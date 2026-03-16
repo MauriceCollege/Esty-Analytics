@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esty Analytics | Professional Data & Engineering Solutions</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .feature-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold">E</div>
+                <span class="font-bold text-xl tracking-tight">Esty<span class="text-blue-600">Analytics</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                <a href="#" class="hover:text-blue-600 transition-colors">Home</a>
+                <a href="#portfolio" class="hover:text-blue-600 transition-colors">Portfolio</a>
+                <a href="#about" class="hover:text-blue-600 transition-colors">Methodology</a>
+                <a href="mailto:contact@estyanalytics.com" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all">Get in Touch</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="py-24 px-6 bg-white border-b border-slate-100">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
+                Data-Driven Solutions for <span class="text-blue-600">Technical Challenges</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
+                Specializing in power systems analysis, financial modeling, and operational optimization. I bridge the gap between complex raw data and clear, interactive visual tools.
+            </p>
+            <div class="flex flex-wrap gap-4 justify-center">
+                <a href="#portfolio" class="px-8 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg">View Portfolio</a>
+                <a href="mailto:contact@estyanalytics.com" class="px-8 py-4 bg-white text-blue-600 border border-blue-200 rounded-lg font-bold hover:bg-blue-50 transition-all">Request Consultation</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Portfolio Grid -->
+    <section id="portfolio" class="py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-16 text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">Core Competencies</h2>
+                <p class="text-slate-500 font-medium">Professional analytics across Engineering, Finance, Operations, and Education.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Project 1: Power Quality & Signal Analysis -->
+                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="h-44 bg-blue-50 flex items-center justify-center border-b border-slate-100">
+                        <svg class="w-14 h-14 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mb-3">Electrical Engineering</div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Power Quality & Signal Analysis</h3>
+                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Advanced harmonics analysis and phasor diagrams designed for diagnosing power quality issues and monitoring signal integrity.</p>
+                        <a href="dashboards/power-quality.html" class="inline-flex items-center gap-2 text-blue-600 font-bold hover:gap-3 transition-all">
+                            Open Dashboard 
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Project 2: Financial Analytics -->
+                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="h-44 bg-emerald-50 flex items-center justify-center border-b border-slate-100">
+                        <svg class="w-14 h-14 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-3">Finance</div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Financial Analytics Hub</h3>
+                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Interactive performance monitoring, cash flow projections, and ROI tracking for data-driven financial decision making.</p>
+                        <a href="dashboards/financial-analytics.html" class="inline-flex items-center gap-2 text-emerald-600 font-bold hover:gap-3 transition-all">
+                            View Analytics 
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Project 3: Inventory Management -->
+                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="h-44 bg-orange-50 flex items-center justify-center border-b border-slate-100">
+                        <svg class="w-14 h-14 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-orange-600 uppercase tracking-[0.2em] mb-3">Operations</div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Inventory Optimization</h3>
+                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Real-time stock tracking, turnover rates, and supply chain visibility tools to minimize waste and optimize storage.</p>
+                        <a href="dashboards/inventory-management.html" class="inline-flex items-center gap-2 text-orange-600 font-bold hover:gap-3 transition-all">
+                            Check Stock 
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Project 4: Education -->
+                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="h-44 bg-purple-50 flex items-center justify-center border-b border-slate-100">
+                        <svg class="w-14 h-14 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-purple-600 uppercase tracking-[0.2em] mb-3">Education</div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Assessment Systems</h3>
+                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Smart examination modules with automated scoring and student performance tracking for interactive learning.</p>
+                        <a href="dashboards/exam-questions.html" class="inline-flex items-center gap-2 text-purple-600 font-bold hover:gap-3 transition-all">
+                            Access Portal 
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Project 5: Project Analysis -->
+                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="h-44 bg-slate-100 flex items-center justify-center border-b border-slate-100">
+                        <svg class="w-14 h-14 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] mb-3">Project Management</div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Operational Site Analysis</h3>
+                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Optimization tools for manual labor and site projects, tracking productivity metrics like excavation volume and resource efficiency.</p>
+                        <a href="dashboards/project-analysis.html" class="inline-flex items-center gap-2 text-slate-700 font-bold hover:gap-3 transition-all">
+                            Launch Project 
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Methodology -->
+    <section id="about" class="py-24 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold mb-8">Professional Standards</h2>
+                    <p class="text-slate-400 mb-10 leading-relaxed text-lg">
+                        I apply rigorous analytical frameworks to every project, ensuring that technical data is translated into intuitive, user-friendly experiences.
+                    </p>
+                    <div class="space-y-8">
+                        <div class="flex gap-6">
+                            <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center font-bold text-blue-400 border border-blue-500/30 shrink-0">01</div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">Analytical Rigor</h4>
+                                <p class="text-slate-400 text-sm">Every visualization is built on a foundation of verified mathematical logic and data integrity.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6">
+                            <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center font-bold text-blue-400 border border-blue-500/30 shrink-0">02</div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">User-Centric Design</h4>
+                                <p class="text-slate-400 text-sm">Dashboards are designed for clarity, allowing users to find the insights they need without technical friction.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-800 p-1 rounded-[2.5rem] border border-slate-700 shadow-2xl">
+                    <div class="aspect-video bg-slate-900 rounded-[2.2rem] flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-blue-500 text-5xl font-extrabold mb-2">100%</div>
+                            <div class="text-slate-400 font-bold tracking-widest uppercase text-[10px]">Data Precision Guarantee</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 px-6 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded"></div>
+                <span class="font-bold text-xl tracking-tight text-slate-800">Esty Analytics</span>
+            </div>
+            <div class="flex gap-10 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <a href="#" class="hover:text-blue-600 transition-colors">LinkedIn</a>
+                <a href="#" class="hover:text-blue-600 transition-colors">GitHub</a>
+                <a href="mailto:contact@estyanalytics.com" class="hover:text-blue-600 transition-colors">Contact</a>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+            &copy; 2024 Esty Analytics | Strategic Problem Solving through Visualization
+        </div>
+    </footer>
+
+</body>
+</html>
