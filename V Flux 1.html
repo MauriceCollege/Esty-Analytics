@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V/f Flux & Core Saturation Analytics</title>
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 1);
+        }
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        #currentWaveContainer canvas {
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
+
+    <!-- Header Section with Dark Blue Background -->
+    <header class="bg-blue-900 text-white p-6 md:p-8 mb-8 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-4xl font-black tracking-tighter italic uppercase mb-2">V/f Flux Analyzer</h1>
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <p class="text-blue-200 font-medium flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Customer: <span id="site-name" class="text-white font-bold">NWC Parnassus 210</span>
+                    </p>
+                    <p class="text-blue-200 font-medium flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                        Meter ID: <span id="meter-id" class="text-white font-bold font-mono">2335449</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-4">
+                <div class="px-5 py-3 bg-white/10 backdrop-blur rounded-2xl border border-white/20 flex items-center gap-3">
+                    <span id="status-dot" class="h-3 w-3 rounded-full bg-red-500 status-pulse"></span>
+                    <div>
+                        <span class="text-[10px] font-black text-blue-300 block uppercase">Flag: Diag7</span>
+                        <span id="status-text" class="text-sm font-bold">Over-Voltage Critical</span>
+                    </div>
+                </div>
+                <div class="px-5 py-3 bg-slate-800 rounded-2xl shadow-inner border border-slate-700">
+                    <span class="text-[10px] font-black text-slate-400 block uppercase">Active Voltage</span>
+                    <span id="display-voltage" class="text-xl font-mono font-bold text-red-400">404.9V</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 md:px-8 pb-12">
+        <!-- Data Input Section -->
+        <div class="mb-10">
+            <label class="block mb-2 text-xs font-black text-slate-400 uppercase tracking-widest">Import Site Data (Excel/CSV)</label>
+            <div class="drop-zone p-6 rounded-2xl text-center cursor-pointer bg-white shadow-sm" id="upload-container">
+                <input type="file" id="excel-input" class="hidden" accept=".xlsx, .xls, .csv">
+                <div class="flex flex-col items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-sm font-bold text-slate-600">Click to upload your PQ Excel/CSV file</p>
+                    <p class="text-[10px] text-slate-400 uppercase">Supports Bellevue, NWC, and Generic PQ Formats</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Flux Saturation</h3>
+                <p class="text-4xl font-black text-slate-800"><span id="metric-flux">12.4</span>% <span id="flux-arrow" class="text-base text-red-500">↑</span></p>
+                <p id="flux-desc" class="text-[11px] text-slate-500 mt-2 font-medium italic">Operating deep in magnetic knee</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm border-b-4 border-b-orange-400">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Steinmetz Hysteresis</h3>
+                <p class="text-4xl font-black text-slate-800"><span id="metric-hys">1.8</span> <span class="text-lg">kW</span></p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3">
+                    <div id="hys-bar" class="bg-orange-400 h-1.5 rounded-full" style="width: 75%"></div>
+                </div>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm border-b-4 border-b-blue-400">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Eddy Current Drain</h3>
+                <p class="text-4xl font-black text-slate-800"><span id="metric-eddy">0.9</span> <span class="text-lg">kW</span></p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3">
+                    <div id="eddy-bar" class="bg-blue-400 h-1.5 rounded-full" style="width: 40%"></div>
+                </div>
+            </div>
+            <div id="loss-card" class="bg-red-600 p-6 rounded-3xl shadow-lg text-white transition-colors duration-500">
+                <h3 class="text-xs font-black text-red-200 uppercase tracking-widest mb-2">Total Core Loss</h3>
+                <p class="text-4xl font-black"><span id="metric-total">2.7</span> <span class="text-lg">kW</span></p>
+                <p class="text-[10px] font-bold text-red-100 mt-2 uppercase tracking-tighter">Est. Annual Cost: $<span id="metric-cost">3,540</span> wasted</p>
+            </div>
+        </div>
+
+        <!-- Main Visual Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass-card p-8 rounded-[2rem] shadow-xl">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">B-H Magnetization Profile</h2>
+                            <p class="text-xs text-slate-500 font-mono">Saturation Knee Detection: Flux Density (B) vs Field (H)</p>
+                        </div>
+                    </div>
+                    <div class="h-[400px]">
+                        <canvas id="bhCurve"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[2rem] shadow-xl border-t-8 border-t-slate-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Live Excitation Current Signature</h2>
+                            <p class="text-xs text-slate-500 font-mono">Real-time simulation of "peaky" current harmonics</p>
+                        </div>
+                    </div>
+                    <div id="currentWaveContainer" class="h-[200px]">
+                        <canvas id="currentWave"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="glass-card p-8 rounded-[2rem] shadow-lg border-l-8 border-l-red-500">
+                    <h2 class="text-lg font-bold text-slate-800 mb-6">Expert Assessment</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-sm font-black text-slate-400 uppercase mb-2">Saturation Mode</h4>
+                            <p id="assessment-text" class="text-sm text-slate-600 leading-relaxed italic">"Transformer iron enters saturation when over-voltage flags are triggered."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[2rem] shadow-lg">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 tracking-tight">Technical Loss Breakdown</h2>
+                    <canvas id="lossPie" class="mb-6"></canvas>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">Hysteresis (Steinmetz)</span>
+                            <span id="pie-hys-label" class="font-mono text-slate-800">67%</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">Eddy Current</span>
+                            <span id="pie-eddy-label" class="font-mono text-slate-800">33%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let bhChart, waveChart, pieChart;
+        let animationTime = 0;
+        let currentSaturationIntensity = 2.5; 
+        const labels = Array.from({length: 100}, (_, i) => (i / 50 - 1).toFixed(2));
+
+        function initCharts() {
+            const bhCtx = document.getElementById('bhCurve').getContext('2d');
+            bhChart = new Chart(bhCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Ideal Core (Linear)', 
+                            data: Array.from({length: 100}, (_, i) => ((i/100)*2-1) * 0.9), 
+                            borderColor: '#94a3b8', borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0
+                        },
+                        { 
+                            label: 'Site Core State (Magnetic Knee)', 
+                            data: [], borderColor: '#ef4444', borderWidth: 5, pointRadius: 0, 
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, tension: 0.4 
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { min: -1.2, max: 1.2 }, x: { title: { display: true, text: 'Field Intensity (H)' } } }
+                }
+            });
+
+            const cwCtx = document.getElementById('currentWave').getContext('2d');
+            waveChart = new Chart(cwCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 100}, (_, i) => i),
+                    datasets: [{ label: 'Excitation', data: [], borderColor: '#3b82f6', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: false }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { min: -1.5, max: 1.5 } }
+                }
+            });
+
+            const pieCtx = document.getElementById('lossPie').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: { labels: ['Hysteresis', 'Eddy'], datasets: [{ data: [67, 33], backgroundColor: ['#fb923c', '#60a5fa'], borderWidth: 0 }] },
+                options: { cutout: '70%', plugins: { legend: { display: false } } }
+            });
+        }
+
+        function animateWave() {
+            animationTime += 0.2;
+            waveChart.data.datasets[0].data = Array.from({length: 100}, (_, i) => {
+                let sine = Math.sin(i * 0.2 + animationTime);
+                let peakiness = Math.max(1, 1 + currentSaturationIntensity / 2.5);
+                return Math.pow(Math.abs(sine), peakiness) * Math.sign(sine);
+            });
+            waveChart.update('none');
+            requestAnimationFrame(animateWave);
+        }
+
+        function updateAnalysis(voltage, siteName = "Custom Site", meterId = "0000000", diag7 = false) {
+            const nominal = 400; 
+            const ratio = voltage / nominal;
+            const saturationOffset = Math.max(0, (ratio - 1) * 100);
+            currentSaturationIntensity = 2.5 + (saturationOffset * 0.3);
+
+            document.getElementById('site-name').innerText = siteName;
+            document.getElementById('meter-id').innerText = meterId;
+            document.getElementById('display-voltage').innerText = voltage.toFixed(1) + "V";
+            document.getElementById('metric-flux').innerText = (10 + saturationOffset * 1.5).toFixed(1);
+            
+            const hysLoss = 1.2 * Math.pow(ratio, 1.6);
+            const eddyLoss = 0.5 * Math.pow(ratio, 2.0);
+            const total = hysLoss + eddyLoss;
+            const cost = total * 8760 * 0.15; 
+
+            document.getElementById('metric-hys').innerText = hysLoss.toFixed(1);
+            document.getElementById('metric-eddy').innerText = eddyLoss.toFixed(1);
+            document.getElementById('metric-total').innerText = total.toFixed(1);
+            document.getElementById('metric-cost').innerText = Math.round(cost).toLocaleString();
+            
+            const isDanger = diag7 || ratio > 1.05;
+            document.getElementById('status-dot').className = isDanger ? "h-3 w-3 rounded-full bg-red-500 status-pulse" : "h-3 w-3 rounded-full bg-green-500";
+            document.getElementById('loss-card').className = isDanger ? "bg-red-600 p-6 rounded-3xl shadow-lg text-white" : "bg-slate-800 p-6 rounded-3xl shadow-lg text-white";
+            document.getElementById('status-text').innerText = isDanger ? "Over-Voltage / Saturation Active" : "Normal Magnetic Profile";
+            
+            document.getElementById('assessment-text').innerText = `"Site is operating at ${voltage.toFixed(1)}V. Magnetization knee detected at ${nominal}V."`;
+
+            bhChart.data.datasets[1].data = Array.from({length: 100}, (_, i) => Math.tanh(((i/100)*2-1) * currentSaturationIntensity));
+            bhChart.update();
+
+            const hysPct = Math.round((hysLoss / total) * 100) || 0;
+            const eddyPct = 100 - hysPct;
+            pieChart.data.datasets[0].data = [hysPct, eddyPct];
+            document.getElementById('pie-hys-label').innerText = hysPct + "%";
+            document.getElementById('pie-eddy-label').innerText = eddyPct + "%";
+            pieChart.update();
+        }
+
+        document.getElementById('upload-container').addEventListener('click', () => document.getElementById('excel-input').click());
+        document.getElementById('excel-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const bstr = evt.target.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                if (data.length > 0) {
+                    const firstRow = data[0];
+                    const keys = Object.keys(firstRow);
+                    
+                    // Column mapping: A (index 0) is Meter ID, B (index 1) is Customer Name
+                    const meterId = keys[0] ? firstRow[keys[0]] : "0000000";
+                    const siteName = keys[1] ? firstRow[keys[1]] : "Imported Site";
+                    
+                    // Search for technical columns
+                    const vCol = keys.find(k => k.toLowerCase().includes('phase a voltage'));
+                    const diag7Col = keys.find(k => k.toLowerCase().includes('diag7'));
+
+                    const voltage = vCol ? parseFloat(firstRow[vCol]) : 404.9;
+                    const isDiag7 = diag7Col ? (firstRow[diag7Col] === true || String(firstRow[diag7Col]).toLowerCase() === "true") : false;
+
+                    updateAnalysis(voltage, siteName, meterId, isDiag7);
+                }
+            };
+            reader.readAsBinaryString(file);
+        });
+
+        initCharts();
+        updateAnalysis(404.9, "National Water Commission", "2335449", true); 
+        animateWave();
+    </script>
+</body>
+</html>

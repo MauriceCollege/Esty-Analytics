@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phasor BI Analyzer - Precision Metrics</title>
+    
+    <!-- Load React, ReactDOM, and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load SheetJS (Excel Parser) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Load PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @keyframes flash-red {
+            0%, 100% { background-color: white; border-color: #e2e8f0; }
+            50% { background-color: #fee2e2; border-color: #ef4444; }
+        }
+        .animate-flash-red {
+            animation: flash-red 1.2s infinite;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        #pdf-report-workspace {
+            background-color: #f8fafc;
+            min-height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // Optimized Icon component to prevent DOM conflicts with React
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const wrapperRef = useRef(null);
+
+            useEffect(() => {
+                if (window.lucide && wrapperRef.current) {
+                    wrapperRef.current.innerHTML = `<i data-lucide="${name}" class="${className}" style="width: ${size}px; height: ${size}px;"></i>`;
+                    window.lucide.createIcons({
+                        attrs: { 'stroke-width': 2 },
+                        elements: [wrapperRef.current.firstChild]
+                    });
+                }
+            }, [name, size, className]);
+
+            return <span ref={wrapperRef} className="inline-flex items-center justify-center leading-none" />;
+        };
+
+        const OfficialLogo = ({ collapsed, dark = false }) => (
+            <div className="flex items-center gap-3">
+                <div className={`relative w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-lg border ${dark ? 'border-slate-700' : 'border-slate-200'} overflow-hidden group`}>
+                    <svg viewBox="0 0 100 100" className="w-10 h-10 transition-transform duration-700 group-hover:scale-110">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#2563eb" />
+                                <stop offset="100%" stopColor="#1e40af" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="#cbd5e1" strokeWidth="0.5" strokeDasharray="2 2" />
+                        <g strokeWidth="6" strokeLinecap="round">
+                            <line x1="50" y1="50" x2="50" y2="22" stroke="#ef4444" />
+                            <line x1="50" y1="50" x2="74" y2="64" stroke="#eab308" />
+                            <line x1="50" y1="50" x2="26" y2="64" stroke="#3b82f6" />
+                        </g>
+                        <circle cx="50" cy="50" r="8" fill="url(#logoGrad)" stroke="white" strokeWidth="2" />
+                    </svg>
+                </div>
+                {!collapsed && (
+                    <div className="flex flex-col">
+                        <span className={`font-black text-xl tracking-tighter leading-none ${dark ? 'text-white' : 'text-slate-900'}`}>
+                            PHASOR<span className="text-blue-500">BI</span>
+                        </span>
+                        <span className="text-[8px] font-bold text-slate-500 tracking-[0.3em] uppercase mt-1">
+                            BI Analytics
+                        </span>
+                    </div>
+                )}
+            </div>
+        );
+
+        const NavItem = ({ iconName, label, active, onClick, collapsed }) => (
+            <button 
+                onClick={onClick}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
+                    active ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                } ${collapsed ? 'justify-center' : ''}`}
+            >
+                <Icon name={iconName} size={20} />
+                {!collapsed && <span className="font-semibold text-sm">{label}</span>}
+            </button>
+        );
+
+        const StatCard = ({ title, value, status, subtitle, forceFlash }) => {
+            const isError = status === 'error' || forceFlash;
+            const cardClass = isError ? 'animate-flash-red' : (status === 'success' ? 'bg-white border-green-100 text-green-600' : 'bg-white border-slate-100 text-slate-800');
+            
+            return (
+                <div className={`p-5 rounded-2xl border shadow-sm transition-all hover:shadow-md ${cardClass}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate max-w-[80%]">{title}</span>
+                        <Icon name={isError ? "shield-alert" : "activity"} size={16} className={isError ? "text-red-500" : "text-slate-400"} />
+                    </div>
+                    <div className={`text-lg font-black truncate ${isError ? 'text-red-700' : 'text-slate-900'}`}>{value}</div>
+                    <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic leading-tight truncate">{subtitle}</div>
+                </div>
+            );
+        };
+
+        const PhaseInput = ({ phase, color, mags, angs, onChange }) => {
+            const p = phase.toLowerCase();
+            return (
+                <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1 h-3 rounded-full" style={{ backgroundColor: color }}></div>
+                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Phase {phase}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase">Magnitude</label>
+                            <div className="flex flex-col gap-2">
+                                <input type="number" step="0.1" value={mags[0]} onChange={(e) => onChange(`v${p}_mag`, e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500" />
+                                <input type="number" step="0.1" value={mags[1]} onChange={(e) => onChange(`i${p}_mag`, e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-bold border-dashed outline-none focus:ring-1 focus:ring-blue-500" />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase">Angle (°)</label>
+                            <div className="flex flex-col gap-2">
+                                <input type="number" step="1" value={angs[0]} onChange={(e) => onChange(`v${p}_ang`, e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500" />
+                                <input type="number" step="1" value={angs[1]} onChange={(e) => onChange(`i${p}_ang`, e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-bold border-dashed outline-none focus:ring-1 focus:ring-blue-500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProgressRow = ({ label, value, target }) => {
+            const diff = Math.abs(value - target);
+            const color = diff > 5 ? 'bg-red-500' : 'bg-blue-500';
+            return (
+                <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-slate-300">{label}</span>
+                        <span className={diff > 5 ? 'text-red-400' : 'text-blue-400'}>{value.toFixed(1)}°</span>
+                    </div>
+                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-500 ${color}`} style={{ width: `${Math.min((value / 180) * 100, 100)}%` }}></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const initialInputs = {
+                va_mag: 120, vb_mag: 120, vc_mag: 120,
+                ia_mag: 10,  ib_mag: 10,  ic_mag: 10,
+                va_ang: 0,   vb_ang: 240, vc_ang: 120,
+                ia_ang: 330, ib_ang: 210, ic_ang: 90
+            };
+
+            const [inputs, setInputs] = useState(initialInputs);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+            const [activeTab, setActiveTab] = useState('live');
+            const [uploadedData, setUploadedData] = useState([]);
+            const [selectedDevice, setSelectedDevice] = useState(null);
+            const [customerName, setCustomerName] = useState(null);
+            const [meterCode, setMeterCode] = useState(null);
+            const [selectedTime, setSelectedTime] = useState('');
+            const [activeDiagnostics, setActiveDiagnostics] = useState([]); 
+            const [isParsing, setIsParsing] = useState(false);
+            const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+            const fileInputRef = useRef(null);
+            const scrollContainerRef = useRef(null);
+            const exportTargetRef = useRef(null);
+
+            const handleInputChange = (field, value) => {
+                setInputs(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
+            };
+
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                setIsParsing(true);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    setUploadedData(json);
+                    if (json.length > 0) {
+                        const first = json[0];
+                        setSelectedDevice(first['Device Name']);
+                        setCustomerName(first['Customer Name']);
+                        setMeterCode(first['Feeder Code']);
+                        setSelectedTime(first['Gateway Time']);
+                        updateFromRow(first);
+                    }
+                    setIsParsing(false);
+                    setActiveTab('live');
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            const updateFromRow = (row) => {
+                if (!row) return;
+                setInputs({
+                    va_mag: parseFloat(row['Phase A Voltage']) || 0,
+                    vb_mag: parseFloat(row['Phase B Voltage']) || 0,
+                    vc_mag: parseFloat(row['Phase C Voltage']) || 0,
+                    ia_mag: parseFloat(row['Phase A Current']) || 0,
+                    ib_mag: parseFloat(row['Phase B Current']) || 0,
+                    ic_mag: parseFloat(row['Phase C Current']) || 0,
+                    va_ang: parseFloat(row['Phase A Voltage Angle']) || 0,
+                    vb_ang: parseFloat(row['Phase B Voltage Angle']) || 0,
+                    vc_ang: parseFloat(row['Phase C Voltage Angle']) || 0,
+                    ia_ang: parseFloat(row['Phase A Current Angle']) || 0,
+                    ib_ang: parseFloat(row['Phase B Current Angle']) || 0,
+                    ic_ang: parseFloat(row['Phase C Current Angle']) || 0,
+                });
+
+                const diagKeys = [
+                    { key: 'Diag1 Polarity Cross Phase Reverse Energy Flow Flag', label: 'Reverse Energy', id: 'Diag. 1' },
+                    { key: 'Diag2 Voltage Imbalance Flag', label: 'Volt Imbalance', id: 'Diag. 2' },
+                    { key: 'Diag3 Inactive Phase Current Flag', label: 'Inactive Phase', id: 'Diag. 3' },
+                    { key: 'Diag4 Phase Angle Alert Flag', label: 'Angle Alert', id: 'Diag. 4' },
+                    { key: 'Diag5 High Distortion Flag', label: 'High Distortion', id: 'Diag. 5' },
+                    { key: ' Diag6 Phase A Under Voltage Flag', label: 'A Under Volt', id: 'Diag. 6' },
+                    { key: 'Diag7 Phase A Over Voltage Flag', label: 'A Over Volt', id: 'Diag. 7' },
+                    { key: 'Diag8 High Neutral Current Flag', label: 'Neutral High', id: 'Diag. 8' }
+                ];
+
+                const trueDiags = diagKeys
+                    .filter(d => {
+                        const val = row[d.key];
+                        return val === true || val === 'true' || val === 1 || val === '1';
+                    })
+                    .map(d => ({ id: d.id, label: d.label }));
+                
+                setActiveDiagnostics(trueDiags);
+            };
+
+            const deviceDateRange = useMemo(() => {
+                if (!selectedDevice || !uploadedData.length) return null;
+                const deviceRecords = uploadedData.filter(row => row['Device Name'] === selectedDevice);
+                const times = deviceRecords
+                    .map(row => new Date(row['Gateway Time']))
+                    .filter(d => !isNaN(d.getTime()))
+                    .sort((a, b) => a - b);
+                
+                if (times.length === 0) return "No Range Available";
+                const start = times[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                const end = times[times.length - 1].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                return start === end ? start : `${start} — ${end}`;
+            }, [selectedDevice, uploadedData]);
+
+            const availableTimes = useMemo(() => {
+                if (!selectedDevice || !uploadedData.length) return [];
+                return uploadedData
+                    .filter(row => row['Device Name'] === selectedDevice)
+                    .map(row => row['Gateway Time']);
+            }, [selectedDevice, uploadedData]);
+
+            const handleTimeChange = (time) => {
+                setSelectedTime(time);
+                const row = uploadedData.find(r => r['Device Name'] === selectedDevice && r['Gateway Time'] === time);
+                if (row) updateFromRow(row);
+            };
+
+            const downloadPDF = async () => {
+                if (!exportTargetRef.current) return;
+                setIsGeneratingPDF(true);
+                
+                try {
+                    const element = exportTargetRef.current;
+                    const canvas = await html2canvas(element, {
+                        scale: 2, // High DPI for crispness
+                        useCORS: true,
+                        backgroundColor: '#f8fafc',
+                        onclone: (clonedDoc) => {
+                            const workspace = clonedDoc.getElementById('pdf-report-workspace');
+                            if (workspace) {
+                                // Set base font size to 12pt (standard readability for PDF)
+                                workspace.style.fontSize = '12pt';
+                                // Adjust card titles/values specifically for the clone to ensure perfect scaling
+                                const labels = workspace.querySelectorAll('span, p, h3');
+                                labels.forEach(el => {
+                                    if (!el.classList.contains('text-xl') && !el.classList.contains('text-3xl')) {
+                                        el.style.fontSize = '12pt';
+                                    }
+                                });
+                                workspace.style.padding = '40px';
+                            }
+                        }
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    const fileName = `PhasorBI_ComplianceReport_${selectedDevice || 'System'}_${new Date().toISOString().split('T')[0]}.pdf`;
+                    pdf.save(fileName);
+                } catch (err) {
+                    console.error("PDF Export failed:", err);
+                }
+                setIsGeneratingPDF(false);
+            };
+
+            const data = useMemo(() => {
+                const phases = ['a', 'b', 'c'];
+                const colors = { va: '#ef4444', vb: '#eab308', vc: '#3b82f6', ia: '#f87171', ib: '#facc15', ic: '#60a5fa' };
+                const maxV = Math.max(inputs.va_mag, inputs.vb_mag, inputs.vc_mag, 1);
+                const maxI = Math.max(inputs.ia_mag, inputs.ib_mag, inputs.ic_mag, 0.1);
+                
+                const vScale = 270 / maxV;
+                const effectiveMaxI = Math.max(maxI, 0.6);
+                const iScale = 320 / effectiveMaxI; 
+                
+                const getDiff = (a, b) => { 
+                    let d = Math.abs(a - b) % 360; 
+                    return d > 180 ? 360 - d : d; 
+                };
+                
+                const breakdown = [];
+                const metrics = phases.map(p => {
+                    let phi = (inputs[`v${p}_ang`] - inputs[`i${p}_ang`]) % 360;
+                    if (phi < 0) phi += 360;
+                    let type = "Unity";
+                    if (phi > 1 && phi < 179) type = "Lagging";
+                    else if (phi > 181 && phi < 359) type = "Leading";
+                    
+                    const pf = Math.cos(phi * (Math.PI / 180));
+                    breakdown.push({ 
+                        label: p.toUpperCase(), 
+                        type, 
+                        pf: parseFloat(pf.toFixed(3)), 
+                        color: colors[`v${p}`], 
+                        displacement: (phi > 180 ? 360 - phi : phi).toFixed(1) 
+                    });
+                    return { pf };
+                });
+
+                const avgPF = metrics.reduce((acc, m) => acc + m.pf, 0) / 3;
+                const imb = {
+                    ab: getDiff(inputs.va_ang, inputs.vb_ang),
+                    bc: getDiff(inputs.vb_ang, inputs.vc_ang),
+                    ca: getDiff(inputs.vc_ang, inputs.va_ang)
+                };
+                const maxImb = Math.max(Math.abs(imb.ab - 120), Math.abs(imb.bc - 120), Math.abs(imb.ca - 120));
+
+                const vectors = phases.flatMap(p => {
+                    const vRad = (inputs[`v${p}_ang`] * Math.PI) / 180;
+                    const iRad = (inputs[`i${p}_ang`] * Math.PI) / 180;
+                    return [
+                        { label: `V${p.toUpperCase()}`, x: Math.cos(vRad)*inputs[`v${p}_mag`]*vScale, y: -Math.sin(vRad)*inputs[`v${p}_mag`]*vScale, color: colors[`v${p}`], type: 'voltage' },
+                        { label: `I${p.toUpperCase()}`, x: Math.cos(iRad)*inputs[`i${p}_mag`]*iScale, y: -Math.sin(iRad)*inputs[`i${p}_mag`]*iScale, color: colors[`i${p}`], type: 'current' }
+                    ];
+                });
+
+                let reliability = 100;
+                reliability -= (activeDiagnostics.length * 12);
+                if (maxImb > 5) reliability -= 10;
+                if (avgPF < 0.85) reliability -= 10;
+                const healthIndex = Math.max(0, reliability);
+
+                let severity = "Healthy";
+                const activeLabels = activeDiagnostics.map(d => d.label);
+                if (activeDiagnostics.length > 2 || activeLabels.includes("A Under Volt") || activeLabels.includes("Reverse Energy")) severity = "Critical";
+                else if (activeDiagnostics.length > 0 || maxImb > 8) severity = "Warning";
+                else if (avgPF < 0.90) severity = "Advisory";
+
+                return { vectors, avgPF, imb, maxImb, breakdown, healthIndex, severity };
+            }, [inputs, activeDiagnostics]);
+
+            return (
+                <div className="flex h-screen overflow-hidden">
+                    <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white transition-all duration-300 flex flex-col shadow-2xl z-20`}>
+                        <div className="p-6 border-b border-slate-800">
+                            <OfficialLogo collapsed={!isSidebarOpen} dark={true} />
+                        </div>
+                        <nav className="flex-1 p-4 space-y-2 mt-4">
+                            <NavItem iconName="layout-dashboard" label="Live Analysis" active={activeTab === 'live'} onClick={() => setActiveTab('live')} collapsed={!isSidebarOpen} />
+                            <NavItem iconName="database" label="Dataset Library" active={activeTab === 'dataset'} onClick={() => setActiveTab('dataset')} collapsed={!isSidebarOpen} />
+                        </nav>
+                        <div className="p-4 border-t border-slate-800 flex flex-col items-center gap-4">
+                            {isSidebarOpen ? (
+                                <p className="text-[10px] text-slate-500 font-black tracking-[0.3em] uppercase opacity-60">Business Intelligence & Analytics</p>
+                            ) : (
+                                <div className="text-[10px] text-slate-500 font-bold vertical-text py-4 tracking-widest whitespace-nowrap">BI & ANALYTICS</div>
+                            )}
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="w-full flex justify-center p-2 hover:bg-slate-800 rounded-lg transition-colors"><Icon name="menu" /></button>
+                        </div>
+                    </aside>
+
+                    <main className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                        <header className="h-16 bg-white border-b flex items-center justify-between px-8 shadow-sm z-10">
+                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">PQ BI Platform</h2>
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={downloadPDF}
+                                    disabled={isGeneratingPDF}
+                                    className="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg hover:bg-slate-800 transition-all disabled:opacity-50"
+                                >
+                                    <Icon name={isGeneratingPDF ? "loader-2" : "file-text"} size={14} className={isGeneratingPDF ? "animate-spin" : ""} />
+                                    {isGeneratingPDF ? 'Generating...' : 'Download PDF Report'}
+                                </button>
+                                <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+                                <button onClick={() => fileInputRef.current.click()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition-all">
+                                    <Icon name="upload" size={14} /> {isParsing ? 'Processing...' : 'Upload Load Profile'}
+                                </button>
+                            </div>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+                            <div id="pdf-report-workspace" ref={exportTargetRef} className="p-8 space-y-12">
+                                
+                                <div className="flex justify-between items-start border-b border-slate-200 pb-6 mb-8">
+                                    <div>
+                                        <OfficialLogo collapsed={false} />
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Identity</p>
+                                        <p className="text-sm font-black text-slate-900">Phasor Analytical Report</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="bg-blue-600 p-4 rounded-xl text-white shadow-lg">
+                                            <Icon name="user" size={24} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Customer & Meter Identity</h3>
+                                            <p className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                                                {customerName || 'N/A'} <span className="text-slate-300 font-normal mx-2">|</span> {selectedDevice || '---'}
+                                            </p>
+                                            {meterCode && <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">Feeder Code: {meterCode}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 border-l border-slate-100 pl-6 h-full">
+                                        <div className="text-right">
+                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Snapshot Timeline</h3>
+                                            <p className="text-xs font-bold text-blue-600 italic tracking-tight">{deviceDateRange || 'No Dataset Active'}</p>
+                                        </div>
+                                        <select 
+                                            value={selectedTime}
+                                            onChange={(e) => handleTimeChange(e.target.value)}
+                                            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-inner min-w-[260px]"
+                                            disabled={!availableTimes.length}
+                                        >
+                                            {!availableTimes.length && <option>Waiting for Dataset...</option>}
+                                            {availableTimes.map((t, idx) => (
+                                                <option key={idx} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-6">
+                                    <StatCard 
+                                        title="Avg Power Factor" 
+                                        value={data.avgPF.toFixed(3)} 
+                                        status={data.avgPF < 0.85 ? 'warning' : 'success'} 
+                                        forceFlash={data.avgPF < 0.8} 
+                                        subtitle={data.avgPF < 0.8 ? "CRITICAL: Low PF" : "Efficiency Ratio"} 
+                                    />
+                                    <StatCard 
+                                        title="Phase Imbalance" 
+                                        value={`${data.maxImb.toFixed(1)}°`} 
+                                        status={data.maxImb > 5 ? 'error' : 'success'} 
+                                        subtitle="Angular Variance" 
+                                    />
+                                    <StatCard 
+                                        title="Reliability Index" 
+                                        value={`${data.healthIndex}%`} 
+                                        status={data.healthIndex < 70 ? 'error' : (data.healthIndex < 90 ? 'warning' : 'success')}
+                                        forceFlash={data.healthIndex < 60}
+                                        subtitle="PQ Compliance Score" 
+                                    />
+                                    <StatCard 
+                                        title="Operational Severity" 
+                                        value={data.severity} 
+                                        status={data.severity === 'Critical' || data.severity === 'Warning' ? 'error' : (data.severity === 'Advisory' ? 'warning' : 'success')} 
+                                        subtitle={activeDiagnostics.length > 0 ? `${activeDiagnostics.map(d => d.id).join(', ')} Active` : "Grid Standards Met"} 
+                                    />
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Icon name="settings" size={14} className="text-slate-400" /> Vector Configuration
+                                        </h3>
+                                        <button onClick={() => setInputs(initialInputs)} className="text-[10px] font-bold text-blue-600 hover:underline">Reset to Default</button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-6">
+                                        <PhaseInput phase="A" color="#ef4444" mags={[inputs.va_mag, inputs.ia_mag]} angs={[inputs.va_ang, inputs.ia_ang]} onChange={handleInputChange} />
+                                        <PhaseInput phase="B" color="#eab308" mags={[inputs.vb_mag, inputs.ib_mag]} angs={[inputs.vb_ang, inputs.ia_ang]} onChange={handleInputChange} />
+                                        <PhaseInput phase="C" color="#3b82f6" mags={[inputs.vc_mag, inputs.ic_mag]} angs={[inputs.vc_ang, inputs.ic_ang]} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-900 rounded-2xl p-8 text-white shadow-xl">
+                                    <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                        <Icon name="arrow-right-left" size={14} /> Phase Separation Metrics
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-12">
+                                        <ProgressRow label="A → B Separation" value={data.imb.ab} target={120} />
+                                        <ProgressRow label="B → C Separation" value={data.imb.bc} target={120} />
+                                        <ProgressRow label="C → A Separation" value={data.imb.ca} target={120} />
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-2xl border border-slate-200 p-10 flex flex-col items-center relative shadow-sm min-h-[700px]">
+                                    <div className="absolute top-10 left-10 text-left">
+                                        <h3 className="font-black text-slate-800 text-3xl tracking-tight leading-none">3-Phasor Diagram</h3>
+                                        <p className="text-xs text-slate-400 font-bold uppercase italic tracking-tighter mt-2">Precision Vector Canvas</p>
+                                    </div>
+                                    <div className="w-full flex justify-center py-10">
+                                        <svg viewBox="0 0 700 700" className="w-full max-w-[620px] drop-shadow-2xl overflow-visible">
+                                            <g stroke="#475569" fill="none" strokeWidth="1.5" opacity="0.3">
+                                                {[85, 175, 260, 335].map(r => (
+                                                    <circle key={r} cx="350" cy="350" r={r} strokeDasharray={r === 335 ? "0" : "6 6"} />
+                                                ))}
+                                                <line x1="0" y1="350" x2="700" y2="350" />
+                                                <line x1="350" y1="0" x2="350" y2="700" />
+                                            </g>
+                                            
+                                            <g fontSize="14" fontWeight="900" fill="#475569" textAnchor="middle">
+                                                <text x="680" y="340">0°</text>
+                                                <text x="350" y="25">90°</text>
+                                                <text x="20" y="340">180°</text>
+                                                <text x="350" y="695">270°</text>
+                                            </g>
+
+                                            <defs>
+                                                {data.vectors.map((v, i) => (
+                                                    <marker key={i} id={`head-${i}`} markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                                                        <path d="M0,0 L10,5 L0,10 z" fill={v.color} />
+                                                    </marker>
+                                                ))}
+                                            </defs>
+
+                                            {data.vectors.map((v, i) => (
+                                                <g key={i}>
+                                                    <line 
+                                                        x1="350" y1="350" 
+                                                        x2={350 + v.x} y2={350 + v.y} 
+                                                        stroke={v.color} 
+                                                        strokeWidth={v.type === 'voltage' ? 4.3 : 2.9} 
+                                                        strokeDasharray={v.type === 'current' ? "12 6" : "0"} 
+                                                        markerEnd={`url(#head-${i})`} 
+                                                        className="transition-all duration-700 ease-out"
+                                                    />
+                                                    <text 
+                                                        x={350 + v.x * 1.15} 
+                                                        y={350 + v.y * 1.15 + 5} 
+                                                        fill={v.color} 
+                                                        fontSize="16" 
+                                                        fontWeight="900" 
+                                                        textAnchor="middle"
+                                                        className="filter drop-shadow-sm"
+                                                    >
+                                                        {v.label}
+                                                    </text>
+                                                </g>
+                                            ))}
+                                        </svg>
+                                    </div>
+
+                                    <div className="mt-6 flex gap-12 bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-inner">
+                                        <div className="flex items-center gap-3 text-xs font-black text-slate-600 uppercase tracking-widest">
+                                            <div className="w-12 h-2.5 bg-slate-400 rounded-full"></div>
+                                            <span>Voltage Vector (Solid)</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs font-black text-slate-600 uppercase tracking-widest">
+                                            <div className="w-12 h-2.5 border-t-2 border-dashed border-slate-400"></div>
+                                            <span>Current Vector (Extended)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                                        <Icon name="compass" size={14} className="text-blue-500" /> Vector Analytical Breakdown
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-8">
+                                        {data.breakdown.map((pb, i) => {
+                                            const isLowPF = pb.pf < 0.8;
+                                            return (
+                                                <div key={i} className={`p-6 rounded-2xl border transition-all duration-500 flex flex-col gap-6 shadow-sm ${isLowPF ? 'animate-flash-red border-red-200' : 'bg-slate-50 border-slate-100'}`}>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg" style={{backgroundColor: pb.color}}>{pb.label}</div>
+                                                            <div>
+                                                                <p className={`text-sm font-black uppercase ${pb.type === 'Lagging' ? 'text-orange-600' : pb.type === 'Leading' ? 'text-blue-600' : 'text-green-600'}`}>{pb.type}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Operational Mode</p>
+                                                            </div>
+                                                        </div>
+                                                        {isLowPF && <Icon name="zap" size={18} className="text-red-600 animate-pulse" />}
+                                                    </div>
+                                                    <div className="grid grid-cols-2 border-t border-slate-200 pt-6 gap-4">
+                                                        <div>
+                                                            <p className={`text-xl font-black ${isLowPF ? 'text-red-700' : 'text-slate-800'}`}>{pb.displacement}°</p>
+                                                            <p className="text-[10px] text-slate-400 font-black uppercase">Displacement</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className={`text-xl font-black ${isLowPF ? 'text-red-700' : 'text-slate-800'}`}>{pb.pf}</p>
+                                                            <p className="text-[10px] text-slate-400 font-black uppercase">Power Factor</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="pt-12 pb-8 border-t border-slate-200 w-full text-center">
+                                    <p className="text-[12px] text-slate-300 font-black tracking-[0.8em] uppercase">BI Analytics • Precision Compliance Report</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

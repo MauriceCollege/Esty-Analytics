@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Harmonics Distortion Dashboard</title>
+    
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React 18 Core -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Necessary dependencies for Recharts UMD -->
+    <script src="https://unpkg.com/react-is@18/umd/react-is.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.372.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Excel Parsing Library (SheetJS) -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { background-color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .recharts-responsive-container { min-height: 300px; }
+        .card-shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        textarea::placeholder { font-size: 0.8rem; }
+        .table-container { overflow-x: auto; }
+        tr:nth-child(even) { background-color: #f1f5f9; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        const { 
+            ResponsiveContainer, ComposedChart, Line, Area, BarChart, Bar, 
+            XAxis, YAxis, CartesianGrid, Tooltip, Cell, Legend 
+        } = window.Recharts;
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const [svgContent, setSvgContent] = useState('');
+
+            useEffect(() => {
+                if (window.lucide && window.lucide.icons) {
+                    const iconConfig = window.lucide.icons[name] || window.lucide.icons['help-circle'];
+                    if (iconConfig) {
+                        const attrs = Object.entries({
+                            xmlns: "http://www.w3.org/2000/svg",
+                            width: size,
+                            height: size,
+                            viewBox: "0 0 24 24",
+                            fill: "none",
+                            stroke: "currentColor",
+                            "stroke-width": "2",
+                            "stroke-linecap": "round",
+                            "stroke-linejoin": "round",
+                            ...iconConfig[1]
+                        }).map(([k, v]) => `${k}="${v}"`).join(' ');
+                        
+                        const children = iconConfig[2].map(child => {
+                            const childAttrs = Object.entries(child[1]).map(([k, v]) => `${k}="${v}"`).join(' ');
+                            return `<${child[0]} ${childAttrs}></${child[0]}>`;
+                        }).join('');
+
+                        setSvgContent(`<svg ${attrs} class="${className}">${children}</svg>`);
+                    }
+                }
+            }, [name, size, className]);
+
+            return <span dangerouslySetInnerHTML={{ __html: svgContent }} className="inline-flex items-center justify-center" />;
+        };
+
+        const App = () => {
+            const [feederCode, setFeederCode] = useState('Good Year - 110');
+            const [customerName, setCustomerName] = useState('Seaforth Sec Sch');
+            const [meterNumber, setMeterNumber] = useState('2336238');
+            const [summaryDate, setSummaryDate] = useState('');
+            const fileInputRef = useRef(null);
+            
+            // Raw parsed data for all meters
+            const [fullFleetData, setFullFleetData] = useState([]);
+            // Filtered data for the specific meter currently graphed
+            const [meterData, setMeterData] = useState([
+                { date: 'Nov 04 2025', time: '10:21 PM', load: 130.6, thd: 4.2, h3: 2.9, h5: 0.8, vA: 130.6, vB: 122.8, vC: 220, loss: 5.4, activeDiags: ['Diag4'], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+                { date: 'Nov 05 2025', time: '10:20 PM', load: 117.4, thd: 7.7, h3: 5.4, h5: 1.5, vA: 117.4, vB: 136.1, vC: 218, loss: 9.0, activeDiags: ['Diag4', 'Diag6'], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+                { date: 'Feb 16 2026', time: '07:00 AM', load: 45, thd: 3.8, h3: 2.1, h5: 1.2, vA: 110, vB: 112, vC: 111, loss: 1.71, activeDiags: [], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+                { date: 'Feb 16 2026', time: '09:00 AM', load: 115, thd: 9.2, h3: 6.5, h5: 2.1, vA: 108, vB: 125, vC: 118, loss: 10.58, activeDiags: ['Diag2', 'Diag4'], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+                { date: 'Feb 16 2026', time: '11:00 AM', load: 145, thd: 13.5, h3: 9.8, h5: 3.2, vA: 98.9, vB: 148.3, vC: 218.9, loss: 19.57, activeDiags: ['Diag2', 'Diag4', 'Diag6'], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' }, 
+                { date: 'Feb 16 2026', time: '01:00 PM', load: 138, thd: 12.1, h3: 8.4, h5: 2.9, vA: 102, vB: 140, vC: 115, loss: 16.70, activeDiags: ['Diag2', 'Diag4'], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+                { date: 'Feb 16 2026', time: '07:00 PM', load: 35, thd: 3.2, h3: 1.5, h5: 0.9, vA: 112, vB: 112, vC: 112, loss: 1.12, activeDiags: [], customerName: 'Seaforth Sec Sch', meterNumber: '2336238' },
+            ]);
+
+            const [selectedTime, setSelectedTime] = useState(meterData[4]);
+            const [showInput, setShowInput] = useState(false);
+            const [csvRaw, setCsvRaw] = useState('');
+
+            const parseCSVLine = (text) => {
+                const result = [];
+                let cur = '';
+                let inQuote = false;
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    if (char === '"') {
+                        inQuote = !inQuote;
+                    } else if (char === ',' && !inQuote) {
+                        result.push(cur.trim());
+                        cur = '';
+                    } else {
+                        cur += char;
+                    }
+                }
+                result.push(cur.trim());
+                return result;
+            };
+
+            const processData = (jsonData) => {
+                try {
+                    let headers = [];
+                    let startIndex = 0;
+                    
+                    for (let i = 0; i < Math.min(jsonData.length, 10); i++) {
+                        const rowValues = Object.values(jsonData[i]);
+                        if (rowValues.some(v => v && v.toString().includes('Gateway Time'))) {
+                            headers = rowValues.map(v => v.toString().trim());
+                            startIndex = i + 1;
+                            break;
+                        }
+                    }
+
+                    if (headers.length === 0) {
+                        headers = Object.keys(jsonData[0]);
+                        startIndex = 0;
+                    }
+
+                    const dataRows = startIndex > 0 ? jsonData.slice(startIndex) : jsonData;
+
+                    const parsed = dataRows.map(row => {
+                        const obj = {};
+                        if (Array.isArray(row)) {
+                            headers.forEach((h, i) => obj[h] = row[i]);
+                        } else {
+                            const values = Object.values(row);
+                            headers.forEach((h, i) => obj[h] = values[i]);
+                        }
+
+                        const timeRaw = obj['Gateway Time'] || 'Unknown';
+                        let dateLabel = "";
+                        let timeLabel = "";
+
+                        if (timeRaw && timeRaw.includes(',')) {
+                            const parts = timeRaw.split(',');
+                            dateLabel = parts[0].trim();
+                            timeLabel = parts[1].trim();
+                        } else if (timeRaw) {
+                            const parts = timeRaw.toString().split(' ');
+                            if (parts.length >= 3) {
+                                dateLabel = parts.slice(0, 3).join(' ');
+                                timeLabel = parts.slice(3).join(' ');
+                            } else {
+                                timeLabel = timeRaw.toString();
+                            }
+                        }
+                        
+                        const vA = parseFloat(obj['Phase A Voltage']) || 0;
+                        const vB = parseFloat(obj['Phase B Voltage']) || 0;
+                        const vC = parseFloat(obj['Phase C Voltage']) || 0;
+                        
+                        const load = (parseFloat(obj['Phase A KW Demand Fund Only']) || 0) + 
+                                     (parseFloat(obj['Phase B KW Demand Fund Only']) || 0) + 
+                                     (parseFloat(obj['Phase C KW Demand Fund Only']) || 0);
+
+                        const loadFull = (parseFloat(obj['Phase A KW Demand Fund Harmonics']) || 0) + 
+                                         (parseFloat(obj['Phase B KW Demand Fund Harmonics']) || 0) + 
+                                         (parseFloat(obj['Phase C KW Demand Fund Harmonics']) || 0);
+                        
+                        const loss = Math.abs(loadFull - load);
+                        const thd = load > 0 ? (loss / load) * 100 : 0;
+
+                        const activeDiags = [
+                            { key: 'Diag1', label: 'Diag1 Polarity Cross Phase Reverse Energy Flow Flag' },
+                            { key: 'Diag2', label: 'Diag2 Voltage Imbalance Flag' },
+                            { key: 'Diag3', label: 'Diag3 Inactive Phase Current Flag' },
+                            { key: 'Diag4', label: 'Diag4 Phase Angle Alert Flag' },
+                            { key: 'Diag5', label: 'Diag5 High Distortion Flag' },
+                            { key: 'Diag6', label: 'Diag6 Phase A Under Voltage Flag' },
+                            { key: 'Diag7', label: 'Diag7 Phase A Over Voltage Flag' },
+                            { key: 'Diag8', label: 'Diag8 High Neutral Current Flag' }
+                        ].filter(d => {
+                            const val = obj[d.label] || obj[d.label.trim()];
+                            return val && val.toString().toLowerCase() === 'true';
+                        }).map(d => d.key);
+
+                        const avg = (vA + vB + vC) / 3;
+                        const maxDev = Math.max(Math.abs(vA - avg), Math.abs(vB - avg), Math.abs(vC - avg));
+                        const unbalance = avg > 0 ? ((maxDev / avg) * 100).toFixed(1) : 0;
+
+                        return {
+                            date: dateLabel,
+                            time: timeLabel,
+                            displayLabel: `${dateLabel} ${timeLabel}`,
+                            load: parseFloat(load.toFixed(2)),
+                            thd: parseFloat(thd.toFixed(1)),
+                            h3: (thd * 0.7).toFixed(1),
+                            h5: (thd * 0.2).toFixed(1),
+                            vA, vB, vC,
+                            unbalance,
+                            loss: parseFloat(loss.toFixed(2)),
+                            activeDiags,
+                            customerName: obj['Customer Name'] || 'Unknown',
+                            meterNumber: obj['Device Name'] || 'Unknown',
+                            feeder: obj['Feeder Code'] || 'Unknown'
+                        };
+                    }).filter(item => item !== null && item.load > 0);
+
+                    if (parsed.length > 0) {
+                        const sorted = parsed.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+                        setFullFleetData(sorted);
+                        
+                        // Default view to the first meter found
+                        const firstMeter = sorted[0].meterNumber;
+                        const filtered = sorted.filter(d => d.meterNumber === firstMeter);
+                        setMeterData(filtered);
+                        setSelectedTime(filtered[filtered.length - 1]);
+                        setCustomerName(filtered[0].customerName);
+                        setMeterNumber(filtered[0].meterNumber);
+                        setFeederCode(filtered[0].feeder);
+                        setSummaryDate(filtered[filtered.length-1].date);
+                        
+                        setShowInput(false);
+                        setCsvRaw('');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Analysis error: Please ensure your file has the correct Power Quality headers.");
+                }
+            };
+
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const bstr = evt.target.result;
+                    const wb = XLSX.read(bstr, { type: 'binary' });
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    processData(data);
+                };
+                reader.readAsBinaryString(file);
+            };
+
+            const handleTextImport = () => {
+                if (!csvRaw) return;
+                const rows = csvRaw.split(/\r?\n/).map(row => parseCSVLine(row));
+                processData(rows);
+            };
+
+            const currentHarmonics = useMemo(() => [
+                { name: 'Fundamental (50Hz)', value: 100, color: '#3b82f6' },
+                { name: '3rd (150Hz)', value: parseFloat(selectedTime.h3), color: '#ef4444' },
+                { name: '5th (250Hz)', value: parseFloat(selectedTime.h5), color: '#f59e0b' },
+                { name: '9th (450Hz)', value: parseFloat((selectedTime.h3 * 0.15).toFixed(1)), color: '#8b5cf6' },
+            ], [selectedTime]);
+
+            const fleetSummary = useMemo(() => {
+                if (!summaryDate || fullFleetData.length === 0) return [];
+                
+                // Group by meter and find the latest reading on that specific date
+                const meters = {};
+                fullFleetData.forEach(d => {
+                    if (d.date === summaryDate) {
+                        meters[d.meterNumber] = d;
+                    }
+                });
+                
+                // Return sorted from highest unbalance to lowest
+                return Object.values(meters).sort((a, b) => parseFloat(b.unbalance) - parseFloat(a.unbalance));
+            }, [fullFleetData, summaryDate]);
+
+            const uniqueDates = useMemo(() => {
+                const dates = [...new Set(fullFleetData.map(d => d.date))];
+                return dates.sort((a,b) => new Date(b) - new Date(a));
+            }, [fullFleetData]);
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    <div className="max-w-6xl mx-auto space-y-6">
+                        
+                        {/* Header: Dark Blue Background */}
+                        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-2xl border border-slate-700 shadow-xl">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h1 className="text-2xl font-bold tracking-tight">Total Harmonics Distortion Dashboard</h1>
+                                    <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded uppercase">50Hz</span>
+                                </div>
+                                <div className="flex flex-col mt-1">
+                                    <p className="text-slate-400 text-sm font-medium">{customerName} | Meter: {meterNumber}</p>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <span className="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-700 text-blue-400 font-black uppercase tracking-wider">Feeder: {feederCode}</span>
+                                        <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 uppercase tracking-wider">
+                                            <Icon name="calendar" size={12}/> Analysis Range: {meterData[0]?.date} — {meterData[meterData.length-1]?.date}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => setShowInput(!showInput)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-500 transition-all shadow-lg active:scale-95"
+                                >
+                                    <Icon name="upload-cloud" size={16} /> Import Meter Data
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* Import Panel */}
+                        {showInput && (
+                            <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-blue-200 animate-in fade-in slide-in-from-top-4 duration-300 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                        <Icon name="database" size={18} className="text-blue-500"/> Data Source Import
+                                    </h3>
+                                    <button onClick={() => setShowInput(false)} className="text-slate-400 hover:text-slate-600">
+                                        <Icon name="x" size={20} />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Option 1: Upload Excel/CSV</label>
+                                        <div onClick={() => fileInputRef.current.click()} className="h-40 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center hover:bg-slate-50 cursor-pointer group">
+                                            <div className="p-3 bg-blue-100 rounded-full text-blue-600 group-hover:scale-110 transition-transform mb-3">
+                                                <Icon name="file-text" size={24} />
+                                            </div>
+                                            <p className="text-sm font-bold text-slate-700">Click to upload .xlsx or .csv</p>
+                                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls, .csv" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Option 2: Paste Content</label>
+                                        <textarea value={csvRaw} onChange={(e) => setCsvRaw(e.target.value)} className="w-full h-40 p-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-mono focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste CSV rows here..." />
+                                        <button onClick={handleTextImport} disabled={!csvRaw} className="w-full py-2 bg-slate-800 text-white text-sm font-black rounded-lg hover:bg-slate-700 disabled:opacity-50">Analyze Pasted Content</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Summary Stats Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <StatCard label="Total Real Power" value={`${selectedTime.load} kW`} icon="activity" subText={`Snapshot: ${selectedTime.date} ${selectedTime.time}`} />
+                            <StatCard label="THD Level (%)" value={`${selectedTime.thd}%`} icon="zap" color={selectedTime.thd > 8 ? 'text-red-600' : 'text-green-600'} />
+                            <StatCard label="Wasted (Heat Loss)" value={`${selectedTime.loss} kW`} icon="thermometer" color="text-red-500" />
+                            <div className="bg-white p-5 rounded-xl border border-slate-200 card-shadow flex flex-col justify-between">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Icon name="shield-alert" size={14} className="text-slate-400" />
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Active Diagnostics - TRUE</p>
+                                </div>
+                                <div className="flex flex-wrap gap-1 mt-auto">
+                                    {selectedTime.activeDiags && selectedTime.activeDiags.length > 0 ? selectedTime.activeDiags.map(diag => (
+                                        <span key={diag} className="text-[9px] bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200 font-black">{diag}</span>
+                                    )) : <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 font-black uppercase">Normal</span>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fleet Summary Table Section */}
+                        {fullFleetData.length > 0 && (
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow space-y-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 tracking-tight">
+                                        <Icon name="list" size={20} className="text-indigo-500"/> Fleet Summary — Snapshot Analysis
+                                    </h2>
+                                    <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                        <span className="text-[10px] font-black uppercase text-slate-400">Analysis Date:</span>
+                                        <select 
+                                            value={summaryDate} 
+                                            onChange={(e) => setSummaryDate(e.target.value)}
+                                            className="bg-transparent text-xs font-bold text-slate-700 focus:outline-none"
+                                        >
+                                            {uniqueDates.map(date => <option key={date} value={date}>{date}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="table-container">
+                                    <table className="w-full text-left text-xs">
+                                        <thead>
+                                            <tr className="border-b border-slate-200 text-slate-500">
+                                                <th className="py-3 px-2 font-black uppercase tracking-wider">Device Name (Meter)</th>
+                                                <th className="py-3 px-2 font-black uppercase tracking-wider">Customer Name</th>
+                                                <th className="py-3 px-2 font-black uppercase tracking-wider">Unbalance %</th>
+                                                <th className="py-3 px-2 font-black uppercase tracking-wider">Active Diags (TRUE)</th>
+                                                <th className="py-3 px-2 font-black uppercase tracking-wider">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {fleetSummary.map((m, i) => (
+                                                <tr key={i} className="hover:bg-blue-50 transition-colors">
+                                                    <td className="py-3 px-2 font-bold text-slate-700">{m.meterNumber}</td>
+                                                    <td className="py-3 px-2 font-medium text-slate-600">{m.customerName}</td>
+                                                    <td className={`py-3 px-2 font-black ${parseFloat(m.unbalance) > 2 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                                        {m.unbalance}%
+                                                    </td>
+                                                    <td className="py-3 px-2">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {m.activeDiags.length > 0 ? m.activeDiags.map(d => (
+                                                                <span key={d} className="text-[8px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold">{d}</span>
+                                                            )) : <span className="text-[8px] text-emerald-500 font-bold">CLEAR</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2">
+                                                        <button 
+                                                            onClick={() => {
+                                                                const filtered = fullFleetData.filter(d => d.meterNumber === m.meterNumber);
+                                                                setMeterData(filtered);
+                                                                setCustomerName(m.customerName);
+                                                                setMeterNumber(m.meterNumber);
+                                                                setFeederCode(m.feeder);
+                                                                setSelectedTime(m);
+                                                            }}
+                                                            className="text-blue-600 font-bold hover:underline"
+                                                        >
+                                                            View Trend
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 card-shadow">
+                                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800 tracking-tight">
+                                    <Icon name="trending-up" size={20} className="text-blue-500"/> Power Profile & Distortion Trend
+                                </h2>
+                                <div className="h-80 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={meterData} onClick={(data) => data && data.activePayload && setSelectedTime(data.activePayload[0].payload)}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="displayLabel" fontSize={8} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(meterData.length / 4))} tick={{fill: '#64748b', fontWeight: 'bold'}} />
+                                            <YAxis yAxisId="left" fontSize={10} tickLine={false} axisLine={false} tick={{fill: '#64748b'}} />
+                                            <YAxis yAxisId="right" orientation="right" fontSize={10} tickLine={false} axisLine={false} tick={{fill: '#64748b'}} />
+                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '12px' }} />
+                                            <Area yAxisId="left" type="monotone" dataKey="load" fill="#3b82f610" stroke="#3b82f6" strokeWidth={3} name="System Demand (kW)" />
+                                            <Line yAxisId="right" type="monotone" dataKey="thd" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }} name="THD Distortion %" />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow space-y-6">
+                                <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 tracking-tight">
+                                    <Icon name="zap" size={20} className="text-orange-500"/> Phase Voltage Status
+                                </h2>
+                                <div className="space-y-5">
+                                    <VoltageBar label="Phase A" value={selectedTime.vA} color="bg-blue-600" textColor="text-blue-600" />
+                                    <VoltageBar label="Phase B" value={selectedTime.vB} color="bg-orange-600" textColor="text-orange-600" />
+                                    <VoltageBar label="Phase C" value={selectedTime.vC} color="bg-emerald-600" textColor="text-emerald-600" />
+                                </div>
+                                <div className={`p-4 rounded-xl border-2 ${parseFloat(selectedTime.unbalance) > 2 ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
+                                    <p className="text-[10px] font-black uppercase mb-1 tracking-widest">Unbalance Severity</p>
+                                    <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+                                        {parseFloat(selectedTime.unbalance) > 2 ? `CRITICAL ALERT: Unbalance at ${selectedTime.unbalance}% detected. Fault risks include motor overheating and neutral current surges.` : `SYSTEM STABLE: Phase voltages are balanced within ${selectedTime.unbalance}%.`}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow">
+                                <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800 tracking-tight">
+                                    <Icon name="clock" size={20} className="text-slate-400"/> Harmonic Spectrum — {selectedTime.date}
+                                </h2>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={currentHarmonics} margin={{ bottom: 20 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" fontSize={9} interval={0} angle={-15} textAnchor="end" tick={{fontWeight: 'bold'}} />
+                                            <YAxis fontSize={10} tickLine={false} axisLine={false} />
+                                            <Tooltip cursor={{fill: '#f1f5f9'}} />
+                                            <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                                                {currentHarmonics.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900 text-white p-8 rounded-2xl card-shadow flex flex-col justify-center">
+                                <h2 className="text-xl font-bold flex items-center gap-2 text-blue-400 mb-6 tracking-tight">
+                                    <Icon name="info" size={24} /> System Health Report
+                                </h2>
+                                <div className="space-y-5 text-sm text-slate-300 leading-relaxed">
+                                    <p className="font-medium">Selected Reading: <span className="text-white font-bold">{selectedTime.date} {selectedTime.time}</span></p>
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                        <p className="font-black text-white text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
+                                            <Icon name="shield-alert" size={12} className="text-red-400"/> Diagnostic Results
+                                        </p>
+                                        {selectedTime.activeDiags && selectedTime.activeDiags.length > 0 ? <p className="text-red-300 font-bold">TRUE Flags: {selectedTime.activeDiags.join(', ')}.</p> : <p className="text-emerald-400 font-bold">All diagnostic monitors are FALSE.</p>}
+                                    </div>
+                                    <div className="bg-blue-600/20 p-4 rounded-xl border border-blue-500/30">
+                                        <p className="font-black text-blue-300 text-[10px] uppercase tracking-widest mb-1 flex items-center gap-2">
+                                            <Icon name="zap" size={12} /> Analysis Advice
+                                        </p>
+                                        <p className="text-xs">At {selectedTime.thd}% THD, the system is losing {selectedTime.loss} kW. High 3rd Harmonics suggest PC Labs or high-density LED lighting loads.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const StatCard = ({ label, value, icon, color = "text-slate-800", subText = "" }) => (
+            <div className="bg-white p-5 rounded-xl border border-slate-200 card-shadow h-full flex flex-col">
+                <div className="flex items-center gap-2 mb-2">
+                    <Icon name={icon} size={14} className="text-slate-400" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}</p>
+                </div>
+                <p className={`text-2xl font-black mt-auto ${color}`}>{value}</p>
+                {subText && <p className="text-[9px] text-slate-400 mt-1 font-bold">{subText}</p>}
+            </div>
+        );
+
+        const VoltageBar = ({ label, value, color, textColor }) => (
+            <div className="space-y-1">
+                <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">{label}</span>
+                    <span className={`text-lg font-black ${textColor}`}>{value}V</span>
+                </div>
+                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden shadow-inner">
+                    <div className={color + " h-full transition-all duration-700 ease-out"} style={{ width: `${Math.min((value/250)*100, 100)}%` }}></div>
+                </div>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
