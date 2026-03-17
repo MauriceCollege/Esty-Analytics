@@ -6,50 +6,120 @@
     <title>Esty Analytics | Professional Data & Engineering Solutions</title>
     <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind to use 'class' strategy for dark mode
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        midnight: '#0f172a',
+                        'midnight-light': '#1e293b',
+                        brand: {
+                            teal: '#2DD4BF',
+                            blue: '#3B82F6',
+                            dark: '#312E81'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
         .feature-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.3s ease;
         }
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+        }
+        .icon-container {
+            perspective: 1000px;
+        }
+        .icon-3d {
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+            transition: transform 0.5s ease;
+        }
+        .feature-card:hover .icon-3d {
+            transform: translateZ(20px) rotateY(10deg);
+        }
+        .logo-text {
+            letter-spacing: 0.15em;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 dark:bg-midnight dark:text-slate-100">
 
     <!-- Navigation -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold">E</div>
-                <span class="font-bold text-xl tracking-tight">Esty<span class="text-blue-600">Analytics</span></span>
+    <nav class="bg-white dark:bg-midnight-light border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Replicated Logo from Image -->
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 flex-shrink-0">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+                                <stop offset="0%" style="stop-color:#2DD4BF" />
+                                <stop offset="50%" style="stop-color:#3B82F6" />
+                                <stop offset="100%" style="stop-color:#312E81" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M25 45C35 45 42 38 52 42M25 52C38 52 45 60 58 55M28 60C40 65 48 50 62 52M32 40C45 35 52 28 65 32M38 68C48 72 55 60 68 62M52 42C62 46 68 35 78 38M58 55C68 50 75 58 82 52M62 52C70 55 78 45 85 48M65 32C72 35 78 25 85 28M68 62C75 65 82 55 88 58" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="25" cy="45" r="2.5" fill="#2DD4BF" />
+                        <circle cx="28" cy="60" r="3" fill="#2DD4BF" />
+                        <circle cx="32" cy="40" r="2" fill="#2DD4BF" />
+                        <circle cx="52" cy="42" r="4" fill="#3B82F6" />
+                        <circle cx="58" cy="55" r="3.5" fill="#3B82F6" />
+                        <circle cx="65" cy="32" r="4.5" fill="#3B82F6" />
+                        <circle cx="78" cy="38" r="5" fill="#312E81" />
+                        <circle cx="82" cy="52" r="3.5" fill="#312E81" />
+                        <circle cx="85" cy="48" r="4" fill="#312E81" />
+                        <circle cx="85" cy="28" r="3" fill="#312E81" />
+                        <circle cx="88" cy="58" r="2.5" fill="#312E81" />
+                    </svg>
+                </div>
+                <span class="font-bold text-lg md:text-xl logo-text text-slate-800 dark:text-white uppercase tracking-[0.2em]">Esty Analytics</span>
             </div>
-            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-                <a href="#" class="hover:text-blue-600 transition-colors">Home</a>
-                <a href="#portfolio" class="hover:text-blue-600 transition-colors">Portfolio</a>
-                <a href="#about" class="hover:text-blue-600 transition-colors">Methodology</a>
-                <a href="mailto:contact@estyanalytics.com" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all">Get in Touch</a>
+            
+            <div class="flex items-center gap-4 md:gap-8">
+                <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                    <a href="#" class="hover:text-blue-600 transition-colors">Home</a>
+                    <a href="#portfolio" class="hover:text-blue-600 transition-colors">Portfolio</a>
+                </div>
+                
+                <button 
+                    onclick="toggleDarkMode()" 
+                    class="bg-midnight dark:bg-blue-600 text-white px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-2"
+                    id="theme-toggle"
+                >
+                    <span id="theme-text">Dark View</span>
+                    <svg id="theme-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                </button>
+
+                <a href="mailto:contact@estyanalytics.com" class="hidden sm:block bg-blue-600 dark:bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 dark:hover:bg-slate-700 transition-all">Get in Touch</a>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <header class="py-24 px-6 bg-white border-b border-slate-100">
+    <header class="py-24 px-6 bg-white dark:bg-midnight border-b border-slate-100 dark:border-slate-800">
         <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
                 Data-Driven Solutions for <span class="text-blue-600">Technical Challenges</span>
             </h1>
-            <p class="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
+            <p class="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 leading-relaxed">
                 Specializing in power systems analysis, financial modeling, and operational optimization. I bridge the gap between complex raw data and clear, interactive visual tools.
             </p>
             <div class="flex flex-wrap gap-4 justify-center">
-                <a href="#portfolio" class="px-8 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg">View Portfolio</a>
-                <a href="mailto:contact@estyanalytics.com" class="px-8 py-4 bg-white text-blue-600 border border-blue-200 rounded-lg font-bold hover:bg-blue-50 transition-all">Request Consultation</a>
+                <a href="#portfolio" class="px-8 py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-lg font-bold hover:bg-slate-800 dark:hover:bg-blue-700 transition-all shadow-lg">View Portfolio</a>
+                <a href="mailto:contact@estyanalytics.com" class="px-8 py-4 bg-white dark:bg-midnight-light text-blue-600 dark:text-white border border-blue-200 dark:border-slate-700 rounded-lg font-bold hover:bg-blue-50 dark:hover:bg-slate-800 transition-all">Request Consultation</a>
             </div>
         </div>
     </header>
@@ -58,32 +128,35 @@
     <section id="portfolio" class="py-20 px-6">
         <div class="max-w-7xl mx-auto">
             <div class="mb-16 text-center max-w-2xl mx-auto">
-                <h2 class="text-3xl font-bold text-slate-900 mb-4">Core Competencies</h2>
-                <p class="text-slate-500 font-medium">Professional analytics across Engineering, Finance, Operations, and Education.</p>
+                <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Core Competencies</h2>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">Professional analytics across Engineering, Finance, Operations, and Education.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 
-                <!-- Project 1: Power Quality & Signal Analysis -->
-                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-44 bg-blue-50 flex items-center justify-center border-b border-slate-100">
-                        <svg class="w-14 h-14 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <!-- Project 1: Electrical Engineering -->
+                <div class="feature-card bg-white dark:bg-midnight-light rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div class="h-52 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-indigo-900/30 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 icon-container">
+                        <svg class="w-24 h-24 icon-3d" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 10L30 50H45L35 90L65 40H50L60 10Z" fill="#3B82F6" />
+                            <circle cx="50" cy="50" r="35" stroke="#3B82F6" stroke-width="2" stroke-dasharray="5 5" opacity="0.3" />
+                        </svg>
                     </div>
                     <div class="p-8 flex-grow">
-                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mb-3">Electrical Engineering</div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Signal & Power Quality Tools</h3>
-                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">A suite of interactive diagnostic tools designed for electrical engineering signal monitoring and power quality assessment.</p>
+                        <div class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-3">Engineering</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Power Systems Engineering</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">Interactive diagnostic tools for signal monitoring, flux analysis, and power quality assessment.</p>
                         
                         <div class="space-y-3">
-                            <a href="HarmonicsAnalysisMultiple.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100">
+                            <a href="HarmonicsAnalysisMultiple.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
                                 <span class="text-sm font-semibold">Harmonics Analysis</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="VFlux.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100">
+                            <a href="VFlux.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
                                 <span class="text-sm font-semibold">VFlux Monitor</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="PhasorDiagram.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100">
+                            <a href="PhasorDiagram.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
                                 <span class="text-sm font-semibold">Phasor Diagram</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
@@ -92,102 +165,122 @@
                 </div>
 
                 <!-- Project 2: Financial Analytics -->
-                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-44 bg-emerald-50 flex items-center justify-center border-b border-slate-100">
-                        <svg class="w-14 h-14 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="feature-card bg-white dark:bg-midnight-light rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div class="h-52 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-emerald-900/30 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 icon-container">
+                        <svg class="w-24 h-24 icon-3d" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="25" y="45" width="12" height="35" rx="3" fill="#10B981" opacity="0.6" />
+                            <rect x="44" y="30" width="12" height="50" rx="3" fill="#10B981" opacity="0.8" />
+                            <rect x="63" y="15" width="12" height="65" rx="3" fill="#10B981" />
+                        </svg>
                     </div>
                     <div class="p-8 flex-grow">
-                        <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em] mb-3">Finance</div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Financial Analytics Hub</h3>
-                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Interactive performance monitoring, cash flow projections, and ROI tracking for data-driven financial decision making.</p>
-                        <a href="financial-analytics.html" class="inline-flex items-center gap-2 text-emerald-600 font-bold hover:gap-3 transition-all">
-                            View Analytics 
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 3: Inventory Management -->
-                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-44 bg-orange-50 flex items-center justify-center border-b border-slate-100">
-                        <svg class="w-14 h-14 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                    </div>
-                    <div class="p-8 flex-grow">
-                        <div class="text-[10px] font-bold text-orange-600 uppercase tracking-[0.2em] mb-3">Operations</div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Inventory Optimization</h3>
-                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Real-time stock tracking, turnover rates, and supply chain visibility tools to minimize waste and optimize storage.</p>
-                        <a href="inventory-management.html" class="inline-flex items-center gap-2 text-orange-600 font-bold hover:gap-3 transition-all">
-                            Check Stock 
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Project 4: Education -->
-                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-44 bg-purple-50 flex items-center justify-center border-b border-slate-100">
-                        <svg class="w-14 h-14 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    </div>
-                    <div class="p-8 flex-grow">
-                        <div class="text-[10px] font-bold text-purple-600 uppercase tracking-[0.2em] mb-3">Education</div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Learning & Assessment Suite</h3>
-                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Interactive modules for academic assessment, student performance tracking, and curriculum management.</p>
+                        <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] mb-3">Finance</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Financial Intelligence</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">Modeling environments for tracking fiscal performance, revenue attribution, and ROI forecasting.</p>
                         
-                        <!-- Education Options -->
                         <div class="space-y-3">
-                            <a href="QuizModule.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Quiz & Exam Module</span>
+                            <a href="CashFlowProjections.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-emerald-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Cash Flow Projections</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="PerformanceAnalytics.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Performance Analytics</span>
+                            <a href="RevenueAttribution.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-emerald-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Revenue Attribution</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="ExamGenerator.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Dynamic Exam Generator</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
-                            <a href="CourseFeedback.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Student Feedback Hub</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
-                            <a href="CurriculumMapper.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Curriculum Mapping</span>
+                            <a href="ROICalculator.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-emerald-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">ROI Performance Hub</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Project 5: Project Analysis -->
-                <div class="feature-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-44 bg-slate-100 flex items-center justify-center border-b border-slate-100">
-                        <svg class="w-14 h-14 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                <!-- Project 3: Inventory Management -->
+                <div class="feature-card bg-white dark:bg-midnight-light rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div class="h-52 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-slate-800 dark:to-orange-900/30 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 icon-container">
+                        <svg class="w-24 h-24 icon-3d" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M50 20L80 35V65L50 80L20 65V35L50 20Z" fill="#F59E0B" />
+                            <path d="M20 35L50 50L80 35" stroke="white" stroke-width="2" opacity="0.4" />
+                            <path d="M50 50V80" stroke="white" stroke-width="2" opacity="0.4" />
+                        </svg>
                     </div>
                     <div class="p-8 flex-grow">
-                        <div class="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] mb-3">Project Management</div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Operational Analysis Tools</h3>
-                        <p class="text-slate-600 text-sm mb-6 leading-relaxed">Decision support systems for site operations, resource planning, and project timeline optimization.</p>
+                        <div class="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-[0.2em] mb-3">Operations</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Inventory & Supply Chain</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">Systems for stock level optimization, turnover analytics, and end-to-end supply visibility.</p>
                         
-                        <!-- Project Management Options -->
                         <div class="space-y-3">
-                            <a href="ResourceAllocation.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-slate-900 hover:text-white transition-all border border-slate-100">
+                            <a href="StockTracker.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-orange-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Live Stock Tracker</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                            <a href="TurnoverAnalytics.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-orange-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Turnover Analytics</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                            <a href="SupplyChainVisibility.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-orange-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Supply Visibility Monitor</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 4: Education -->
+                <div class="feature-card bg-white dark:bg-midnight-light rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div class="h-52 bg-gradient-to-br from-purple-50 to-fuchsia-50 dark:from-slate-800 dark:to-purple-900/30 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 icon-container">
+                        <svg class="w-24 h-24 icon-3d" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 40L50 25L80 40L50 55L20 40Z" fill="#8B5CF6" />
+                            <path d="M30 45V65C30 65 50 75 70 65V45" fill="#8B5CF6" opacity="0.6" />
+                            <circle cx="80" cy="40" r="5" fill="#8B5CF6" />
+                        </svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-[0.2em] mb-3">Education</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Academic Assessment</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">Interactive modules for academic assessment, student performance tracking, and curriculum management.</p>
+                        
+                        <div class="space-y-3">
+                            <a href="QuizModule.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Quiz & Exam Module</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                            <a href="PerformanceAnalytics.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Performance Analytics</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                            <a href="ExamGenerator.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-purple-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold">Dynamic Exam Generator</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 5: Operational Site Analysis -->
+                <div class="feature-card bg-white dark:bg-midnight-light rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div class="h-52 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900/50 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 icon-container">
+                        <svg class="w-24 h-24 icon-3d" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="30" fill="#475569" />
+                            <path d="M50 30L50 50L65 50" stroke="white" stroke-width="4" stroke-linecap="round" />
+                            <circle cx="50" cy="50" r="38" stroke="#475569" stroke-width="1" opacity="0.3" />
+                        </svg>
+                    </div>
+                    <div class="p-8 flex-grow">
+                        <div class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.2em] mb-3">Project Management</div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Operational Site Analysis</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">Decision support systems for site operations, resource planning, and project timeline optimization.</p>
+                        
+                        <div class="space-y-3">
+                            <a href="ResourceAllocation.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-slate-900 dark:hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
                                 <span class="text-sm font-semibold">Resource Allocation</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="TimelineForecaster.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-slate-900 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Timeline Forecaster</span>
+                            <a href="AssetManagement.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-slate-900 dark:hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-800">
+                                <span class="text-sm font-semibold">Asset Management</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
-                            <a href="LaborEfficiency.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-slate-900 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Labor Efficiency Tracker</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
-                            <a href="CostAnalysis.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-slate-900 hover:text-white transition-all border border-slate-100">
-                                <span class="text-sm font-semibold">Cost-Benefit Analysis</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
-                            <a href="ExcavationVolume.html" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg group hover:bg-slate-900 hover:text-white transition-all border border-slate-100">
+                            <a href="ExcavationVolume.html" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-midnight rounded-lg group hover:bg-slate-900 dark:hover:bg-blue-600 hover:text-white transition-all border border-slate-100 dark:border-slate-700">
                                 <span class="text-sm font-semibold">Site Volume Analysis</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </a>
@@ -199,61 +292,78 @@
         </div>
     </section>
 
-    <!-- Methodology -->
-    <section id="about" class="py-24 bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
-                <div>
-                    <h2 class="text-3xl font-bold mb-8">Professional Standards</h2>
-                    <p class="text-slate-400 mb-10 leading-relaxed text-lg">
-                        I apply rigorous analytical frameworks to every project, ensuring that technical data is translated into intuitive, user-friendly experiences.
-                    </p>
-                    <div class="space-y-8">
-                        <div class="flex gap-6">
-                            <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center font-bold text-blue-400 border border-blue-500/30 shrink-0">01</div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1">Analytical Rigor</h4>
-                                <p class="text-slate-400 text-sm">Every visualization is built on a foundation of verified mathematical logic and data integrity.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-6">
-                            <div class="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center font-bold text-blue-400 border border-blue-500/30 shrink-0">02</div>
-                            <div>
-                                <h4 class="font-bold text-lg mb-1">User-Centric Design</h4>
-                                <p class="text-slate-400 text-sm">Dashboards are designed for clarity, allowing users to find the insights they need without technical friction.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-slate-800 p-1 rounded-[2.5rem] border border-slate-700 shadow-2xl">
-                    <div class="aspect-video bg-slate-900 rounded-[2.2rem] flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="text-blue-500 text-5xl font-extrabold mb-2">100%</div>
-                            <div class="text-slate-400 font-bold tracking-widest uppercase text-[10px]">Data Precision Guarantee</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Footer -->
-    <footer class="py-16 px-6 bg-white border-t border-slate-200">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded"></div>
-                <span class="font-bold text-xl tracking-tight text-slate-800">Esty Analytics</span>
+    <footer class="py-12 px-6 bg-white dark:bg-midnight border-t border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col items-center gap-8">
+            
+            <!-- Branding, Tagline, and Links Container -->
+            <div class="w-full flex flex-col md:flex-row justify-between items-center gap-6">
+                
+                <!-- Grouped Logo, Name, and Tagline -->
+                <div class="flex items-center gap-4">
+                    <!-- Footer Logo -->
+                    <div class="w-10 h-10 flex-shrink-0">
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M25 45C35 45 42 38 52 42M25 52C38 52 45 60 58 55M28 60C40 65 48 50 62 52" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+                            <circle cx="52" cy="42" r="4" fill="#3B82F6" />
+                            <circle cx="25" cy="45" r="2.5" fill="#2DD4BF" />
+                            <circle cx="78" cy="38" r="5" fill="#312E81" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Single Line Brand & Tagline -->
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-sm logo-text text-slate-800 dark:text-white uppercase tracking-[0.2em]">
+                            Esty Analytics
+                        </span>
+                        <div class="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 hidden sm:block"></div>
+                        <span class="text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-[0.15em] font-bold hidden sm:block">
+                            From Data Complexity to Decision Clarity
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Tagline for Mobile (Visible only on small screens) -->
+                <div class="sm:hidden text-center">
+                    <p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-[0.12em] font-bold">
+                        From Data Complexity to Decision Clarity
+                    </p>
+                </div>
+
+                <!-- Footer Links -->
+                <div class="flex gap-6 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    <a href="#" class="hover:text-blue-600 transition-colors">LinkedIn</a>
+                    <a href="#" class="hover:text-blue-600 transition-colors">GitHub</a>
+                    <a href="mailto:contact@estyanalytics.com" class="hover:text-blue-600 transition-colors">Contact</a>
+                </div>
             </div>
-            <div class="flex gap-10 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                <a href="#" class="hover:text-blue-600 transition-colors">LinkedIn</a>
-                <a href="#" class="hover:text-blue-600 transition-colors">GitHub</a>
-                <a href="mailto:contact@estyanalytics.com" class="hover:text-blue-600 transition-colors">Contact</a>
+
+            <!-- Copyright Line -->
+            <div class="w-full pt-6 border-t border-slate-100 dark:border-slate-800/50 text-center">
+                <div class="text-slate-400 text-[9px] font-bold uppercase tracking-[0.2em]">
+                    &copy; 2026 Esty Analytics
+                </div>
             </div>
-        </div>
-        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-            &copy; 2024 Esty Analytics | Strategic Problem Solving through Visualization
         </div>
     </footer>
+
+    <script>
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const toggleText = document.getElementById('theme-text');
+            const toggleIcon = document.getElementById('theme-icon');
+
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                toggleText.innerText = 'Dark View';
+                toggleIcon.innerHTML = '<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>';
+            } else {
+                html.classList.add('dark');
+                toggleText.innerText = 'Light View';
+                toggleIcon.innerHTML = '<path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>';
+            }
+        }
+    </script>
 
 </body>
 </html>
