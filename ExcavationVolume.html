@@ -115,6 +115,21 @@
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <!-- Map View -->
             <div class="lg:col-span-3 relative bg-slate-900 rounded-[2.5rem] border border-slate-800 h-[650px] overflow-hidden shadow-2xl">
+                <!-- Map Failure Overlay -->
+                <div id="mapFailureOverlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950 p-8 text-center space-y-6">
+                    <div class="p-6 bg-red-500/10 rounded-full text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black uppercase tracking-tight text-white">Satellite Link Error</h3>
+                        <p class="text-slate-400 text-sm mt-2 max-w-sm mx-auto">The Google Maps API failed to load. This is usually caused by an invalid API key or disabled billing.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="location.reload()" class="px-6 py-3 bg-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-700 transition-all">Retry Link</button>
+                        <button onclick="promptNewKey()" class="px-6 py-3 bg-red-500 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-400 transition-all">Update API Key</button>
+                    </div>
+                </div>
+
                 <div id="mapLoader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950/80 backdrop-blur-sm z-20">
                     <div class="w-16 h-16 border-4 border-red-500/10 border-t-red-500 rounded-full animate-spin"></div>
                     <p class="mt-6 font-bold tracking-widest text-xs uppercase animate-pulse">Establishing Satellite Link...</p>
@@ -166,9 +181,31 @@
                 Cloud <span id="dbStatus">Standby</span>
             </div>
             <div class="ml-auto opacity-50">
-                UPH-PRO-v4.5
+                UPH-PRO-v4.6
             </div>
         </footer>
+    </div>
+
+    <!-- API Key Update Modal -->
+    <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 space-y-6 glow-red animate-in fade-in zoom-in-95">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-black tracking-tight">Update Satellite Key</h2>
+                <p class="text-slate-400 text-sm">Please enter a valid Google Maps API Key to restore map functionality.</p>
+            </div>
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="newApiKeyInput"
+                    placeholder="AIzaSy..."
+                    class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-4 text-sm font-mono focus:ring-2 focus:ring-red-500/50 outline-none transition-all"
+                >
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-2xl hover:bg-slate-700 transition-all">Cancel</button>
+                    <button onclick="saveNewKey()" class="flex-1 bg-red-500 hover:bg-red-400 text-slate-950 font-black py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20">Apply Key</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <input type="file" id="imageInput" class="hidden" accept="image/*">
@@ -189,7 +226,7 @@
         let gMarkers = [];
         let googleMap = null;
         let unsubscribeHoles = null;
-        const googleMapsKey = 'AIzaSyClVdsKzjqXr5cdi6H2bakxGj7QG40o1-o';
+        let googleMapsKey = localStorage.getItem('uph_gmaps_key') || 'AIzaSyClVdsKzjqXr5cdi6H2bakxGj7QG40o1-o';
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
         // Error helper
@@ -260,23 +297,79 @@
 
         initAuth();
 
-        // Map Integration
-        window.initMap = () => {
-            googleMap = new google.maps.Map(document.getElementById('map'), {
-                center: JAMAICA_CENTER, zoom: 8.5,
-                styles: [
-                    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-                    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
-                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-                ],
-                disableDefaultUI: false, mapTypeControl: true, streetViewControl: false
-            });
+        /**
+         * ROBUST MAP LOADING AND FAILURE DETECTION
+         */
+        let mapLoadTimer = null;
+        
+        window.handleMapFailure = (title) => {
+            clearTimeout(mapLoadTimer);
             document.getElementById('mapLoader').classList.add('hidden');
-            document.getElementById('sysIndicator').className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]";
-            document.getElementById('sysStatus').innerText = 'Operational';
-            updateMapMarkers();
+            document.getElementById('mapFailureOverlay').classList.remove('hidden');
+            document.getElementById('sysIndicator').className = "w-2 h-2 rounded-full bg-slate-600";
+            document.getElementById('sysStatus').innerText = 'Satellite Link Offline';
+            console.error("Map failure triggered:", title);
         };
+
+        // Catch specific Google Maps Authentication errors
+        window.gm_authFailure = function() {
+            window.handleMapFailure("AUTHENTICATION FAILED");
+        };
+
+        window.initMap = () => {
+            clearTimeout(mapLoadTimer);
+            try {
+                if (typeof google === 'undefined' || !google.maps) throw new Error("API Loaded but Object Missing");
+                
+                googleMap = new google.maps.Map(document.getElementById('map'), {
+                    center: JAMAICA_CENTER, zoom: 8.5,
+                    styles: [
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                        { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                    ],
+                    disableDefaultUI: false, mapTypeControl: true, streetViewControl: false
+                });
+
+                document.getElementById('mapLoader').classList.add('hidden');
+                document.getElementById('mapFailureOverlay').classList.add('hidden');
+                document.getElementById('sysIndicator').className = "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]";
+                document.getElementById('sysStatus').innerText = 'Operational';
+                updateMapMarkers();
+            } catch (e) {
+                console.error("initMap error:", e);
+                window.handleMapFailure("INITIALIZATION ERROR");
+            }
+        };
+
+        const loadGMap = () => {
+            // Set a 10 second timeout for the map to load
+            mapLoadTimer = setTimeout(() => {
+                if (!googleMap) window.handleMapFailure("LINK TIMEOUT");
+            }, 10000);
+
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
+            script.async = true;
+            script.onerror = () => window.handleMapFailure("NETWORK FAILURE");
+            document.head.appendChild(script);
+        };
+
+        window.promptNewKey = () => {
+            document.getElementById('apiKeyModal').classList.remove('hidden');
+            document.getElementById('newApiKeyInput').focus();
+        };
+
+        window.saveNewKey = () => {
+            const val = document.getElementById('newApiKeyInput').value.trim();
+            if (val) {
+                localStorage.setItem('uph_gmaps_key', val);
+                location.reload();
+            }
+        };
+
+        loadGMap();
 
         // Actions
         window.addMarker = async () => {
@@ -300,7 +393,6 @@
             const newLat = parseFloat(match[1]);
             const newLng = parseFloat(match[2]);
 
-            // DUPLICATE CHECK
             const isDuplicate = markers.some(m => 
                 Math.abs(m.lat - newLat) < 0.000001 && 
                 Math.abs(m.lng - newLng) < 0.000001
@@ -547,15 +639,6 @@
             });
             if (markers.length > 0) googleMap.fitBounds(bounds);
         }
-
-        const loadGMap = () => {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
-            script.async = true;
-            document.head.appendChild(script);
-        };
-        loadGMap();
-
     </script>
 </body>
 </html>
