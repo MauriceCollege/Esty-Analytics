@@ -10,32 +10,18 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
+        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .animate-pulse-slow { animation: pulse-slow 3s infinite; }
-
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        /* Google Maps InfoWindow Customization */
         .gm-style-iw { background: transparent !important; box-shadow: none !important; border: none !important; }
         .gm-style-iw-tc { display: none !important; }
         .gm-style-iw-d { background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 16px !important; overflow: hidden !important; padding: 0 !important; color: white !important; }
-        
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(51, 65, 85, 0.5);
-        }
-
-        .status-badge {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-6 lg:p-8">
@@ -48,9 +34,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">
-                        UPH Tracker Pro
-                    </h1>
+                    <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">UPH Tracker Pro</h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span id="cloudStatus" class="w-2 h-2 rounded-full bg-slate-600"></span>
                         <p id="cloudStatusText" class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Initializing Satellite Link</p>
@@ -61,34 +45,14 @@
             <div class="flex flex-col md:flex-row gap-3 items-stretch">
                 <div class="flex flex-col sm:flex-row gap-2">
                     <div class="relative group">
-                        <input 
-                            type="text" 
-                            id="communityInput"
-                            placeholder="Community Name"
-                            class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold"
-                            oninput="updatePrefix()"
-                        >
+                        <input type="text" id="communityInput" placeholder="Community Name" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold" oninput="updatePrefix()">
                         <div id="prefixDisplay" class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
                     </div>
-                    <input 
-                        type="text" 
-                        id="contractorInput"
-                        placeholder="Assign Contractor"
-                        class="w-full sm:w-48 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm shadow-xl font-semibold"
-                    >
+                    <input type="text" id="contractorInput" placeholder="Assign Contractor" class="w-full sm:w-48 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm shadow-xl font-semibold">
                 </div>
-
                 <div class="relative flex-1 md:w-80 group">
-                    <input 
-                        type="text" 
-                        id="coordInput"
-                        placeholder="Paste Coordinates or Maps URL"
-                        class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl"
-                    >
-                    <button 
-                        onclick="addMarker()"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center"
-                    >
+                    <input type="text" id="coordInput" placeholder="Paste Coordinates or Maps URL" class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
+                    <button onclick="addMarker()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
                 </div>
@@ -131,9 +95,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Map View -->
             <div class="lg:col-span-8 relative bg-slate-900 rounded-[2.5rem] border border-slate-800 h-[680px] overflow-hidden shadow-2xl group">
-                <!-- Map Failure Overlay -->
                 <div id="mapFailureOverlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-10 text-center space-y-8">
                     <div class="p-8 bg-red-500/10 rounded-full text-red-500 ring-4 ring-red-500/5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
@@ -147,7 +109,6 @@
                         <button onclick="promptNewKey()" class="px-8 py-4 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-500 transition-all shadow-xl shadow-red-600/20">Update Master Key</button>
                     </div>
                 </div>
-
                 <div id="mapLoader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950/80 backdrop-blur-sm z-20">
                     <div class="relative">
                         <div class="w-20 h-20 border-4 border-slate-800 rounded-full"></div>
@@ -158,101 +119,77 @@
                 <div id="map" class="w-full h-full"></div>
             </div>
 
-            <!-- Sidebar Inventory -->
             <div class="lg:col-span-4 glass-panel rounded-[2.5rem] flex flex-col h-[680px] overflow-hidden shadow-2xl">
                 <div class="p-6 border-b border-slate-800/60 flex flex-col gap-4">
                     <div class="flex items-center justify-between">
-                        <h2 class="font-black text-xs flex items-center gap-3 uppercase tracking-[0.25em] text-slate-400">
-                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Hole Inventory
-                        </h2>
+                        <h2 class="font-black text-xs flex items-center gap-3 uppercase tracking-[0.25em] text-slate-400"><span class="w-2 h-2 rounded-full bg-red-500"></span>Hole Inventory</h2>
                         <button onclick="generateReport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 hover:text-blue-300 transition-all bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Export
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export
                         </button>
                     </div>
                     <div class="relative">
-                        <input 
-                            type="text" 
-                            id="searchInventory" 
-                            placeholder="Search by ID or Contractor..." 
-                            oninput="renderRegistry()"
-                            class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-slate-700 focus:outline-none transition-all"
-                        >
+                        <input type="text" id="searchInventory" placeholder="Search by ID or Contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-slate-700 focus:outline-none transition-all">
                         <svg class="absolute right-3 top-2.5 text-slate-600" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
                 </div>
-
-                <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
-                    <!-- Dynamic List -->
-                </div>
-                
-                <div id="noResults" class="hidden flex flex-col items-center justify-center p-10 text-center">
-                    <p class="text-xs font-bold text-slate-600 uppercase tracking-widest">No Matches Found</p>
-                </div>
+                <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar"></div>
+                <div id="noResults" class="hidden flex flex-col items-center justify-center p-10 text-center"><p class="text-xs font-bold text-slate-600 uppercase tracking-widest">No Matches Found</p></div>
             </div>
         </div>
 
-        <!-- System Status Footer -->
         <footer class="flex flex-wrap items-center gap-8 px-6 py-4 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black border-t border-slate-900 mt-4">
-            <div class="flex items-center gap-3">
-                <span id="sysIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>
-                System <span id="sysStatus" class="text-slate-500">Standby</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span id="dbIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>
-                Cloud <span id="dbStatus" class="text-slate-500">Standby</span>
-            </div>
-            <!-- REFRESH API BUTTON (LINE 136) -->
+            <div class="flex items-center gap-3"><span id="sysIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>System <span id="sysStatus" class="text-slate-500">Standby</span></div>
+            <div class="flex items-center gap-3"><span id="dbIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>Cloud <span id="dbStatus" class="text-slate-500">Standby</span></div>
             <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                 <button onclick="promptNewKey()" class="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all group font-black uppercase tracking-widest text-[9px]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
-                    Refresh API
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>Refresh API
                 </button>
             </div>
-            <div class="ml-auto flex items-center gap-4 opacity-40">
-                <span>Enterprise Engine v4.9</span>
-                <span>Node: JPN-01</span>
-            </div>
+            <div class="ml-auto flex items-center gap-4 opacity-40"><span>Enterprise Engine v4.9</span><span>Node: JPN-01</span></div>
         </footer>
     </div>
 
-    <!-- API Key Update Modal -->
+    <!-- Modals -->
     <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-6">
         <div class="max-w-md w-full glass-panel rounded-[3rem] p-10 space-y-8 shadow-3xl ring-1 ring-slate-800">
             <div class="text-center space-y-3">
-                <div class="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-4 ring-8 ring-red-500/5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z"></path><path d="M12 12l.5 5 3.5 3.5 5-5-3.5-3.5-5 .5z"></path></svg>
-                </div>
+                <div class="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-4 ring-8 ring-red-500/5"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z"></path><path d="M12 12l.5 5 3.5 3.5 5-5-3.5-3.5-5 .5z"></path></svg></div>
                 <h2 class="text-3xl font-black tracking-tighter text-white">Refresh Master Key</h2>
-                <p class="text-slate-400 text-sm leading-relaxed" id="modalDesc">Enter a valid Google Maps API Key to restore real-time satellite visualization and mapping services.</p>
+                <p class="text-slate-400 text-sm leading-relaxed" id="modalDesc">Enter a valid Google Maps API Key to restore real-time satellite visualization.</p>
             </div>
             <div class="space-y-6">
-                <input 
-                    type="password" 
-                    id="newApiKeyInput"
-                    placeholder="Enter AIzaSy..."
-                    class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-sm font-mono focus:ring-2 focus:ring-red-600/40 outline-none transition-all tracking-wider text-center"
-                >
+                <input type="password" id="newApiKeyInput" placeholder="Enter AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-sm font-mono focus:ring-2 focus:ring-red-600/40 outline-none transition-all tracking-wider text-center">
                 <div class="flex gap-4">
                     <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-400 font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all border border-slate-800">Dismiss</button>
                     <button onclick="saveNewKey()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-red-600/20">Sync API</button>
                 </div>
             </div>
-            <p class="text-[10px] text-center text-slate-600 font-bold uppercase tracking-widest">Master sync will reload the console</p>
         </div>
     </div>
 
     <input type="file" id="imageInput" class="hidden" accept="image/*">
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, query, addDoc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Environment Globals
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // --- WEBSITE READY CONFIGURATION ---
+        // REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL FIREBASE KEYS
+        const manualFirebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Safety check for environment variables
+        let firebaseConfig;
+        try { firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualFirebaseConfig; } 
+        catch (e) { firebaseConfig = manualFirebaseConfig; }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -265,41 +202,29 @@
         let googleMapsKey = localStorage.getItem('uph_gmaps_key') || 'AIzaSyClVdsKzjqXr5cdi6H2bakxGj7QG40o1-o';
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
-        // Error Feedback System
         function showGlobalError(msg, subtitle = "") {
             const banner = document.getElementById('errorBanner');
             document.getElementById('errorMessage').innerText = msg;
             document.getElementById('errorSubtitle').innerText = subtitle;
-            banner.classList.remove('hidden');
-            banner.classList.add('animate-shake');
+            banner.classList.remove('hidden'); banner.classList.add('animate-shake');
             setTimeout(() => banner.classList.add('hidden'), 6000);
         }
 
-        // Logic Helpers
         window.updatePrefix = () => {
             const input = document.getElementById('communityInput').value.trim();
             const display = document.getElementById('prefixDisplay');
             if (input.length >= 2) {
                 const prefix = input.substring(0, 3).toUpperCase();
-                display.innerText = `${prefix}-H#`;
-                return prefix;
+                display.innerText = `${prefix}-H#`; return prefix;
             }
-            display.innerText = '';
-            return 'GEN';
+            display.innerText = ''; return 'GEN';
         };
 
-        // Firebase Auth Init
         const initAuth = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Auth Failure:", err);
-                showGlobalError("Cloud Handshake Failed", err.message);
-            }
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
+                else { await signInAnonymously(auth); }
+            } catch (err) { console.error("Auth Failure:", err); showGlobalError("Cloud Handshake Failed", "Check manualFirebaseConfig keys."); }
         };
 
         onAuthStateChanged(auth, (user) => {
@@ -309,20 +234,13 @@
                 document.getElementById('dbStatus').innerText = 'Synced';
                 document.getElementById('cloudStatus').className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]";
                 document.getElementById('cloudStatusText').innerText = "Real-time Tracking Active";
-                
-                // Subscribe to real-time updates
                 const holesRef = collection(db, 'artifacts', appId, 'public', 'data', 'holes');
                 if (unsubscribeHoles) unsubscribeHoles();
-                
                 unsubscribeHoles = onSnapshot(holesRef, (snapshot) => {
                     markers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     markers.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-                    renderRegistry();
-                    updateMapMarkers();
-                }, (err) => {
-                    console.error("Data Stream Error:", err);
-                    showGlobalError("Access Restricted", "Security policy prevented data load.");
-                });
+                    renderRegistry(); updateMapMarkers();
+                }, (err) => { showGlobalError("Database Error", err.code); });
             } else {
                 document.getElementById('dbIndicator').className = "w-2.5 h-2.5 rounded-full bg-slate-800";
                 document.getElementById('dbStatus').innerText = 'Disconnected';
@@ -331,102 +249,43 @@
 
         initAuth();
 
-        /**
-         * ROBUST GOOGLE MAPS LOADER
-         */
         window.gm_authFailure = function() {
-            console.error("Google Maps API Key Authentication Failed.");
-            
-            // UI Feedback
             document.getElementById('mapErrorTitle').innerText = "API Key Expired";
-            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired or is invalid. Please refresh it below.";
-            document.getElementById('modalDesc').innerText = "ALERT: Your current API Key has expired. Please enter a new valid key to restore map services.";
-            
+            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired or is invalid.";
             window.handleMapFailure("INVALID_KEY");
-            
-            // Automatically prompt since the map is definitely broken
-            setTimeout(() => {
-                promptNewKey();
-            }, 1000);
+            setTimeout(() => { promptNewKey(); }, 1000);
         };
 
         window.initMap = () => {
             try {
-                if (typeof google === 'undefined') throw new Error("G-API Load Error");
-                
                 googleMap = new google.maps.Map(document.getElementById('map'), {
-                    center: JAMAICA_CENTER, zoom: 8,
-                    mapTypeId: 'hybrid', // Hybrid is Satellite + Labels
-                    styles: [
-                        {
-                            // DARKEN ALL ROADS
-                            featureType: "road",
-                            elementType: "geometry",
-                            stylers: [
-                                { color: "#1a1a1a" }, // Very dark grey/black roads
-                                { lightness: -10 },
-                                { weight: 2.0 }
-                            ]
-                        },
-                        {
-                            // HIGH CONTRAST ROAD LABELS
-                            featureType: "road",
-                            elementType: "labels.text.fill",
-                            stylers: [{ color: "#ffffff" }] // Pure white text
-                        },
-                        {
-                            featureType: "road",
-                            elementType: "labels.text.stroke",
-                            stylers: [{ color: "#000000" }, { weight: 4 }] // Thick black outline
-                        },
-                        {
-                            // REDUCE NOISE FOR OTHER ELEMENTS
-                            featureType: "poi",
-                            stylers: [{ visibility: "off" }]
-                        },
-                        {
-                            featureType: "transit",
-                            stylers: [{ visibility: "off" }]
-                        }
-                    ],
+                    center: JAMAICA_CENTER, zoom: 8, mapTypeId: 'hybrid',
+                    styles: [{ featureType: "road", elementType: "geometry", stylers: [{ color: "#1a1a1a" }, { lightness: -10 }, { weight: 2.0 }] }, { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] }, { featureType: "road", elementType: "labels.text.stroke", stylers: [{ color: "#000000" }, { weight: 4 }] }, { featureType: "poi", stylers: [{ visibility: "off" }] }, { featureType: "transit", stylers: [{ visibility: "off" }] }],
                     disableDefaultUI: false, streetViewControl: false
                 });
-
                 document.getElementById('mapLoader').classList.add('hidden');
                 document.getElementById('mapFailureOverlay').classList.add('hidden');
                 document.getElementById('sysIndicator').className = "w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_#dc2626]";
                 document.getElementById('sysStatus').className = "text-red-500";
                 document.getElementById('sysStatus').innerText = 'Operational';
                 updateMapMarkers();
-            } catch (e) {
-                console.error("Map Init Failed:", e);
-                window.handleMapFailure();
-            }
+            } catch (e) { window.handleMapFailure(); }
         };
 
         window.handleMapFailure = (type) => {
             document.getElementById('mapLoader').classList.add('hidden');
             document.getElementById('mapFailureOverlay').classList.remove('hidden');
             document.getElementById('sysIndicator').className = "w-2.5 h-2.5 rounded-full bg-slate-800";
-            document.getElementById('sysStatus').innerText = 'Satellite Link Offline';
-            if (type === "INVALID_KEY") {
-                showGlobalError("API Key Error", "The provided Google Maps key is expired or invalid.");
-            }
+            document.getElementById('sysStatus').innerText = 'Offline';
+            if (type === "INVALID_KEY") showGlobalError("API Key Error", "Key is expired or invalid.");
         };
 
         const loadGMap = () => {
-            const failsafe = setTimeout(() => {
-                if (!googleMap) window.handleMapFailure("TIMEOUT");
-            }, 8000);
-
+            const failsafe = setTimeout(() => { if (!googleMap) window.handleMapFailure("TIMEOUT"); }, 8000);
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
-            script.async = true;
-            script.defer = true;
-            script.onerror = () => {
-                clearTimeout(failsafe);
-                window.handleMapFailure("NETWORK_ERROR");
-            };
+            script.async = true; script.defer = true;
+            script.onerror = () => { clearTimeout(failsafe); window.handleMapFailure("NETWORK_ERROR"); };
             document.head.appendChild(script);
         };
 
@@ -437,242 +296,83 @@
 
         window.saveNewKey = () => {
             const val = document.getElementById('newApiKeyInput').value.trim();
-            if (val) { 
-                localStorage.setItem('uph_gmaps_key', val); 
-                location.reload(); 
-            } else {
-                showGlobalError("Input Required", "Please enter a valid API key string.");
-            }
+            if (val) { localStorage.setItem('uph_gmaps_key', val); location.reload(); }
+            else { showGlobalError("Input Required", "Please enter a valid API key string."); }
         };
 
         loadGMap();
 
-        // Core Functions
         window.addMarker = async () => {
             if (!auth.currentUser) return showGlobalError("Syncing...", "Waiting for cloud connection.");
-
             const coordInput = document.getElementById('coordInput');
             const commInput = document.getElementById('communityInput').value.trim() || 'General';
             const contractorInput = document.getElementById('contractorInput').value.trim() || 'Unassigned';
-            
             const latLngRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
             const urlRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-            
-            let match = coordInput.value.match(latLngRegex);
-            if (!match) match = coordInput.value.match(urlRegex);
-
-            if (!match) return showGlobalError("Parsing Failed", "Input coordinates as 'lat, lng' or a Maps URL.");
-
-            const newLat = parseFloat(match[1]);
-            const newLng = parseFloat(match[2]);
-
-            if (markers.some(m => Math.abs(m.lat - newLat) < 0.00001 && Math.abs(m.lng - newLng) < 0.00001)) {
-                return showGlobalError("Conflict Detected", "This coordinate is already in the database.");
-            }
-
+            let match = coordInput.value.match(latLngRegex) || coordInput.value.match(urlRegex);
+            if (!match) return showGlobalError("Parsing Failed", "Use 'lat, lng' or Maps URL.");
+            const newLat = parseFloat(match[1]); const newLng = parseFloat(match[2]);
+            if (markers.some(m => Math.abs(m.lat - newLat) < 0.00001 && Math.abs(m.lng - newLng) < 0.00001)) return showGlobalError("Conflict", "Already in database.");
             const prefix = commInput.substring(0, 3).toUpperCase();
-            const communityHoles = markers.filter(m => m.community === commInput);
-            const nextNum = communityHoles.length + 1;
-            const uniqueId = `${prefix}-H${nextNum}`;
-
-            const newHole = {
-                community: commInput,
-                contractor: contractorInput,
-                uniqueId: uniqueId,
-                lat: newLat,
-                lng: newLng,
-                image: null,
-                digMethod: 'M',
-                status: 'pending',
-                createdAt: Date.now(),
-                timestamp: new Date().toLocaleString()
-            };
-
+            const uniqueId = `${prefix}-H${markers.filter(m => m.community === commInput).length + 1}`;
+            const newHole = { community: commInput, contractor: contractorInput, uniqueId: uniqueId, lat: newLat, lng: newLng, image: null, digMethod: 'M', status: 'pending', createdAt: Date.now(), timestamp: new Date().toLocaleString() };
             coordInput.value = '';
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'holes'), newHole);
-            } catch (err) {
-                showGlobalError("Database Write Error", err.message);
-            }
+            try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'holes'), newHole); } catch (err) { showGlobalError("Write Error", err.message); }
         };
 
-        window.deleteMarker = async (docId) => {
-            if (!confirm("Permanently remove this hole entry?")) return;
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId));
-        };
-
-        window.toggleStatus = async (docId, current) => {
-            const next = current === 'complete' ? 'pending' : 'complete';
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { status: next });
-        };
-
-        window.toggleDigMethod = async (docId, method) => {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { digMethod: method });
-        };
-
-        window.triggerUpload = (docId) => {
-            window.pendingId = docId;
-            document.getElementById('imageInput').click();
-        };
-
+        window.deleteMarker = async (docId) => { if (confirm("Remove entry?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId)); };
+        window.toggleStatus = async (docId, current) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { status: current === 'complete' ? 'pending' : 'complete' }); };
+        window.toggleDigMethod = async (docId, method) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { digMethod: method }); };
+        window.triggerUpload = (docId) => { window.pendingId = docId; document.getElementById('imageInput').click(); };
         document.getElementById('imageInput').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file && window.pendingId) {
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', window.pendingId), { image: reader.result });
-                };
+            const file = e.target.files[0]; if (file && window.pendingId) {
+                const reader = new FileReader(); reader.onloadend = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', window.pendingId), { image: reader.result }); };
                 reader.readAsDataURL(file);
             }
         };
 
-        // Render & Logic
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         window.renderRegistry = () => {
-            const list = document.getElementById('registryList');
-            const kpi = document.getElementById('kpiContainer');
+            const list = document.getElementById('registryList'); const kpi = document.getElementById('kpiContainer');
             const search = document.getElementById('searchInventory').value.toLowerCase();
-            const community = document.getElementById('communityInput').value.trim() || 'General';
-            
-            const filteredMarkers = markers.filter(m => 
-                m.uniqueId.toLowerCase().includes(search) || 
-                (m.contractor && m.contractor.toLowerCase().includes(search))
-            );
-
-            if (markers.length === 0) {
-                list.innerHTML = `<div class="py-20 text-center opacity-20"><p class="text-[10px] font-black uppercase tracking-widest">Awaiting Link...</p></div>`;
-                kpi.classList.add('hidden');
-                return;
-            }
-
-            kpi.classList.remove('hidden');
-            document.getElementById('communityTag').innerText = community.toUpperCase();
-            document.getElementById('noResults').classList.toggle('hidden', filteredMarkers.length > 0);
-
+            const filteredMarkers = markers.filter(m => m.uniqueId.toLowerCase().includes(search) || (m.contractor && m.contractor.toLowerCase().includes(search)));
+            if (markers.length === 0) { list.innerHTML = `<div class="py-20 text-center opacity-20"><p class="text-[10px] font-black uppercase tracking-widest">Awaiting Link...</p></div>`; kpi.classList.add('hidden'); return; }
+            kpi.classList.remove('hidden'); document.getElementById('noResults').classList.toggle('hidden', filteredMarkers.length > 0);
             const completed = markers.filter(m => m.status === 'complete').length;
             const percentage = Math.round((completed / markers.length) * 100);
             document.getElementById('kpiCounts').innerText = `${completed} / ${markers.length} Holes Completed`;
             document.getElementById('kpiPercent').innerText = `${percentage}%`;
             document.getElementById('kpiProgressBar').style.width = `${percentage}%`;
-
             let totalDist = 0;
             list.innerHTML = filteredMarkers.map((m, idx) => {
                 const prev = idx > 0 ? filteredMarkers[idx - 1] : null;
                 const dist = prev ? calculateDistance(prev.lat, prev.lng, m.lat, m.lng) : null;
-                if (dist) totalDist += dist;
-                const isComplete = m.status === 'complete';
-                
-                return `
-                    <div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}">
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">
-                                    ${m.uniqueId.split('-').pop()}
-                                </div>
-                                <div class="space-y-1">
-                                    <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
-                                    <p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </button>
-                                <button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-black uppercase text-slate-600">Method</span>
-                                <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                    <button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button>
-                                    <button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button>
-                                </div>
-                            </div>
-                            <p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">
-                                ${m.contractor || 'UNASSIGNED'}
-                            </p>
-                        </div>
-
-                        <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                            <button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">
-                                ${m.image ? 'Media Attached' : 'Attach Photo'}
-                            </button>
-                            ${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}
-                        </div>
-                    </div>`;
+                if (dist) totalDist += dist; const isComplete = m.status === 'complete';
+                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}"><div class="flex items-start justify-between"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-').pop()}</div><div class="space-y-1"><h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4><p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p></div></div><div class="flex gap-2"><button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button><button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button></div></div><div class="mt-4 flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[9px] font-black uppercase text-slate-600">Method</span><div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button><button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button></div></div><p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">${m.contractor || 'UNASSIGNED'}</p></div><div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50"><button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">${m.image ? 'Media Attached' : 'Attach Photo'}</button>${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}</div></div>`;
             }).join('');
             document.getElementById('maxDistLabel').innerText = `Route: ${totalDist.toFixed(2)} km`;
         };
 
         function updateMapMarkers() {
-            if (!googleMap) return;
-            gMarkers.forEach(gm => gm.setMap(null));
-            gMarkers = [];
-            const bounds = new google.maps.LatLngBounds();
-            
+            if (!googleMap) return; gMarkers.forEach(gm => gm.setMap(null)); gMarkers = []; const bounds = new google.maps.LatLngBounds();
             markers.forEach((m, idx) => {
-                const isComplete = m.status === 'complete';
-                const pos = { lat: m.lat, lng: m.lng };
-                
-                const gMarker = new google.maps.Marker({
-                    position: pos, map: googleMap,
-                    label: { text: m.uniqueId.split('-').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" },
-                    icon: { 
-                        path: google.maps.SymbolPath.CIRCLE, 
-                        fillColor: isComplete ? "#eab308" : "#dc2626", 
-                        fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' 
-                    },
-                    zIndex: markers.length - idx
-                });
-                
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div style="padding: 16px; width: 220px; font-family: 'Inter', sans-serif;">
-                            ${m.image ? `<img src="${m.image}" style="width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; object-fit: cover;">` : ''}
-                            <div style="font-weight: 900; font-size: 14px; color: white; margin-bottom: 4px;">${m.uniqueId}</div>
-                            <div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</div>
-                            <div style="display: flex; justify-between; gap: 8px;">
-                                <span style="background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.digMethod === 'M' ? 'MANUAL' : 'BACKHOE'}</span>
-                                <span style="background: ${isComplete ? '#eab308' : '#334155'}; color: ${isComplete ? 'black' : 'white'}; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.status.toUpperCase()}</span>
-                            </div>
-                        </div>`
-                });
-
-                gMarker.addListener('click', () => infoWindow.open(googleMap, gMarker));
-                gMarkers.push(gMarker);
-                bounds.extend(pos);
+                const isComplete = m.status === 'complete'; const pos = { lat: m.lat, lng: m.lng };
+                const gMarker = new google.maps.Marker({ position: pos, map: googleMap, label: { text: m.uniqueId.split('-').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: isComplete ? "#eab308" : "#dc2626", fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' }, zIndex: markers.length - idx });
+                const infoWindow = new google.maps.InfoWindow({ content: `<div style="padding: 16px; width: 220px; font-family: 'Inter', sans-serif;">${m.image ? `<img src="${m.image}" style="width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; object-fit: cover;">` : ''}<div style="font-weight: 900; font-size: 14px; color: white; margin-bottom: 4px;">${m.uniqueId}</div><div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</div><div style="display: flex; justify-between; gap: 8px;"><span style="background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.digMethod === 'M' ? 'MANUAL' : 'BACKHOE'}</span><span style="background: ${isComplete ? '#eab308' : '#334155'}; color: ${isComplete ? 'black' : 'white'}; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.status.toUpperCase()}</span></div></div>` });
+                gMarker.addListener('click', () => infoWindow.open(googleMap, gMarker)); gMarkers.push(gMarker); bounds.extend(pos);
             });
             if (markers.length > 0) googleMap.fitBounds(bounds);
         }
 
         window.generateReport = () => {
-            const community = document.getElementById('communityInput').value.trim() || 'ALL_UNITS';
-            const data = markers.map(h => ({
-                "ID": h.uniqueId,
-                "Community": h.community,
-                "Contractor": h.contractor,
-                "Lat": h.lat,
-                "Lng": h.lng,
-                "Method": h.digMethod === 'M' ? 'Manual' : 'Backhoe',
-                "Status": h.status.toUpperCase(),
-                "Logged": h.timestamp
-            }));
-
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(data);
-            XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-            XLSX.writeFile(wb, `UPH_REPORT_${community.toUpperCase()}.xlsx`);
+            const data = markers.map(h => ({ "ID": h.uniqueId, "Community": h.community, "Contractor": h.contractor, "Lat": h.lat, "Lng": h.lng, "Method": h.digMethod === 'M' ? 'Manual' : 'Backhoe', "Status": h.status.toUpperCase(), "Logged": h.timestamp }));
+            const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Inventory"); XLSX.writeFile(wb, `UPH_REPORT.xlsx`);
         };
     </script>
 </body>
