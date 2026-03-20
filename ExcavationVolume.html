@@ -37,7 +37,7 @@
                     <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">UPH Tracker Pro</h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span id="cloudStatus" class="w-2 h-2 rounded-full bg-slate-600"></span>
-                        <p id="cloudStatusText" class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Initializing Satellite Link</p>
+                        <p id="cloudStatusText" class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Operational Intelligence Active</p>
                     </div>
                 </div>
             </div>
@@ -187,7 +187,13 @@
 
         // Safety check for environment variables
         let firebaseConfig;
-        try { firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualFirebaseConfig; } 
+        try { 
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualFirebaseConfig; 
+            // If we are using manual config and it still has placeholders, warn the user
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                console.warn("Firebase placeholders detected. Please update manualFirebaseConfig in the code.");
+            }
+        } 
         catch (e) { firebaseConfig = manualFirebaseConfig; }
 
         const app = initializeApp(firebaseConfig);
@@ -207,7 +213,7 @@
             document.getElementById('errorMessage').innerText = msg;
             document.getElementById('errorSubtitle').innerText = subtitle;
             banner.classList.remove('hidden'); banner.classList.add('animate-shake');
-            setTimeout(() => banner.classList.add('hidden'), 6000);
+            setTimeout(() => banner.classList.add('hidden'), 10000); // Longer timeout for critical errors
         }
 
         window.updatePrefix = () => {
@@ -224,7 +230,14 @@
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
                 else { await signInAnonymously(auth); }
-            } catch (err) { console.error("Auth Failure:", err); showGlobalError("Cloud Handshake Failed", "Check manualFirebaseConfig keys."); }
+            } catch (err) { 
+                console.error("Auth Failure:", err); 
+                if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                    showGlobalError("Config Missing", "Update manualFirebaseConfig with your Firebase keys.");
+                } else {
+                    showGlobalError("Cloud Handshake Failed", err.message);
+                }
+            }
         };
 
         onAuthStateChanged(auth, (user) => {
@@ -303,7 +316,7 @@
         loadGMap();
 
         window.addMarker = async () => {
-            if (!auth.currentUser) return showGlobalError("Syncing...", "Waiting for cloud connection.");
+            if (!auth.currentUser) return showGlobalError("Auth Error", "Please ensure your Firebase keys are set correctly in manualFirebaseConfig.");
             const coordInput = document.getElementById('coordInput');
             const commInput = document.getElementById('communityInput').value.trim() || 'General';
             const contractorInput = document.getElementById('contractorInput').value.trim() || 'Unassigned';
@@ -353,7 +366,7 @@
                 const prev = idx > 0 ? filteredMarkers[idx - 1] : null;
                 const dist = prev ? calculateDistance(prev.lat, prev.lng, m.lat, m.lng) : null;
                 if (dist) totalDist += dist; const isComplete = m.status === 'complete';
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}"><div class="flex items-start justify-between"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-').pop()}</div><div class="space-y-1"><h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4><p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p></div></div><div class="flex gap-2"><button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button><button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button></div></div><div class="mt-4 flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[9px] font-black uppercase text-slate-600">Method</span><div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button><button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button></div></div><p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">${m.contractor || 'UNASSIGNED'}</p></div><div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50"><button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">${m.image ? 'Media Attached' : 'Attach Photo'}</button>${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}</div></div>`;
+                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}"><div class="flex items-start justify-between"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-').pop()}</div><div class="space-y-1"><h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4><p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p></div></div><div class="flex gap-2"><button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button><button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button></div></div><div class="mt-4 flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[9px] font-black uppercase text-slate-600">Method</span><div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button><button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button></div></div><p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">${m.contractor || 'UNASSIGNED'}</p></div><div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50"><button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">${m.image ? 'Media Attached' : 'Attach Photo'}</button>${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}</div></div>`;
             }).join('');
             document.getElementById('maxDistLabel').innerText = `Route: ${totalDist.toFixed(2)} km`;
         };
