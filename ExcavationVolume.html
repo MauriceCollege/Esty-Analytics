@@ -139,8 +139,8 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-black uppercase tracking-tight text-white mb-3">Satellite Link Failed</h3>
-                        <p class="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">The Google Maps connection could not be established. Ensure your API key is valid and billing is active.</p>
+                        <h3 class="text-2xl font-black uppercase tracking-tight text-white mb-3" id="mapErrorTitle">Satellite Link Failed</h3>
+                        <p class="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed" id="mapErrorDesc">The Google Maps connection could not be established. Ensure your API key is valid and billing is active.</p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-4">
                         <button onclick="location.reload()" class="px-8 py-4 bg-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-slate-700 transition-all border border-slate-700">Re-Authenticate</button>
@@ -203,8 +203,12 @@
                 <span id="dbIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>
                 Cloud <span id="dbStatus" class="text-slate-500">Standby</span>
             </div>
+            <!-- REFRESH API BUTTON (LINE 136) -->
             <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
-                <button onclick="promptNewKey()" class="hover:text-red-500 transition-colors">Refresh API</button>
+                <button onclick="promptNewKey()" class="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all group font-black uppercase tracking-widest text-[9px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                    Refresh API
+                </button>
             </div>
             <div class="ml-auto flex items-center gap-4 opacity-40">
                 <span>Enterprise Engine v4.9</span>
@@ -221,7 +225,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z"></path><path d="M12 12l.5 5 3.5 3.5 5-5-3.5-3.5-5 .5z"></path></svg>
                 </div>
                 <h2 class="text-3xl font-black tracking-tighter text-white">Refresh Master Key</h2>
-                <p class="text-slate-400 text-sm leading-relaxed">Enter a valid Google Maps API Key to restore real-time satellite visualization and mapping services.</p>
+                <p class="text-slate-400 text-sm leading-relaxed" id="modalDesc">Enter a valid Google Maps API Key to restore real-time satellite visualization and mapping services.</p>
             </div>
             <div class="space-y-6">
                 <input 
@@ -332,11 +336,18 @@
          */
         window.gm_authFailure = function() {
             console.error("Google Maps API Key Authentication Failed.");
+            
+            // UI Feedback
+            document.getElementById('mapErrorTitle').innerText = "API Key Expired";
+            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired or is invalid. Please refresh it below.";
+            document.getElementById('modalDesc').innerText = "ALERT: Your current API Key has expired. Please enter a new valid key to restore map services.";
+            
             window.handleMapFailure("INVALID_KEY");
-            // If the key is the default one and it fails, prompt the user immediately
-            if (googleMapsKey === 'AIzaSyClVdsKzjqXr5cdi6H2bakxGj7QG40o1-o') {
+            
+            // Automatically prompt since the map is definitely broken
+            setTimeout(() => {
                 promptNewKey();
-            }
+            }, 1000);
         };
 
         window.initMap = () => {
@@ -345,10 +356,38 @@
                 
                 googleMap = new google.maps.Map(document.getElementById('map'), {
                     center: JAMAICA_CENTER, zoom: 8,
-                    mapTypeId: 'satellite',
+                    mapTypeId: 'hybrid', // Hybrid is Satellite + Labels
                     styles: [
-                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-                        { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                        {
+                            // DARKEN ALL ROADS
+                            featureType: "road",
+                            elementType: "geometry",
+                            stylers: [
+                                { color: "#1a1a1a" }, // Very dark grey/black roads
+                                { lightness: -10 },
+                                { weight: 2.0 }
+                            ]
+                        },
+                        {
+                            // HIGH CONTRAST ROAD LABELS
+                            featureType: "road",
+                            elementType: "labels.text.fill",
+                            stylers: [{ color: "#ffffff" }] // Pure white text
+                        },
+                        {
+                            featureType: "road",
+                            elementType: "labels.text.stroke",
+                            stylers: [{ color: "#000000" }, { weight: 4 }] // Thick black outline
+                        },
+                        {
+                            // REDUCE NOISE FOR OTHER ELEMENTS
+                            featureType: "poi",
+                            stylers: [{ visibility: "off" }]
+                        },
+                        {
+                            featureType: "transit",
+                            stylers: [{ visibility: "off" }]
+                        }
                     ],
                     disableDefaultUI: false, streetViewControl: false
                 });
@@ -371,18 +410,16 @@
             document.getElementById('sysIndicator').className = "w-2.5 h-2.5 rounded-full bg-slate-800";
             document.getElementById('sysStatus').innerText = 'Satellite Link Offline';
             if (type === "INVALID_KEY") {
-                showGlobalError("API Key Rejected", "The provided Google Maps key is invalid.");
+                showGlobalError("API Key Error", "The provided Google Maps key is expired or invalid.");
             }
         };
 
         const loadGMap = () => {
-            // Set a failsafe timeout
             const failsafe = setTimeout(() => {
                 if (!googleMap) window.handleMapFailure("TIMEOUT");
             }, 8000);
 
             const script = document.createElement('script');
-            // Using callback and libraries parameter correctly
             script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
             script.async = true;
             script.defer = true;
@@ -402,14 +439,12 @@
             const val = document.getElementById('newApiKeyInput').value.trim();
             if (val) { 
                 localStorage.setItem('uph_gmaps_key', val); 
-                // Hard refresh to re-init with new key
                 location.reload(); 
             } else {
                 showGlobalError("Input Required", "Please enter a valid API key string.");
             }
         };
 
-        // Start map loading
         loadGMap();
 
         // Core Functions
@@ -420,7 +455,6 @@
             const commInput = document.getElementById('communityInput').value.trim() || 'General';
             const contractorInput = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             
-            // Robust coordinate extraction
             const latLngRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
             const urlRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
             
@@ -432,7 +466,6 @@
             const newLat = parseFloat(match[1]);
             const newLng = parseFloat(match[2]);
 
-            // Duplicate Check
             if (markers.some(m => Math.abs(m.lat - newLat) < 0.00001 && Math.abs(m.lng - newLng) < 0.00001)) {
                 return showGlobalError("Conflict Detected", "This coordinate is already in the database.");
             }
