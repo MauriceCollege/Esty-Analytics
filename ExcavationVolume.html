@@ -44,6 +44,7 @@
             
             <div class="flex flex-col md:flex-row gap-3 items-stretch">
                 <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="feederInput" placeholder="Feeder (e.g. Bogue 610)" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl font-semibold">
                     <div class="relative group">
                         <input type="text" id="communityInput" placeholder="Community Name" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold" oninput="updatePrefix()">
                         <div id="prefixDisplay" class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
@@ -64,7 +65,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Fleet Operations Progress</h3>
+                        <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Hole Digging Operation</h3>
                         <span id="communityTag" class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[9px] font-bold tracking-tighter">OFFLINE MODE</span>
                     </div>
                     <div class="flex items-end gap-4">
@@ -128,7 +129,7 @@
                         </button>
                     </div>
                     <div class="relative">
-                        <input type="text" id="searchInventory" placeholder="Search by ID or Contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-slate-700 focus:outline-none transition-all">
+                        <input type="text" id="searchInventory" placeholder="Search by ID, Contractor, or Feeder..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:ring-1 focus:ring-slate-700 focus:outline-none transition-all">
                         <svg class="absolute right-3 top-2.5 text-slate-600" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
                 </div>
@@ -144,7 +145,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>Refresh Maps API
                 </button>
             </div>
-            <div class="ml-auto flex items-center gap-4 opacity-40"><span>Enterprise Engine v5.0</span><span>Storage: Browser (IndexedDB)</span></div>
+            <div class="ml-auto flex items-center gap-4 opacity-40"><span>Enterprise Engine v5.1</span><span>Storage: Browser (IndexedDB)</span></div>
         </footer>
     </div>
 
@@ -170,7 +171,6 @@
 
     <script>
         // --- LOCAL STORAGE ENGINE ---
-        // Replacing Firebase with Browser Local Storage
         let markers = JSON.parse(localStorage.getItem('uph_markers')) || [];
         let gMarkers = [];
         let googleMap = null;
@@ -251,8 +251,10 @@
 
         window.addMarker = () => {
             const coordInput = document.getElementById('coordInput');
+            const feederInput = document.getElementById('feederInput');
             const commInput = document.getElementById('communityInput').value.trim() || 'General';
             const contractorInput = document.getElementById('contractorInput').value.trim() || 'Unassigned';
+            const feederVal = feederInput.value.trim() || 'N/A';
             
             // Robust coordinate parsing
             const latLngRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
@@ -273,6 +275,7 @@
             
             const newHole = { 
                 id: Date.now().toString(),
+                feeder: feederVal,
                 community: commInput, 
                 contractor: contractorInput, 
                 uniqueId: uniqueId, 
@@ -331,7 +334,11 @@
         window.renderRegistry = () => {
             const list = document.getElementById('registryList');
             const search = document.getElementById('searchInventory').value.toLowerCase();
-            const filteredMarkers = markers.filter(m => m.uniqueId.toLowerCase().includes(search) || (m.contractor && m.contractor.toLowerCase().includes(search)));
+            const filteredMarkers = markers.filter(m => 
+                m.uniqueId.toLowerCase().includes(search) || 
+                (m.contractor && m.contractor.toLowerCase().includes(search)) ||
+                (m.feeder && m.feeder.toLowerCase().includes(search))
+            );
             
             if (markers.length === 0) { 
                 list.innerHTML = `<div class="py-20 text-center opacity-20"><p class="text-[10px] font-black uppercase tracking-widest">No local entries found</p></div>`; 
@@ -351,7 +358,36 @@
                 const prev = idx > 0 ? filteredMarkers[idx - 1] : null;
                 const dist = prev ? calculateDistance(prev.lat, prev.lng, m.lat, m.lng) : null;
                 if (dist) totalDist += dist; const isComplete = m.status === 'complete';
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}"><div class="flex items-start justify-between"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-').pop()}</div><div class="space-y-1"><h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4><p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p></div></div><div class="flex gap-2"><button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button><button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button></div></div><div class="mt-4 flex items-center justify-between"><div class="flex items-center gap-2"><span class="text-[9px] font-black uppercase text-slate-600">Method</span><div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button><button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button></div></div><p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">${m.contractor || 'UNASSIGNED'}</p></div><div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50"><button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">${m.image ? 'Media Attached' : 'Attach Photo'}</button>${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}</div></div>`;
+                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all hover:border-slate-600 ${isComplete ? 'border-yellow-500/30' : ''}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] transition-all shadow-xl ${isComplete ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-').pop()}</div>
+                            <div class="space-y-1">
+                                <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
+                                <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder || 'N/A'}</p>
+                                <p class="font-mono text-[9px] text-slate-500">${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="toggleStatus('${m.id}', '${m.status}')" class="p-2.5 rounded-xl transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 text-slate-700 hover:text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black uppercase text-slate-600">Method</span>
+                            <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
+                                <button onclick="toggleDigMethod('${m.id}', 'M')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button>
+                                <button onclick="toggleDigMethod('${m.id}', 'B')" class="px-3 py-1 text-[9px] font-black rounded-md transition-all ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button>
+                            </div>
+                        </div>
+                        <p class="text-[9px] font-black uppercase ${isComplete ? 'text-yellow-500' : 'text-slate-500'}">${m.contractor || 'UNASSIGNED'}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
+                        <button onclick="triggerUpload('${m.id}')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${m.image ? 'bg-green-500/10 text-green-500' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">${m.image ? 'Media Attached' : 'Attach Photo'}</button>
+                        ${dist ? `<span class="text-[9px] font-mono text-slate-600 tracking-tighter">+${dist.toFixed(2)} KM</span>` : ''}
+                    </div>
+                </div>`;
             }).join('');
             document.getElementById('maxDistLabel').innerText = `Route: ${totalDist.toFixed(2)} km`;
         };
@@ -373,19 +409,18 @@
                     zIndex: markers.length - idx 
                 });
                 
-                const infoWindow = new google.maps.InfoWindow({ content: `<div style="padding: 16px; width: 220px; font-family: 'Inter', sans-serif;">${m.image ? `<img src="${m.image}" style="width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; object-fit: cover;">` : ''}<div style="font-weight: 900; font-size: 14px; color: white; margin-bottom: 4px;">${m.uniqueId}</div><div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</div><div style="display: flex; justify-between; gap: 8px;"><span style="background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.digMethod === 'M' ? 'MANUAL' : 'BACKHOE'}</span><span style="background: ${isComplete ? '#eab308' : '#334155'}; color: ${isComplete ? 'black' : 'white'}; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.status.toUpperCase()}</span></div></div>` });
+                const infoWindow = new google.maps.InfoWindow({ content: `<div style="padding: 16px; width: 220px; font-family: 'Inter', sans-serif;">${m.image ? `<img src="${m.image}" style="width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; object-fit: cover;">` : ''}<div style="font-weight: 900; font-size: 14px; color: white; margin-bottom: 4px;">${m.uniqueId}</div><div style="font-size: 10px; color: #ef4444; font-weight: 800; margin-bottom: 4px;">FEEDER: ${m.feeder}</div><div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</div><div style="display: flex; justify-between; gap: 8px;"><span style="background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.digMethod === 'M' ? 'MANUAL' : 'BACKHOE'}</span><span style="background: ${isComplete ? '#eab308' : '#334155'}; color: ${isComplete ? 'black' : 'white'}; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.status.toUpperCase()}</span></div></div>` });
                 gMarker.addListener('click', () => infoWindow.open(googleMap, gMarker)); gMarkers.push(gMarker); bounds.extend(pos);
             });
             if (markers.length > 0) googleMap.fitBounds(bounds);
         }
 
         window.generateReport = () => {
-            const data = markers.map(h => ({ "ID": h.uniqueId, "Community": h.community, "Contractor": h.contractor, "Lat": h.lat, "Lng": h.lng, "Method": h.digMethod === 'M' ? 'Manual' : 'Backhoe', "Status": h.status.toUpperCase(), "Logged": h.timestamp }));
+            const data = markers.map(h => ({ "ID": h.uniqueId, "Feeder": h.feeder, "Community": h.community, "Contractor": h.contractor, "Lat": h.lat, "Lng": h.lng, "Method": h.digMethod === 'M' ? 'Manual' : 'Backhoe', "Status": h.status.toUpperCase(), "Logged": h.timestamp }));
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data);
             XLSX.utils.book_append_sheet(wb, ws, "Inventory"); XLSX.writeFile(wb, `UPH_REPORT.xlsx`);
         };
 
-        // Initial render
         window.onload = () => {
             renderRegistry();
         }
