@@ -36,8 +36,8 @@
                 <div>
                     <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">UPH Tracker Pro</h1>
                     <div class="flex items-center gap-2 mt-1">
-                        <span id="cloudStatus" class="w-2 h-2 rounded-full bg-slate-600"></span>
-                        <p id="cloudStatusText" class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Operational Intelligence Active</p>
+                        <span id="cloudStatus" class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
+                        <p id="cloudStatusText" class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">System Ready | Local Database Active</p>
                     </div>
                 </div>
             </div>
@@ -60,12 +60,12 @@
         </header>
 
         <!-- Operations Dashboard -->
-        <div id="kpiContainer" class="hidden glass-panel p-6 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+        <div id="kpiContainer" class="glass-panel p-6 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
                         <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Fleet Operations Progress</h3>
-                        <span id="communityTag" class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[9px] font-bold tracking-tighter">GRID</span>
+                        <span id="communityTag" class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[9px] font-bold tracking-tighter">OFFLINE MODE</span>
                     </div>
                     <div class="flex items-end gap-4">
                         <p id="kpiCounts" class="text-sm text-slate-300 font-bold uppercase tabular-nums">0 / 0 Holes Completed</p>
@@ -138,14 +138,13 @@
         </div>
 
         <footer class="flex flex-wrap items-center gap-8 px-6 py-4 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black border-t border-slate-900 mt-4">
-            <div class="flex items-center gap-3"><span id="sysIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>System <span id="sysStatus" class="text-slate-500">Standby</span></div>
-            <div class="flex items-center gap-3"><span id="dbIndicator" class="w-2.5 h-2.5 rounded-full bg-slate-800 transition-colors"></span>Cloud <span id="dbStatus" class="text-slate-500">Standby</span></div>
+            <div class="flex items-center gap-3"><span id="sysIndicator" class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></span>System <span id="sysStatus" class="text-green-500">Local Active</span></div>
             <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                 <button onclick="promptNewKey()" class="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all group font-black uppercase tracking-widest text-[9px]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>Refresh API
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform duration-500"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>Refresh Maps API
                 </button>
             </div>
-            <div class="ml-auto flex items-center gap-4 opacity-40"><span>Enterprise Engine v4.9</span><span>Node: JPN-01</span></div>
+            <div class="ml-auto flex items-center gap-4 opacity-40"><span>Enterprise Engine v5.0</span><span>Storage: Browser (IndexedDB)</span></div>
         </footer>
     </div>
 
@@ -154,14 +153,14 @@
         <div class="max-w-md w-full glass-panel rounded-[3rem] p-10 space-y-8 shadow-3xl ring-1 ring-slate-800">
             <div class="text-center space-y-3">
                 <div class="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-4 ring-8 ring-red-500/5"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778z"></path><path d="M12 12l.5 5 3.5 3.5 5-5-3.5-3.5-5 .5z"></path></svg></div>
-                <h2 class="text-3xl font-black tracking-tighter text-white">Refresh Master Key</h2>
-                <p class="text-slate-400 text-sm leading-relaxed" id="modalDesc">Enter a valid Google Maps API Key to restore real-time satellite visualization.</p>
+                <h2 class="text-3xl font-black tracking-tighter text-white">Refresh Maps API</h2>
+                <p class="text-slate-400 text-sm leading-relaxed" id="modalDesc">Enter a valid Google Maps API Key to restore satellite view.</p>
             </div>
             <div class="space-y-6">
                 <input type="password" id="newApiKeyInput" placeholder="Enter AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-sm font-mono focus:ring-2 focus:ring-red-600/40 outline-none transition-all tracking-wider text-center">
                 <div class="flex gap-4">
                     <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-400 font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all border border-slate-800">Dismiss</button>
-                    <button onclick="saveNewKey()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-red-600/20">Sync API</button>
+                    <button onclick="saveNewKey()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-red-600/20">Sync Maps API</button>
                 </div>
             </div>
         </div>
@@ -169,51 +168,27 @@
 
     <input type="file" id="imageInput" class="hidden" accept="image/*">
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, query, addDoc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- WEBSITE READY CONFIGURATION ---
-        // REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL FIREBASE KEYS
-        const manualFirebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        // Safety check for environment variables
-        let firebaseConfig;
-        try { 
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualFirebaseConfig; 
-            // If we are using manual config and it still has placeholders, warn the user
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                console.warn("Firebase placeholders detected. Please update manualFirebaseConfig in the code.");
-            }
-        } 
-        catch (e) { firebaseConfig = manualFirebaseConfig; }
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'uph-enterprise-v1';
-        
-        let markers = [];
+    <script>
+        // --- LOCAL STORAGE ENGINE ---
+        // Replacing Firebase with Browser Local Storage
+        let markers = JSON.parse(localStorage.getItem('uph_markers')) || [];
         let gMarkers = [];
         let googleMap = null;
-        let unsubscribeHoles = null;
         let googleMapsKey = localStorage.getItem('uph_gmaps_key') || 'AIzaSyClVdsKzjqXr5cdi6H2bakxGj7QG40o1-o';
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
+
+        function saveToLocal() {
+            localStorage.setItem('uph_markers', JSON.stringify(markers));
+            renderRegistry();
+            updateMapMarkers();
+        }
 
         function showGlobalError(msg, subtitle = "") {
             const banner = document.getElementById('errorBanner');
             document.getElementById('errorMessage').innerText = msg;
             document.getElementById('errorSubtitle').innerText = subtitle;
             banner.classList.remove('hidden'); banner.classList.add('animate-shake');
-            setTimeout(() => banner.classList.add('hidden'), 10000); // Longer timeout for critical errors
+            setTimeout(() => banner.classList.add('hidden'), 10000); 
         }
 
         window.updatePrefix = () => {
@@ -226,45 +201,9 @@
             display.innerText = ''; return 'GEN';
         };
 
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
-                else { await signInAnonymously(auth); }
-            } catch (err) { 
-                console.error("Auth Failure:", err); 
-                if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                    showGlobalError("Config Missing", "Update manualFirebaseConfig with your Firebase keys.");
-                } else {
-                    showGlobalError("Cloud Handshake Failed", err.message);
-                }
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('dbIndicator').className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]";
-                document.getElementById('dbStatus').className = "text-green-500";
-                document.getElementById('dbStatus').innerText = 'Synced';
-                document.getElementById('cloudStatus').className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]";
-                document.getElementById('cloudStatusText').innerText = "Real-time Tracking Active";
-                const holesRef = collection(db, 'artifacts', appId, 'public', 'data', 'holes');
-                if (unsubscribeHoles) unsubscribeHoles();
-                unsubscribeHoles = onSnapshot(holesRef, (snapshot) => {
-                    markers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    markers.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-                    renderRegistry(); updateMapMarkers();
-                }, (err) => { showGlobalError("Database Error", err.code); });
-            } else {
-                document.getElementById('dbIndicator').className = "w-2.5 h-2.5 rounded-full bg-slate-800";
-                document.getElementById('dbStatus').innerText = 'Disconnected';
-            }
-        });
-
-        initAuth();
-
         window.gm_authFailure = function() {
-            document.getElementById('mapErrorTitle').innerText = "API Key Expired";
-            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired or is invalid.";
+            document.getElementById('mapErrorTitle').innerText = "Maps API Expired";
+            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired. Please refresh it below.";
             window.handleMapFailure("INVALID_KEY");
             setTimeout(() => { promptNewKey(); }, 1000);
         };
@@ -278,9 +217,6 @@
                 });
                 document.getElementById('mapLoader').classList.add('hidden');
                 document.getElementById('mapFailureOverlay').classList.add('hidden');
-                document.getElementById('sysIndicator').className = "w-2.5 h-2.5 rounded-full bg-red-600 shadow-[0_0_10px_#dc2626]";
-                document.getElementById('sysStatus').className = "text-red-500";
-                document.getElementById('sysStatus').innerText = 'Operational';
                 updateMapMarkers();
             } catch (e) { window.handleMapFailure(); }
         };
@@ -288,8 +224,6 @@
         window.handleMapFailure = (type) => {
             document.getElementById('mapLoader').classList.add('hidden');
             document.getElementById('mapFailureOverlay').classList.remove('hidden');
-            document.getElementById('sysIndicator').className = "w-2.5 h-2.5 rounded-full bg-slate-800";
-            document.getElementById('sysStatus').innerText = 'Offline';
             if (type === "INVALID_KEY") showGlobalError("API Key Error", "Key is expired or invalid.");
         };
 
@@ -315,31 +249,75 @@
 
         loadGMap();
 
-        window.addMarker = async () => {
-            if (!auth.currentUser) return showGlobalError("Auth Error", "Please ensure your Firebase keys are set correctly in manualFirebaseConfig.");
+        window.addMarker = () => {
             const coordInput = document.getElementById('coordInput');
             const commInput = document.getElementById('communityInput').value.trim() || 'General';
             const contractorInput = document.getElementById('contractorInput').value.trim() || 'Unassigned';
+            
+            // Robust coordinate parsing
             const latLngRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
             const urlRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
             let match = coordInput.value.match(latLngRegex) || coordInput.value.match(urlRegex);
-            if (!match) return showGlobalError("Parsing Failed", "Use 'lat, lng' or Maps URL.");
-            const newLat = parseFloat(match[1]); const newLng = parseFloat(match[2]);
-            if (markers.some(m => Math.abs(m.lat - newLat) < 0.00001 && Math.abs(m.lng - newLng) < 0.00001)) return showGlobalError("Conflict", "Already in database.");
+            
+            if (!match) return showGlobalError("Coordinate Error", "Format must be 'lat, lng' or a Google Maps URL.");
+            
+            const newLat = parseFloat(match[1]); 
+            const newLng = parseFloat(match[2]);
+            
+            if (markers.some(m => Math.abs(m.lat - newLat) < 0.00001 && Math.abs(m.lng - newLng) < 0.00001)) {
+                return showGlobalError("Duplicate Entry", "This location is already in your local storage.");
+            }
+
             const prefix = commInput.substring(0, 3).toUpperCase();
             const uniqueId = `${prefix}-H${markers.filter(m => m.community === commInput).length + 1}`;
-            const newHole = { community: commInput, contractor: contractorInput, uniqueId: uniqueId, lat: newLat, lng: newLng, image: null, digMethod: 'M', status: 'pending', createdAt: Date.now(), timestamp: new Date().toLocaleString() };
+            
+            const newHole = { 
+                id: Date.now().toString(),
+                community: commInput, 
+                contractor: contractorInput, 
+                uniqueId: uniqueId, 
+                lat: newLat, 
+                lng: newLng, 
+                image: null, 
+                digMethod: 'M', 
+                status: 'pending', 
+                createdAt: Date.now(), 
+                timestamp: new Date().toLocaleString() 
+            };
+            
+            markers.push(newHole);
             coordInput.value = '';
-            try { await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'holes'), newHole); } catch (err) { showGlobalError("Write Error", err.message); }
+            saveToLocal();
         };
 
-        window.deleteMarker = async (docId) => { if (confirm("Remove entry?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId)); };
-        window.toggleStatus = async (docId, current) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { status: current === 'complete' ? 'pending' : 'complete' }); };
-        window.toggleDigMethod = async (docId, method) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', docId), { digMethod: method }); };
-        window.triggerUpload = (docId) => { window.pendingId = docId; document.getElementById('imageInput').click(); };
+        window.deleteMarker = (id) => { 
+            if (confirm("Remove entry?")) {
+                markers = markers.filter(m => m.id !== id);
+                saveToLocal();
+            }
+        };
+
+        window.toggleStatus = (id, current) => { 
+            const idx = markers.findIndex(m => m.id === id);
+            markers[idx].status = current === 'complete' ? 'pending' : 'complete';
+            saveToLocal();
+        };
+
+        window.toggleDigMethod = (id, method) => { 
+            const idx = markers.findIndex(m => m.id === id);
+            markers[idx].digMethod = method;
+            saveToLocal();
+        };
+
+        window.triggerUpload = (id) => { window.pendingId = id; document.getElementById('imageInput').click(); };
         document.getElementById('imageInput').onchange = (e) => {
             const file = e.target.files[0]; if (file && window.pendingId) {
-                const reader = new FileReader(); reader.onloadend = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holes', window.pendingId), { image: reader.result }); };
+                const reader = new FileReader(); 
+                reader.onloadend = () => { 
+                    const idx = markers.findIndex(m => m.id === window.pendingId);
+                    markers[idx].image = reader.result;
+                    saveToLocal();
+                };
                 reader.readAsDataURL(file);
             }
         };
@@ -351,16 +329,23 @@
         }
 
         window.renderRegistry = () => {
-            const list = document.getElementById('registryList'); const kpi = document.getElementById('kpiContainer');
+            const list = document.getElementById('registryList');
             const search = document.getElementById('searchInventory').value.toLowerCase();
             const filteredMarkers = markers.filter(m => m.uniqueId.toLowerCase().includes(search) || (m.contractor && m.contractor.toLowerCase().includes(search)));
-            if (markers.length === 0) { list.innerHTML = `<div class="py-20 text-center opacity-20"><p class="text-[10px] font-black uppercase tracking-widest">Awaiting Link...</p></div>`; kpi.classList.add('hidden'); return; }
-            kpi.classList.remove('hidden'); document.getElementById('noResults').classList.toggle('hidden', filteredMarkers.length > 0);
+            
+            if (markers.length === 0) { 
+                list.innerHTML = `<div class="py-20 text-center opacity-20"><p class="text-[10px] font-black uppercase tracking-widest">No local entries found</p></div>`; 
+                return; 
+            }
+            
+            document.getElementById('noResults').classList.toggle('hidden', filteredMarkers.length > 0);
+            
             const completed = markers.filter(m => m.status === 'complete').length;
-            const percentage = Math.round((completed / markers.length) * 100);
+            const percentage = Math.round((completed / markers.length) * 100) || 0;
             document.getElementById('kpiCounts').innerText = `${completed} / ${markers.length} Holes Completed`;
             document.getElementById('kpiPercent').innerText = `${percentage}%`;
             document.getElementById('kpiProgressBar').style.width = `${percentage}%`;
+            
             let totalDist = 0;
             list.innerHTML = filteredMarkers.map((m, idx) => {
                 const prev = idx > 0 ? filteredMarkers[idx - 1] : null;
@@ -372,10 +357,22 @@
         };
 
         function updateMapMarkers() {
-            if (!googleMap) return; gMarkers.forEach(gm => gm.setMap(null)); gMarkers = []; const bounds = new google.maps.LatLngBounds();
+            if (!googleMap) return; 
+            gMarkers.forEach(gm => gm.setMap(null)); 
+            gMarkers = []; 
+            const bounds = new google.maps.LatLngBounds();
+            
             markers.forEach((m, idx) => {
-                const isComplete = m.status === 'complete'; const pos = { lat: m.lat, lng: m.lng };
-                const gMarker = new google.maps.Marker({ position: pos, map: googleMap, label: { text: m.uniqueId.split('-').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: isComplete ? "#eab308" : "#dc2626", fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' }, zIndex: markers.length - idx });
+                const isComplete = m.status === 'complete'; 
+                const pos = { lat: m.lat, lng: m.lng };
+                const gMarker = new google.maps.Marker({ 
+                    position: pos, 
+                    map: googleMap, 
+                    label: { text: m.uniqueId.split('-').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" }, 
+                    icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: isComplete ? "#eab308" : "#dc2626", fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' }, 
+                    zIndex: markers.length - idx 
+                });
+                
                 const infoWindow = new google.maps.InfoWindow({ content: `<div style="padding: 16px; width: 220px; font-family: 'Inter', sans-serif;">${m.image ? `<img src="${m.image}" style="width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; object-fit: cover;">` : ''}<div style="font-weight: 900; font-size: 14px; color: white; margin-bottom: 4px;">${m.uniqueId}</div><div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</div><div style="display: flex; justify-between; gap: 8px;"><span style="background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.digMethod === 'M' ? 'MANUAL' : 'BACKHOE'}</span><span style="background: ${isComplete ? '#eab308' : '#334155'}; color: ${isComplete ? 'black' : 'white'}; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800;">${m.status.toUpperCase()}</span></div></div>` });
                 gMarker.addListener('click', () => infoWindow.open(googleMap, gMarker)); gMarkers.push(gMarker); bounds.extend(pos);
             });
@@ -387,6 +384,11 @@
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data);
             XLSX.utils.book_append_sheet(wb, ws, "Inventory"); XLSX.writeFile(wb, `UPH_REPORT.xlsx`);
         };
+
+        // Initial render
+        window.onload = () => {
+            renderRegistry();
+        }
     </script>
 </body>
 </html>
