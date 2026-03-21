@@ -537,11 +537,46 @@
             
             markers.filter(m => filterProj === 'all' || m.community === filterProj).forEach(m => {
                 const isComplete = m.status === 'complete';
+                const isGuy = m.holeType === 'Guy';
+                const primaryColor = isComplete ? "#eab308" : "#dc2626";
+                
+                let iconConfig;
+                
+                if (isGuy) {
+                    // Two-tone (shaded) SVG for Guy holes
+                    const svg = `
+                        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="16" cy="16" r="14" fill="${primaryColor}" stroke="white" stroke-width="2"/>
+                            <path d="M16 2 A14 14 0 0 1 16 30 Z" fill="black" fill-opacity="0.65"/>
+                        </svg>`;
+                    
+                    iconConfig = {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+                        anchor: new google.maps.Point(16, 16),
+                        labelOrigin: new google.maps.Point(16, 16)
+                    };
+                } else {
+                    // Standard solid circle for Pole holes
+                    iconConfig = { 
+                        path: google.maps.SymbolPath.CIRCLE, 
+                        fillColor: primaryColor, 
+                        fillOpacity: 1, 
+                        strokeWeight: 2, 
+                        scale: 15, 
+                        strokeColor: 'white' 
+                    };
+                }
+
                 const gMarker = new google.maps.Marker({
                     position: { lat: m.lat, lng: m.lng },
                     map: googleMap,
-                    label: { text: m.uniqueId.split('-H').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" },
-                    icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: isComplete ? "#eab308" : "#dc2626", fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' }
+                    label: { 
+                        text: m.uniqueId.split('-H').pop(), 
+                        color: (isComplete && !isGuy) ? "black" : "white", // White text provides better contrast against the Guy shade
+                        fontWeight: "900", 
+                        fontSize: "10px" 
+                    },
+                    icon: iconConfig
                 });
                 gMarkers.push(gMarker);
                 bounds.extend(gMarker.getPosition());
