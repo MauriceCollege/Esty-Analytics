@@ -543,11 +543,17 @@
                 let iconConfig;
                 
                 if (isGuy) {
-                    // Two-tone (shaded) SVG for Guy holes
+                    // SVG for Guy holes with a high-visibility diagonal hazard stripe pattern
+                    // Pattern: primaryColor stripes and solid black stripes
                     const svg = `
                         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="16" cy="16" r="14" fill="${primaryColor}" stroke="white" stroke-width="2"/>
-                            <path d="M16 2 A14 14 0 0 1 16 30 Z" fill="black" fill-opacity="0.65"/>
+                            <defs>
+                                <pattern id="hazardPattern-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                                    <rect width="4" height="8" fill="${primaryColor}"/>
+                                    <rect x="4" width="4" height="8" fill="black"/>
+                                </pattern>
+                            </defs>
+                            <circle cx="16" cy="16" r="14" fill="url(#hazardPattern-${m.id})" stroke="white" stroke-width="2.5"/>
                         </svg>`;
                     
                     iconConfig = {
@@ -572,7 +578,7 @@
                     map: googleMap,
                     label: { 
                         text: m.uniqueId.split('-H').pop(), 
-                        color: (isComplete && !isGuy) ? "black" : "white", // White text provides better contrast against the Guy shade
+                        color: (isComplete && !isGuy) ? "black" : "white", // White text ensures legibility over the hazard pattern
                         fontWeight: "900", 
                         fontSize: "10px" 
                     },
