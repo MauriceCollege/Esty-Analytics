@@ -593,31 +593,53 @@
         window.generateReport = () => {
             if (markers.length === 0) return;
 
+            // 1. Calculate General Statistics
             const total = markers.length;
             const completedCount = markers.filter(m => m.status === 'complete').length;
-            const pending = total - completedCount;
+            const pendingCount = total - completedCount;
             const percentComplete = ((completedCount / total) * 100 || 0).toFixed(2) + '%';
+            const percentPending = ((pendingCount / total) * 100 || 0).toFixed(2) + '%';
             
-            const poleCount = markers.filter(m => (m.holeType || 'Pole') === 'Pole').length;
-            const guyCount = markers.filter(m => m.holeType === 'Guy').length;
+            // 2. Specific Breakdown (Pole vs Guy | Completed vs Pending)
+            const completedPoles = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
+            const pendingPoles = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
+            const completedGuys = markers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
+            const pendingGuys = markers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
             
+            // 3. Category Totals
+            const totalPoles = completedPoles + pendingPoles;
+            const totalGuys = completedGuys + pendingGuys;
+
+            // 4. Dig Method Stats
             const manualCount = markers.filter(m => m.digMethod === 'M').length;
             const backhoeCount = markers.filter(m => m.digMethod === 'B').length;
 
+            // 5. Prepare KPI Summary Data
             const summaryData = [
+                { "KPI Metric": "OVERALL PROGRESS", "Nominal Value": "", "Percentage": "" },
                 { "KPI Metric": "Total Holes Logged", "Nominal Value": total, "Percentage": "100.00%" },
-                { "KPI Metric": "Completed Holes", "Nominal Value": completedCount, "Percentage": percentComplete },
-                { "KPI Metric": "Pending Holes", "Nominal Value": pending, "Percentage": ((pending / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" },
-                { "KPI Metric": "CLASSIFICATION STATS", "Nominal Value": "", "Percentage": "" },
-                { "KPI Metric": "Pole Holes", "Nominal Value": poleCount, "Percentage": ((poleCount / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "Guy Holes", "Nominal Value": guyCount, "Percentage": ((guyCount / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" },
+                { "KPI Metric": "Total Completed", "Nominal Value": completedCount, "Percentage": percentComplete },
+                { "KPI Metric": "Total Pending", "Nominal Value": pendingCount, "Percentage": percentPending },
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+
+                { "KPI Metric": "DETAILED CLASSIFICATION", "Nominal Value": "", "Percentage": "" },
+                { "KPI Metric": "Completed Pole Holes", "Nominal Value": completedPoles, "Percentage": ((completedPoles / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "Pending Pole Holes", "Nominal Value": pendingPoles, "Percentage": ((pendingPoles / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "Completed Guy Holes", "Nominal Value": completedGuys, "Percentage": ((completedGuys / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "Pending Guy Holes", "Nominal Value": pendingGuys, "Percentage": ((pendingGuys / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+
+                { "KPI Metric": "CATEGORY TOTALS", "Nominal Value": "", "Percentage": "" },
+                { "KPI Metric": "Total Pole Holes", "Nominal Value": totalPoles, "Percentage": ((totalPoles / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "Total Guy Holes", "Nominal Value": totalGuys, "Percentage": ((totalGuys / total) * 100 || 0).toFixed(2) + '%' },
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+
                 { "KPI Metric": "METHOD STATS", "Nominal Value": "", "Percentage": "" },
                 { "KPI Metric": "Manual Digging (M)", "Nominal Value": manualCount, "Percentage": ((manualCount / total) * 100 || 0).toFixed(2) + '%' },
                 { "KPI Metric": "Backhoe Digging (B)", "Nominal Value": backhoeCount, "Percentage": ((backhoeCount / total) * 100 || 0).toFixed(2) + '%' }
             ];
 
+            // 6. Prepare Raw Data
             const rawData = markers.map(m => ({ 
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
