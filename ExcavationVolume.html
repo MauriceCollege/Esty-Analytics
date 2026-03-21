@@ -79,12 +79,13 @@
                 
                 <div class="flex flex-col md:flex-row gap-3 items-stretch">
                     <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="feederInput" placeholder="Feeder ID" class="w-full sm:w-40 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl font-semibold">
+                        <input type="text" id="feederInput" placeholder="Feeder ID" class="w-full sm:w-32 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl font-semibold">
                         <div class="relative group">
-                            <input type="text" id="communityInput" placeholder="Community Name" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold" oninput="updatePrefix()">
+                            <input type="text" id="communityInput" placeholder="Community" class="w-full sm:w-40 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold" oninput="updatePrefix()">
                             <div id="prefixDisplay" class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
                         </div>
-                        <input type="text" id="contractorInput" placeholder="Contractor" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm shadow-xl font-semibold">
+                        <input type="text" id="workAreaInput" placeholder="Work Area" class="w-full sm:w-32 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-sm shadow-xl font-semibold">
+                        <input type="text" id="contractorInput" placeholder="Contractor" class="w-full sm:w-40 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm shadow-xl font-semibold">
                     </div>
                     <div class="relative flex-1 md:w-80 group">
                         <input type="text" id="coordInput" placeholder="Paste Coordinates" class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
@@ -347,6 +348,7 @@
             const coordVal = document.getElementById('coordInput').value;
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
             const commVal = document.getElementById('communityInput').value.trim() || 'General';
+            const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             
             const regex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
@@ -366,6 +368,7 @@
                 uniqueId,
                 feeder: feederVal,
                 community: commVal,
+                workArea: workAreaVal,
                 contractor: contractorVal,
                 createdBy: currentUser.fullName,
                 lat, lng,
@@ -477,7 +480,11 @@
                             </div>
                             <div class="space-y-1">
                                 <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
-                                <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
+                                    <span class="text-[8px] text-slate-600 font-black tracking-widest">•</span>
+                                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
+                                </div>
                             </div>
                         </div>
                         <div class="flex gap-2">
@@ -544,7 +551,6 @@
                 
                 if (isGuy) {
                     // SVG for Guy holes with a high-visibility diagonal hazard stripe pattern
-                    // Pattern: primaryColor stripes and solid black stripes
                     const svg = `
                         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <defs>
@@ -578,7 +584,7 @@
                     map: googleMap,
                     label: { 
                         text: m.uniqueId.split('-H').pop(), 
-                        color: (isComplete && !isGuy) ? "black" : "white", // White text ensures legibility over the hazard pattern
+                        color: (isComplete && !isGuy) ? "black" : "white", 
                         fontWeight: "900", 
                         fontSize: "10px" 
                     },
@@ -600,7 +606,7 @@
             const percentComplete = ((completedCount / total) * 100 || 0).toFixed(2) + '%';
             const percentPending = ((pendingCount / total) * 100 || 0).toFixed(2) + '%';
             
-            // 2. Specific Breakdown (Pole vs Guy | Completed vs Pending)
+            // 2. Specific Breakdown
             const completedPoles = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
             const pendingPoles = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
             const completedGuys = markers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
@@ -620,19 +626,19 @@
                 { "KPI Metric": "Total Holes Logged", "Nominal Value": total, "Percentage": "100.00%" },
                 { "KPI Metric": "Total Completed", "Nominal Value": completedCount, "Percentage": percentComplete },
                 { "KPI Metric": "Total Pending", "Nominal Value": pendingCount, "Percentage": percentPending },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, 
 
                 { "KPI Metric": "DETAILED CLASSIFICATION", "Nominal Value": "", "Percentage": "" },
                 { "KPI Metric": "Completed Pole Holes", "Nominal Value": completedPoles, "Percentage": ((completedPoles / total) * 100 || 0).toFixed(2) + '%' },
                 { "KPI Metric": "Pending Pole Holes", "Nominal Value": pendingPoles, "Percentage": ((pendingPoles / total) * 100 || 0).toFixed(2) + '%' },
                 { "KPI Metric": "Completed Guy Holes", "Nominal Value": completedGuys, "Percentage": ((completedGuys / total) * 100 || 0).toFixed(2) + '%' },
                 { "KPI Metric": "Pending Guy Holes", "Nominal Value": pendingGuys, "Percentage": ((pendingGuys / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, 
 
                 { "KPI Metric": "CATEGORY TOTALS", "Nominal Value": "", "Percentage": "" },
                 { "KPI Metric": "Total Pole Holes", "Nominal Value": totalPoles, "Percentage": ((totalPoles / total) * 100 || 0).toFixed(2) + '%' },
                 { "KPI Metric": "Total Guy Holes", "Nominal Value": totalGuys, "Percentage": ((totalGuys / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
+                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, 
 
                 { "KPI Metric": "METHOD STATS", "Nominal Value": "", "Percentage": "" },
                 { "KPI Metric": "Manual Digging (M)", "Nominal Value": manualCount, "Percentage": ((manualCount / total) * 100 || 0).toFixed(2) + '%' },
@@ -644,6 +650,7 @@
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
                 "Community/Project": m.community, 
+                "Work Area": m.workArea || 'N/A',
                 "Contractor": m.contractor, 
                 "Hole Type": m.holeType || 'Pole',
                 "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
