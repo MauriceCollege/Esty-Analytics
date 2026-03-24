@@ -97,10 +97,12 @@
                         </select>
                         
                         <div class="relative group">
-                            <input type="text" id="communityInput" placeholder="Community" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-xs font-semibold w-40" oninput="updatePrefix()">
+                            <input type="text" id="zoneInput" placeholder="Zone" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-xs font-semibold w-40">
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-xs font-semibold w-32" oninput="updatePrefix()">
                             <div id="prefixDisplay" class="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
                         </div>
-                        <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-xs font-semibold w-32">
                         <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-xs font-semibold w-40">
                         
                         <!-- WORK PLAN SECTION -->
@@ -128,11 +130,11 @@
                                 <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
                                 <div class="flex items-center gap-3">
                                     <select id="projectFilter" onchange="handleFilterChange()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50">
-                                        <option value="all">All Communities</option>
+                                        <option value="all">All Zones</option>
                                     </select>
                                     
                                     <!-- RELOCATED NEW PROJECT BUTTON -->
-                                    <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95" title="Clear inputs for a new community">
+                                    <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95" title="Clear inputs for a new zone">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                                         New Project
                                     </button>
@@ -211,7 +213,7 @@
                         Wipe System Data
                     </button>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.0</span><span>IndexedDB Enabled</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.2</span><span>IndexedDB Enabled</span></div>
             </footer>
         </div>
     </div>
@@ -289,16 +291,18 @@
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            const userProjects = [...new Set(markers.map(m => m.community))];
-            dropdown.innerHTML = `<option value="all">All Communities</option>`;
+            // Note: Data migration for existing 'community' field to 'zone'
+            const userProjects = [...new Set(markers.map(m => m.zone || m.community))];
+            dropdown.innerHTML = `<option value="all">All Zones</option>`;
             userProjects.forEach(proj => {
-                const opt = document.createElement('option');
-                opt.value = proj;
-                opt.textContent = proj;
-                dropdown.appendChild(opt);
+                if (proj) {
+                    const opt = document.createElement('option');
+                    opt.value = proj;
+                    opt.textContent = proj;
+                    dropdown.appendChild(opt);
+                }
             });
             dropdown.value = currentVal;
-            // Force title state update
             handleFilterChange();
         }
 
@@ -309,8 +313,9 @@
             setTimeout(() => banner.classList.add('hidden'), 5000);
         }
 
+        // Updated prefix logic to use Work Area
         window.updatePrefix = () => {
-            const input = document.getElementById('communityInput').value.trim();
+            const input = document.getElementById('workAreaInput').value.trim();
             const display = document.getElementById('prefixDisplay');
             if (input.length >= 2) {
                 const prefix = input.substring(0, 3).toUpperCase();
@@ -323,13 +328,13 @@
         // --- NEW PROJECT LOGIC ---
         window.resetInputs = () => {
             document.getElementById('feederInput').value = '';
-            document.getElementById('communityInput').value = '';
+            document.getElementById('zoneInput').value = '';
             document.getElementById('workAreaInput').value = '';
             document.getElementById('contractorInput').value = '';
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
             document.getElementById('prefixDisplay').innerText = '';
-            showGlobalError("Form Cleared. Ready for new project.");
+            showGlobalError("Form Cleared. Ready for new zone.");
         };
 
         // --- MAP ENGINE ---
@@ -376,7 +381,6 @@
             const filterVal = document.getElementById('projectFilter').value;
             const title = document.getElementById('activeOpTitle');
             
-            // Toggle blinking green state
             if (filterVal !== 'all') {
                 title.classList.add('animate-blink-green');
                 title.classList.remove('text-slate-500');
@@ -392,7 +396,7 @@
         window.addMarker = () => {
             let inputString = document.getElementById('coordInput').value.trim();
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
-            const commVal = document.getElementById('communityInput').value.trim() || 'General';
+            const zoneVal = document.getElementById('zoneInput').value.trim() || 'General';
             const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
@@ -430,15 +434,16 @@
 
             if (lat === null || lng === null) return showGlobalError("Invalid Format. Use 'lat, lng' or Google Maps URL");
             
-            const prefix = commVal.substring(0, 3).toUpperCase();
-            const communityCount = markers.filter(m => m.community === commVal).length;
-            const uniqueId = `${prefix}-H${communityCount + 1}`;
+            // New Hole ID logic: First 3 letters from 'Work Area'
+            const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
+            const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
+            const uniqueId = `${prefix}-H${areaCount + 1}`;
             
             const newHole = {
                 id: Date.now().toString(),
                 uniqueId,
                 feeder: feederVal,
-                community: commVal,
+                zone: zoneVal, // Renamed field
                 workArea: workAreaVal,
                 contractor: contractorVal,
                 workPlan: workPlanFormatted,
@@ -510,11 +515,12 @@
             const filterProj = document.getElementById('projectFilter').value;
             
             const filtered = markers.filter(m => {
+                const zone = m.zone || m.community; // Supporting legacy community field
                 const matchesSearch = 
                     m.uniqueId.toLowerCase().includes(search) || 
                     m.contractor.toLowerCase().includes(search) ||
                     (m.workPlan && m.workPlan.toLowerCase().includes(search));
-                const matchesProject = filterProj === 'all' || m.community === filterProj;
+                const matchesProject = filterProj === 'all' || zone === filterProj;
                 return matchesSearch && matchesProject;
             });
             
@@ -602,7 +608,10 @@
             const bounds = new google.maps.LatLngBounds();
             const filterProj = document.getElementById('projectFilter').value;
             
-            const filtered = markers.filter(m => filterProj === 'all' || m.community === filterProj);
+            const filtered = markers.filter(m => {
+                const zone = m.zone || m.community;
+                return filterProj === 'all' || zone === filterProj;
+            });
             
             filtered.forEach(m => {
                 const isComplete = m.status === 'complete';
@@ -641,7 +650,7 @@
                 "Work Plan #": m.workPlan || 'N/A',
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
-                "Community": m.community, 
+                "Zone": m.zone || m.community || 'N/A', 
                 "Work Area": m.workArea || 'N/A',
                 "Contractor": m.contractor, 
                 "Hole Type": m.holeType || 'Pole',
