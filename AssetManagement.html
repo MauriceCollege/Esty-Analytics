@@ -88,7 +88,14 @@
                 
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <input type="text" id="feederInput" placeholder="Feeder ID" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-xs font-semibold w-24">
+                        <!-- FEEDER ID DROP-DOWN -->
+                        <select id="feederInput" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-xs font-semibold w-36">
+                            <option value="" disabled selected>Feeder ID</option>
+                            <option value="Bogue 610">Bogue 610</option>
+                            <option value="Maggotty 110">Maggotty 110</option>
+                            <option value="Paradise 310">Paradise 310</option>
+                        </select>
+                        
                         <div class="relative group">
                             <input type="text" id="communityInput" placeholder="Community" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-xs font-semibold w-40" oninput="updatePrefix()">
                             <div id="prefixDisplay" class="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
