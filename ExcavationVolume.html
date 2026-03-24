@@ -213,7 +213,7 @@
                         Wipe System Data
                     </button>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.5</span><span>IndexedDB Enabled</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.8</span><span>IndexedDB Enabled</span></div>
             </footer>
         </div>
     </div>
@@ -291,7 +291,6 @@
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            // Migration handling
             const userProjects = [...new Set(markers.map(m => m.zone || m.community))];
             dropdown.innerHTML = `<option value="all">All Zones</option>`;
             userProjects.forEach(proj => {
@@ -555,12 +554,10 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <!-- STATUS TOGGLE WITH TOOLTIP -->
                             <button onclick="toggleStatus('${m.id}')" title="${isComplete ? 'Mark as Pending' : 'Mark as Complete'}" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </button>
-                            <!-- DELETE BUTTON WITH TOOLTIP -->
-                            <button onclick="deleteMarker('${m.id}')" title="Delete Entry" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                            <button onclick="deleteMarker('${m.id}')" title="Delete Entry" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
                             </button>
                         </div>
@@ -617,8 +614,7 @@
                 let iconConfig;
                 
                 if (isGuy) {
-                    // HAZARD STRIPE MARKER Logic
-                    const stripeColor = isComplete ? "#eab308" : "#dc2626"; // Yellow or Red
+                    const stripeColor = isComplete ? "#eab308" : "#dc2626";
                     const svg = `
                         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <defs>
@@ -636,14 +632,9 @@
                         labelOrigin: new google.maps.Point(16, 16)
                     };
                 } else {
-                    // Standard solid circle for Pole holes
                     iconConfig = { 
                         path: google.maps.SymbolPath.CIRCLE, 
-                        fillColor: primaryColor, 
-                        fillOpacity: 1, 
-                        strokeWeight: 2, 
-                        scale: 15, 
-                        strokeColor: 'white' 
+                        fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' 
                     };
                 }
 
@@ -653,8 +644,7 @@
                     label: { 
                         text: m.uniqueId.split('-H').pop(), 
                         color: (isComplete && !isGuy) ? "black" : "white", 
-                        fontWeight: "900", 
-                        fontSize: "10px" 
+                        fontWeight: "900", fontSize: "10px" 
                     },
                     icon: iconConfig
                 });
@@ -672,7 +662,9 @@
 
         window.generateReport = () => {
             if (markers.length === 0) return;
-            const rawData = markers.map(m => ({ 
+
+            // --- 1. Operations Log (Detailed List) ---
+            const logData = markers.map(m => ({ 
                 "Work Plan #": m.workPlan || 'N/A',
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
@@ -688,10 +680,31 @@
                 "Timestamp": m.timestamp 
             }));
 
+            // --- 2. UPH Report (Counts Breakdown) ---
+            const poleComplete = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
+            const polePending = markers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
+            const guyComplete = markers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
+            const guyPending = markers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
+
+            const uphReportData = [
+                { "Hole Classification": "POLE HOLES", "Completed": poleComplete, "Pending": polePending, "Total": poleComplete + polePending },
+                { "Hole Classification": "GUY HOLES", "Completed": guyComplete, "Pending": guyPending, "Total": guyComplete + guyPending },
+                { "Hole Classification": "TOTAL OPERATIONS", "Completed": poleComplete + guyComplete, "Pending": polePending + guyPending, "Total": markers.length }
+            ];
+
+            // --- 3. Workbook Assembly ---
             const wb = XLSX.utils.book_new();
-            const wsDetails = XLSX.utils.json_to_sheet(rawData);
-            XLSX.utils.book_append_sheet(wb, wsDetails, "Operations Log");
-            XLSX.writeFile(wb, `UPH_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            // Add UPH Report Sheet
+            const wsUph = XLSX.utils.json_to_sheet(uphReportData);
+            XLSX.utils.book_append_sheet(wb, wsUph, "UPH Report");
+            
+            // Add Operations Log Sheet
+            const wsLog = XLSX.utils.json_to_sheet(logData);
+            XLSX.utils.book_append_sheet(wb, wsLog, "Operations Log");
+
+            // Save File
+            XLSX.writeFile(wb, `UPH_ENTERPRISE_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
