@@ -213,7 +213,7 @@
                         Wipe System Data
                     </button>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.2</span><span>IndexedDB Enabled</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.5</span><span>IndexedDB Enabled</span></div>
             </footer>
         </div>
     </div>
@@ -291,7 +291,7 @@
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            // Note: Data migration for existing 'community' field to 'zone'
+            // Migration handling
             const userProjects = [...new Set(markers.map(m => m.zone || m.community))];
             dropdown.innerHTML = `<option value="all">All Zones</option>`;
             userProjects.forEach(proj => {
@@ -313,7 +313,6 @@
             setTimeout(() => banner.classList.add('hidden'), 5000);
         }
 
-        // Updated prefix logic to use Work Area
         window.updatePrefix = () => {
             const input = document.getElementById('workAreaInput').value.trim();
             const display = document.getElementById('prefixDisplay');
@@ -325,7 +324,6 @@
             display.innerText = ''; return 'GEN';
         };
 
-        // --- NEW PROJECT LOGIC ---
         window.resetInputs = () => {
             document.getElementById('feederInput').value = '';
             document.getElementById('zoneInput').value = '';
@@ -337,7 +335,6 @@
             showGlobalError("Form Cleared. Ready for new zone.");
         };
 
-        // --- MAP ENGINE ---
         window.gm_authFailure = function() {
             document.getElementById('mapLoader').classList.add('hidden');
             document.getElementById('mapFailureOverlay').classList.remove('hidden');
@@ -376,7 +373,6 @@
             if (val) { localStorage.setItem('uph_gmaps_key', val); location.reload(); }
         };
 
-        // --- OPERATIONS ---
         window.handleFilterChange = () => {
             const filterVal = document.getElementById('projectFilter').value;
             const title = document.getElementById('activeOpTitle');
@@ -434,7 +430,6 @@
 
             if (lat === null || lng === null) return showGlobalError("Invalid Format. Use 'lat, lng' or Google Maps URL");
             
-            // New Hole ID logic: First 3 letters from 'Work Area'
             const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
             const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
             const uniqueId = `${prefix}-H${areaCount + 1}`;
@@ -443,7 +438,7 @@
                 id: Date.now().toString(),
                 uniqueId,
                 feeder: feederVal,
-                zone: zoneVal, // Renamed field
+                zone: zoneVal,
                 workArea: workAreaVal,
                 contractor: contractorVal,
                 workPlan: workPlanFormatted,
@@ -458,7 +453,6 @@
             
             markers.push(newHole);
             document.getElementById('coordInput').value = '';
-            
             saveToLocal();
         };
 
@@ -515,7 +509,7 @@
             const filterProj = document.getElementById('projectFilter').value;
             
             const filtered = markers.filter(m => {
-                const zone = m.zone || m.community; // Supporting legacy community field
+                const zone = m.zone || m.community;
                 const matchesSearch = 
                     m.uniqueId.toLowerCase().includes(search) || 
                     m.contractor.toLowerCase().includes(search) ||
@@ -618,18 +612,48 @@
                 const isGuy = m.holeType === 'Guy';
                 const primaryColor = isComplete ? "#eab308" : "#dc2626";
                 
-                let iconConfig = isGuy ? {
-                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${primaryColor}" stroke="white" stroke-width="2.5"/></svg>`),
-                        anchor: new google.maps.Point(16, 16)
-                    } : { 
-                        path: google.maps.SymbolPath.CIRCLE, 
-                        fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' 
+                let iconConfig;
+                
+                if (isGuy) {
+                    // HAZARD STRIPE MARKER Logic
+                    const stripeColor = isComplete ? "#eab308" : "#dc2626"; // Yellow or Red
+                    const svg = `
+                        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                                    <rect width="4" height="8" fill="${stripeColor}"/>
+                                    <rect x="4" width="4" height="8" fill="black"/>
+                                </pattern>
+                            </defs>
+                            <circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/>
+                        </svg>`;
+                    
+                    iconConfig = {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+                        anchor: new google.maps.Point(16, 16),
+                        labelOrigin: new google.maps.Point(16, 16)
                     };
+                } else {
+                    // Standard solid circle for Pole holes
+                    iconConfig = { 
+                        path: google.maps.SymbolPath.CIRCLE, 
+                        fillColor: primaryColor, 
+                        fillOpacity: 1, 
+                        strokeWeight: 2, 
+                        scale: 15, 
+                        strokeColor: 'white' 
+                    };
+                }
 
                 const gMarker = new google.maps.Marker({
                     position: { lat: m.lat, lng: m.lng },
                     map: googleMap,
-                    label: { text: m.uniqueId.split('-H').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" },
+                    label: { 
+                        text: m.uniqueId.split('-H').pop(), 
+                        color: (isComplete && !isGuy) ? "black" : "white", 
+                        fontWeight: "900", 
+                        fontSize: "10px" 
+                    },
                     icon: iconConfig
                 });
                 gMarkers.push(gMarker);
