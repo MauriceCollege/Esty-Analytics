@@ -31,6 +31,15 @@
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         
         .id-badge:hover .media-preview { display: block; animation: fadeIn 0.2s ease-out; }
+
+        /* Blinking Green Animation */
+        @keyframes blink-green {
+            0%, 100% { color: #22c55e; opacity: 1; }
+            50% { color: #4ade80; opacity: 0.5; }
+        }
+        .animate-blink-green {
+            animation: blink-green 1.5s infinite;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -55,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Main Content (Hidden until login) -->
+    <!-- Main Dashboard -->
     <div id="mainDashboard" class="hidden opacity-0 transition-opacity duration-700 p-4 md:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto space-y-6">
             <!-- Header -->
@@ -77,17 +86,24 @@
                     </div>
                 </div>
                 
-                <div class="flex flex-col md:flex-row gap-3 items-stretch">
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="feederInput" placeholder="Feeder ID" class="w-full sm:w-40 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl font-semibold">
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="text" id="feederInput" placeholder="Feeder ID" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-xs font-semibold w-24">
                         <div class="relative group">
-                            <input type="text" id="communityInput" placeholder="Community Name" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm shadow-xl font-semibold" oninput="updatePrefix()">
-                            <div id="prefixDisplay" class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
+                            <input type="text" id="communityInput" placeholder="Community" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-xs font-semibold w-40" oninput="updatePrefix()">
+                            <div id="prefixDisplay" class="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
                         </div>
-                        <input type="text" id="contractorInput" placeholder="Contractor" class="w-full sm:w-44 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm shadow-xl font-semibold">
+                        <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-xs font-semibold w-32">
+                        <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-xs font-semibold w-40">
+                        
+                        <!-- WORK PLAN SECTION -->
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 pointer-events-none">WP-</div>
+                            <input type="number" id="workPlanInput" placeholder="Plan #" class="w-28 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all text-xs font-semibold" title="Enter Work Plan Number">
+                        </div>
                     </div>
-                    <div class="relative flex-1 md:w-80 group">
-                        <input type="text" id="coordInput" placeholder="Paste Coordinates" class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
+                    <div class="relative group">
+                        <input type="text" id="coordInput" placeholder="Paste Coordinates (lat, lng) or Google Maps URL..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
                         <button onclick="addMarker()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
@@ -101,11 +117,18 @@
                     <div class="flex-1 space-y-4">
                         <div class="flex items-center gap-4">
                             <div class="space-y-1">
-                                <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Active Operation</h3>
-                                <div class="flex items-center gap-2">
-                                    <select id="projectFilter" onchange="renderRegistry()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50">
+                                <!-- BLINKING TITLE -->
+                                <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
+                                <div class="flex items-center gap-3">
+                                    <select id="projectFilter" onchange="handleFilterChange()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50">
                                         <option value="all">All Communities</option>
                                     </select>
+                                    
+                                    <!-- RELOCATED NEW PROJECT BUTTON -->
+                                    <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95" title="Clear inputs for a new community">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                        New Project
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -137,7 +160,7 @@
                 </button>
             </div>
 
-            <!-- Map & Inventory -->
+            <!-- Map & Ledger -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div class="lg:col-span-8 relative bg-slate-900 rounded-[2.5rem] border border-slate-800 h-[680px] overflow-hidden shadow-2xl group">
                     <div id="mapFailureOverlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-10 text-center space-y-8">
@@ -145,7 +168,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
                         </div>
                         <h3 class="text-2xl font-black uppercase text-white" id="mapErrorTitle">Satellite Offline</h3>
-                        <p class="text-slate-400 text-sm max-w-sm mx-auto" id="mapErrorDesc">The Google Maps connection could not be established. Your API key may be expired or invalid.</p>
+                        <p class="text-slate-400 text-sm max-w-sm mx-auto" id="mapErrorDesc">Google Maps could not be loaded.</p>
                         <button onclick="promptNewKey()" class="px-8 py-4 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-all">Update API Key</button>
                     </div>
                     <div id="mapLoader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950/80 z-20">
@@ -164,7 +187,7 @@
                             </button>
                         </div>
                         <div class="relative">
-                            <input type="text" id="searchInventory" placeholder="Filter ID or contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
+                            <input type="text" id="searchInventory" placeholder="Filter ID, WP#, or contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
                         </div>
                     </div>
                     <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar"></div>
@@ -181,7 +204,7 @@
                         Wipe System Data
                     </button>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v6.2</span><span>IndexedDB Enabled</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.0</span><span>IndexedDB Enabled</span></div>
             </footer>
         </div>
     </div>
@@ -190,7 +213,7 @@
     <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-6">
         <div class="max-w-md w-full glass-panel rounded-[3rem] p-10 space-y-6">
             <h2 class="text-2xl font-black text-center text-white">Refresh API Credentials</h2>
-            <p class="text-center text-slate-400 text-xs leading-relaxed">Enter a valid Google Maps API Key to restore satellite view features.</p>
+            <p class="text-center text-slate-400 text-xs leading-relaxed">Enter a valid Google Maps API Key.</p>
             <input type="password" id="newApiKeyInput" placeholder="Enter AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-center font-mono outline-none focus:ring-2 focus:ring-red-600/40">
             <div class="flex gap-4">
                 <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-500 py-4 rounded-2xl">Cancel</button>
@@ -206,7 +229,7 @@
         let currentUser = JSON.parse(localStorage.getItem('uph_user')) || null;
         let markers = JSON.parse(localStorage.getItem('uph_markers')) || [];
         let googleMap = null;
-        let googleMapsKey = localStorage.getItem('uph_gmaps_key') || ''; // Default to empty to force user entry if localStorage is empty
+        let googleMapsKey = localStorage.getItem('uph_gmaps_key') || ''; 
         let gMarkers = [];
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
@@ -215,7 +238,6 @@
             const first = document.getElementById('firstNameInput').value.trim();
             const last = document.getElementById('lastNameInput').value.trim();
             if (!first || !last) return;
-            
             currentUser = { first, last, fullName: `${first} ${last}` };
             localStorage.setItem('uph_user', JSON.stringify(currentUser));
             initializeUI();
@@ -250,7 +272,6 @@
             }
         }
 
-        // --- SYSTEM ENGINE ---
         function saveToLocal() {
             localStorage.setItem('uph_markers', JSON.stringify(markers));
             updateProjectDropdown();
@@ -262,7 +283,6 @@
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
             const userProjects = [...new Set(markers.map(m => m.community))];
-            
             dropdown.innerHTML = `<option value="all">All Communities</option>`;
             userProjects.forEach(proj => {
                 const opt = document.createElement('option');
@@ -271,6 +291,8 @@
                 dropdown.appendChild(opt);
             });
             dropdown.value = currentVal;
+            // Force title state update
+            handleFilterChange();
         }
 
         function showGlobalError(msg) {
@@ -291,14 +313,22 @@
             display.innerText = ''; return 'GEN';
         };
 
+        // --- NEW PROJECT LOGIC ---
+        window.resetInputs = () => {
+            document.getElementById('feederInput').value = '';
+            document.getElementById('communityInput').value = '';
+            document.getElementById('workAreaInput').value = '';
+            document.getElementById('contractorInput').value = '';
+            document.getElementById('workPlanInput').value = '';
+            document.getElementById('coordInput').value = '';
+            document.getElementById('prefixDisplay').innerText = '';
+            showGlobalError("Form Cleared. Ready for new project.");
+        };
+
         // --- MAP ENGINE ---
-        
-        // This is a global handler defined by Google Maps for authentication failures (like ExpiredKeyMapError)
         window.gm_authFailure = function() {
             document.getElementById('mapLoader').classList.add('hidden');
             document.getElementById('mapFailureOverlay').classList.remove('hidden');
-            document.getElementById('mapErrorTitle').innerText = "Maps API Expired";
-            document.getElementById('mapErrorDesc').innerText = "The current Google Maps API Key has expired or is invalid. Please refresh it to restore the view.";
             showGlobalError("Google Maps Auth Failed");
             setTimeout(() => { promptNewKey(); }, 1500);
         };
@@ -313,28 +343,18 @@
                 document.getElementById('mapLoader').classList.add('hidden');
                 document.getElementById('mapFailureOverlay').classList.add('hidden');
                 updateMapMarkers();
-            } catch (e) { 
-                document.getElementById('mapFailureOverlay').classList.remove('hidden'); 
-            }
+            } catch (e) { document.getElementById('mapFailureOverlay').classList.remove('hidden'); }
         };
 
         const loadGMap = () => {
             if (!googleMapsKey) {
                 document.getElementById('mapLoader').classList.add('hidden');
                 document.getElementById('mapFailureOverlay').classList.remove('hidden');
-                document.getElementById('mapErrorTitle').innerText = "No API Key Found";
-                document.getElementById('mapErrorDesc').innerText = "Please provide a valid Google Maps API key to initialize the tracking engine.";
                 return;
             }
-            
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
             script.async = true;
-            script.onerror = () => {
-                document.getElementById('mapLoader').classList.add('hidden');
-                document.getElementById('mapFailureOverlay').classList.remove('hidden');
-                showGlobalError("Failed to load Maps library.");
-            };
             document.head.appendChild(script);
         };
 
@@ -345,20 +365,64 @@
         };
 
         // --- OPERATIONS ---
+        window.handleFilterChange = () => {
+            const filterVal = document.getElementById('projectFilter').value;
+            const title = document.getElementById('activeOpTitle');
+            
+            // Toggle blinking green state
+            if (filterVal !== 'all') {
+                title.classList.add('animate-blink-green');
+                title.classList.remove('text-slate-500');
+            } else {
+                title.classList.remove('animate-blink-green');
+                title.classList.add('text-slate-500');
+            }
+
+            renderRegistry();
+            updateMapMarkers();
+        };
+
         window.addMarker = () => {
-            const coordVal = document.getElementById('coordInput').value;
+            let inputString = document.getElementById('coordInput').value.trim();
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
             const commVal = document.getElementById('communityInput').value.trim() || 'General';
+            const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
+            const workPlanRaw = document.getElementById('workPlanInput').value.trim();
             
-            const regex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
-            const match = coordVal.match(regex);
-            
-            if (!match) return showGlobalError("Invalid Coordinate Format");
-            
-            const lat = parseFloat(match[1]);
-            const lng = parseFloat(match[2]);
+            const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
 
+            const urlPatterns = [
+                /@(-?\d+\.\d+),(-?\d+\.\d+)/,
+                /place\/(-?\d+\.\d+),(-?\d+\.\d+)/,
+                /q=(-?\d+\.\d+),(-?\d+\.\d+)/
+            ];
+
+            let lat = null;
+            let lng = null;
+
+            if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
+                for (let pattern of urlPatterns) {
+                    const match = inputString.match(pattern);
+                    if (match) {
+                        lat = parseFloat(match[1]);
+                        lng = parseFloat(match[2]);
+                        break;
+                    }
+                }
+            }
+
+            if (lat === null || lng === null) {
+                const manualRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
+                const match = inputString.match(manualRegex);
+                if (match) {
+                    lat = parseFloat(match[1]);
+                    lng = parseFloat(match[2]);
+                }
+            }
+
+            if (lat === null || lng === null) return showGlobalError("Invalid Format. Use 'lat, lng' or Google Maps URL");
+            
             const prefix = commVal.substring(0, 3).toUpperCase();
             const communityCount = markers.filter(m => m.community === commVal).length;
             const uniqueId = `${prefix}-H${communityCount + 1}`;
@@ -368,18 +432,21 @@
                 uniqueId,
                 feeder: feederVal,
                 community: commVal,
+                workArea: workAreaVal,
                 contractor: contractorVal,
+                workPlan: workPlanFormatted,
                 createdBy: currentUser.fullName,
                 lat, lng,
                 status: 'pending',
                 digMethod: 'M',
-                holeType: 'Pole', // Default Hole Type
+                holeType: 'Pole', 
                 image: null,
                 timestamp: new Date().toLocaleString()
             };
             
             markers.push(newHole);
             document.getElementById('coordInput').value = '';
+            
             saveToLocal();
         };
 
@@ -436,19 +503,21 @@
             const filterProj = document.getElementById('projectFilter').value;
             
             const filtered = markers.filter(m => {
-                const matchesSearch = m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search);
+                const matchesSearch = 
+                    m.uniqueId.toLowerCase().includes(search) || 
+                    m.contractor.toLowerCase().includes(search) ||
+                    (m.workPlan && m.workPlan.toLowerCase().includes(search));
                 const matchesProject = filterProj === 'all' || m.community === filterProj;
                 return matchesSearch && matchesProject;
             });
             
             document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0 || markers.length === 0);
             
-            // KPI Calculations
-            const completed = markers.filter(m => m.status === 'complete').length;
-            const total = markers.length;
-            const percent = Math.round((completed / total) * 100) || 0;
+            const completedCount = filtered.filter(m => m.status === 'complete').length;
+            const total = filtered.length;
+            const percent = Math.round((completedCount / total) * 100) || 0;
             
-            document.getElementById('kpiCounts').innerText = `${completed} / ${total} Completed`;
+            document.getElementById('kpiCounts').innerText = `${completedCount} / ${total} Completed`;
             document.getElementById('kpiPercent').innerText = `${percent}%`;
             document.getElementById('kpiProgressBar').style.width = `${percent}%`;
             
@@ -458,9 +527,8 @@
                 const dist = prev ? calculateDistance(prev.lat, prev.lng, m.lat, m.lng) : 0;
                 totalDist += dist;
                 const isComplete = m.status === 'complete';
-                const currentHoleType = m.holeType || 'Pole';
 
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isComplete ? 'border-yellow-500/40' : 'border-slate-800'}">
+                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isComplete ? 'border-yellow-500/60 ring-1 ring-yellow-500/20' : 'border-slate-800'}">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-4">
                             <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
@@ -468,13 +536,24 @@
                                 ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
                             </div>
                             <div class="space-y-1">
-                                <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
-                                <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
+                                    <span class="text-[9px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded font-bold border border-orange-500/30">${m.workPlan || 'N/A'}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
+                                    <span class="text-[8px] text-slate-600 font-black tracking-widest">•</span>
+                                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex gap-1">
-                            <button onclick="toggleStatus('${m.id}')" class="p-2 rounded-xl ${isComplete ? 'text-yellow-500 bg-yellow-500/10' : 'text-slate-600 hover:bg-slate-800'}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
-                            <button onclick="deleteMarker('${m.id}')" class="p-2 text-slate-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                        <div class="flex gap-2">
+                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>
+                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+                            </button>
                         </div>
                     </div>
                     
@@ -489,8 +568,8 @@
                         <div class="space-y-2">
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
                             <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleHoleType('${m.id}', 'Pole')" class="flex-1 py-1 text-[9px] font-black rounded-md ${currentHoleType === 'Pole' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Pole</button>
-                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${currentHoleType === 'Guy' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Guy</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Pole')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? 'bg-slate-800 text-white' : 'text-slate-600'}">Pole</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Guy</button>
                             </div>
                         </div>
                     </div>
@@ -501,8 +580,7 @@
                             <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Replace Photo' : 'Attach Photo'}</button>
-                            <span class="text-[9px] font-mono text-slate-600 uppercase">${m.createdBy.split(' ')[0]}</span>
+                            <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
                         </div>
                     </div>
                 </div>`;
@@ -517,76 +595,61 @@
             const bounds = new google.maps.LatLngBounds();
             const filterProj = document.getElementById('projectFilter').value;
             
-            markers.filter(m => filterProj === 'all' || m.community === filterProj).forEach(m => {
+            const filtered = markers.filter(m => filterProj === 'all' || m.community === filterProj);
+            
+            filtered.forEach(m => {
                 const isComplete = m.status === 'complete';
+                const isGuy = m.holeType === 'Guy';
+                const primaryColor = isComplete ? "#eab308" : "#dc2626";
+                
+                let iconConfig = isGuy ? {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${primaryColor}" stroke="white" stroke-width="2.5"/></svg>`),
+                        anchor: new google.maps.Point(16, 16)
+                    } : { 
+                        path: google.maps.SymbolPath.CIRCLE, 
+                        fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' 
+                    };
+
                 const gMarker = new google.maps.Marker({
                     position: { lat: m.lat, lng: m.lng },
                     map: googleMap,
                     label: { text: m.uniqueId.split('-H').pop(), color: isComplete ? "black" : "white", fontWeight: "900", fontSize: "10px" },
-                    icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: isComplete ? "#eab308" : "#dc2626", fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' }
+                    icon: iconConfig
                 });
                 gMarkers.push(gMarker);
                 bounds.extend(gMarker.getPosition());
             });
-            if (markers.length > 0) googleMap.fitBounds(bounds);
+
+            if (filtered.length > 0) {
+                googleMap.fitBounds(bounds);
+            } else if (filterProj === 'all' && markers.length === 0) {
+                googleMap.setCenter(JAMAICA_CENTER);
+                googleMap.setZoom(8);
+            }
         }
 
         window.generateReport = () => {
             if (markers.length === 0) return;
-
-            // 1. Calculate Statistics
-            const total = markers.length;
-            const completed = markers.filter(m => m.status === 'complete').length;
-            const pending = total - completed;
-            const percentComplete = ((completed / total) * 100 || 0).toFixed(2) + '%';
-            
-            const poleCount = markers.filter(m => (m.holeType || 'Pole') === 'Pole').length;
-            const guyCount = markers.filter(m => m.holeType === 'Guy').length;
-            
-            const manualCount = markers.filter(m => m.digMethod === 'M').length;
-            const backhoeCount = markers.filter(m => m.digMethod === 'B').length;
-
-            // 2. Prepare KPI Summary Data
-            const summaryData = [
-                { "KPI Metric": "Total Holes Logged", "Nominal Value": total, "Percentage": "100.00%" },
-                { "KPI Metric": "Completed Holes", "Nominal Value": completed, "Percentage": percentComplete },
-                { "KPI Metric": "Pending Holes", "Nominal Value": pending, "Percentage": ((pending / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
-                { "KPI Metric": "CLASSIFICATION STATS", "Nominal Value": "", "Percentage": "" },
-                { "KPI Metric": "Pole Holes", "Nominal Value": poleCount, "Percentage": ((poleCount / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "Guy Holes", "Nominal Value": guyCount, "Percentage": ((guyCount / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "", "Nominal Value": "", "Percentage": "" }, // Spacer
-                { "KPI Metric": "METHOD STATS", "Nominal Value": "", "Percentage": "" },
-                { "KPI Metric": "Manual Digging (M)", "Nominal Value": manualCount, "Percentage": ((manualCount / total) * 100 || 0).toFixed(2) + '%' },
-                { "KPI Metric": "Backhoe Digging (B)", "Nominal Value": backhoeCount, "Percentage": ((backhoeCount / total) * 100 || 0).toFixed(2) + '%' }
-            ];
-
-            // 3. Prepare Raw Data
             const rawData = markers.map(m => ({ 
+                "Work Plan #": m.workPlan || 'N/A',
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
-                "Community/Project": m.community, 
+                "Community": m.community, 
+                "Work Area": m.workArea || 'N/A',
                 "Contractor": m.contractor, 
                 "Hole Type": m.holeType || 'Pole',
                 "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
+                "Status": m.status.toUpperCase(), 
                 "Latitude": m.lat,
                 "Longitude": m.lng,
-                "Operator": m.createdBy, 
-                "Status": m.status.toUpperCase(), 
+                "Operator": m.createdBy,
                 "Timestamp": m.timestamp 
             }));
 
-            // 4. Build Workbook
             const wb = XLSX.utils.book_new();
-            const wsSummary = XLSX.utils.json_to_sheet(summaryData);
             const wsDetails = XLSX.utils.json_to_sheet(rawData);
-
-            // Add sheets to workbook
-            XLSX.utils.book_append_sheet(wb, wsSummary, "KPI Summary");
-            XLSX.utils.book_append_sheet(wb, wsDetails, "Detailed Inventory");
-
-            // 5. Trigger Download
-            XLSX.writeFile(wb, `UPH_OPERATIONS_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, wsDetails, "Operations Log");
+            XLSX.writeFile(wb, `UPH_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
