@@ -378,29 +378,20 @@
             updateProjectDropdown();
             renderRegistry();
             updateMapMarkers();
-            calcStorageUsage(); // Update usage readout
+            calcStorageUsage();
         }
 
-        // --- NEW STORAGE CALCULATION ENGINE ---
         function calcStorageUsage() {
             const el = document.getElementById('storageUsage');
             if (!markers) {
                 el.innerText = '0 KB';
                 return;
             }
-            
-            // Approximate size of the JSON representation of data
-            // This is a reliable proxy for IndexedDB overhead
             const jsonString = JSON.stringify(markers);
             const bytes = new Blob([jsonString]).size;
-            
-            if (bytes < 1024) {
-                el.innerText = `${bytes} B`;
-            } else if (bytes < 1048576) {
-                el.innerText = `${(bytes / 1024).toFixed(2)} KB`;
-            } else {
-                el.innerText = `${(bytes / 1048576).toFixed(2)} MB`;
-            }
+            if (bytes < 1024) el.innerText = `${bytes} B`;
+            else if (bytes < 1048576) el.innerText = `${(bytes / 1024).toFixed(2)} KB`;
+            else el.innerText = `${(bytes / 1048576).toFixed(2)} MB`;
         }
 
         function updateProjectDropdown() {
@@ -667,7 +658,6 @@
                         </div>
                     </div>
                     
-                    <!-- Hierarchical Toggles -->
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Dig Method</p>
@@ -720,13 +710,75 @@
             if (filtered.length > 0) googleMap.fitBounds(bounds);
         }
 
+        /**
+         * --- HIERARCHICAL REPORTING ENGINE ---
+         * Generates a 2-sheet Excel report with detailed summary and raw logs.
+         */
         window.generateReport = () => {
             if (markers.length === 0) return;
-            const sortedMarkers = [...markers].sort((a, b) => (a.zone || '').localeCompare(b.zone || ''));
-            const logData = sortedMarkers.map(m => ({ "Project": m.zone, "Area": m.workArea, "ID": m.uniqueId, "Lat": m.lat, "Lng": m.lng, "Status": m.status }));
+
+            // --- 1. Operations Log (Sheet 2) ---
+            const sortedMarkers = [...markers].sort((a, b) => {
+                const zoneSort = (a.zone || '').localeCompare(b.zone || '');
+                if (zoneSort !== 0) return zoneSort;
+                return (a.workArea || '').localeCompare(b.workArea || '');
+            });
+
+            const logData = sortedMarkers.map(m => ({ 
+                "Project (Zone)": m.zone || 'N/A',
+                "Work Area": m.workArea || 'N/A',
+                "Work Plan #": m.workPlan || 'N/A',
+                "Hole ID": m.uniqueId, 
+                "Feeder": m.feeder, 
+                "Contractor": m.contractor, 
+                "Hole Type": m.holeType || 'Pole',
+                "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
+                "Status": m.status.toUpperCase(), 
+                "Latitude": m.lat,
+                "Longitude": m.lng,
+                "Operator": m.createdBy,
+                "Timestamp": m.timestamp 
+            }));
+
+            // --- 2. UPH Summary (Sheet 1) ---
+            const uphReportData = [];
+            const zones = [...new Set(markers.map(m => m.zone || 'General'))].sort();
+            let gComplete = 0, gPending = 0;
+
+            zones.forEach(zone => {
+                const zoneMarkers = markers.filter(m => (m.zone || 'General') === zone);
+                const workAreas = [...new Set(zoneMarkers.map(m => m.workArea || 'General'))].sort();
+                let zComplete = 0, zPending = 0;
+
+                uphReportData.push({ "Project / Zone": zone.toUpperCase(), "Work Area": "---", "Classification": "---", "Completed": "---", "Pending": "---", "Total": "---" });
+
+                workAreas.forEach(wa => {
+                    const waMarkers = zoneMarkers.filter(m => (m.workArea || 'General') === wa);
+                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
+                    const pp = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
+                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
+                    const gp = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
+
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Pole Holes", "Completed": pc, "Pending": pp, "Total": pc + pp });
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Guy Holes", "Completed": gc, "Pending": gp, "Total": gc + gp });
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": `${wa} SUBTOTAL`, "Classification": "All Types", "Completed": pc + gc, "Pending": pp + gp, "Total": pc + gc + pp + gp });
+                    uphReportData.push({ "Project / Zone": "", "Work Area": "", "Classification": "", "Completed": "", "Pending": "", "Total": "" });
+                    zComplete += (pc + gc); zPending += (pp + gp);
+                });
+
+                uphReportData.push({ "Project / Zone": `${zone} TOTAL`, "Work Area": "ALL AREAS", "Classification": "Zone Summary", "Completed": zComplete, "Pending": zPending, "Total": zComplete + zPending });
+                uphReportData.push({ "Project / Zone": "==========", "Work Area": "==========", "Classification": "==========", "Completed": "===", "Pending": "===", "Total": "===" });
+                gComplete += zComplete; gPending += zPending;
+            });
+
+            uphReportData.push({ "Project / Zone": "GRAND TOTAL", "Work Area": "GLOBAL", "Classification": "All Operations", "Completed": gComplete, "Pending": gPending, "Total": gComplete + gPending });
+
+            // --- 3. Workbook Assembly ---
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Log");
-            XLSX.writeFile(wb, `UPH_REPORT.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uphReportData), "UPH Summary");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
+
+            XLSX.writeFile(wb, `UPH_MANAGEMENT_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
