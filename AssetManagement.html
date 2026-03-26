@@ -651,7 +651,10 @@
                                 ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
                             </div>
                             <div class="space-y-1">
-                                <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
+                                    <span class="text-[9px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded font-bold border border-orange-500/30">${m.workPlan || 'N/A'}</span>
+                                </div>
                                 <div class="flex items-center gap-2">
                                     <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
                                     <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
