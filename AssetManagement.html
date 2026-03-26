@@ -32,7 +32,6 @@
         
         .id-badge:hover .media-preview { display: block; animation: fadeIn 0.2s ease-out; }
 
-        /* Blinking Green Animation */
         @keyframes blink-green {
             0%, 100% { color: #22c55e; opacity: 1; }
             50% { color: #4ade80; opacity: 0.5; }
@@ -88,7 +87,6 @@
                 
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- FEEDER ID DROP-DOWN -->
                         <select id="feederInput" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-xs font-semibold w-36">
                             <option value="" disabled selected>Feeder ID</option>
                             <option value="Bogue 610">Bogue 610</option>
@@ -103,9 +101,13 @@
                             <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-xs font-semibold w-32" oninput="updatePrefix()">
                             <div id="prefixDisplay" class="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
                         </div>
+
+                        <div class="relative">
+                            <input type="text" id="manualIdInput" placeholder="Manual Hole ID" class="bg-slate-900/80 border border-slate-700/50 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500/30 transition-all text-xs font-semibold w-32 placeholder:text-slate-600" title="Override automatic ID sequence">
+                        </div>
+
                         <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-xs font-semibold w-40">
                         
-                        <!-- WORK PLAN SECTION -->
                         <div class="relative">
                             <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 pointer-events-none">WP-</div>
                             <input type="number" id="workPlanInput" placeholder="Plan #" class="w-28 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all text-xs font-semibold" title="Enter Work Plan Number">
@@ -126,14 +128,11 @@
                     <div class="flex-1 space-y-4">
                         <div class="flex items-center gap-4">
                             <div class="space-y-1">
-                                <!-- BLINKING TITLE -->
                                 <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
                                 <div class="flex items-center gap-3">
                                     <select id="projectFilter" onchange="handleFilterChange()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50">
                                         <option value="all">All Zones</option>
                                     </select>
-                                    
-                                    <!-- RELOCATED NEW PROJECT BUTTON -->
                                     <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95" title="Clear inputs for a new zone">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                                         New Project
@@ -213,7 +212,7 @@
                         Wipe System Data
                     </button>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v7.5</span><span>IndexedDB Enabled</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.0 (DB Core)</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -234,55 +233,166 @@
     <input type="file" id="imageInput" class="hidden" accept="image/*">
 
     <script>
-        // --- STATE MANAGEMENT ---
-        let currentUser = JSON.parse(localStorage.getItem('uph_user')) || null;
-        let markers = JSON.parse(localStorage.getItem('uph_markers')) || [];
+        /**
+         * --- INDEXED DB ENGINE ---
+         * High-capacity local-first storage for enterprise field data.
+         */
+        const DB_NAME = 'UPHTrackerDB';
+        const DB_VERSION = 1;
+        let db;
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('markers')) {
+                        db.createObjectStore('markers', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'key' });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+
+                request.onerror = (e) => {
+                    console.error("IndexedDB Error:", e);
+                    reject("Database failure. Check browser permissions.");
+                };
+            });
+        };
+
+        const dbPut = (storeName, data) => {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.put(data);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject();
+            });
+        };
+
+        const dbGet = (storeName, key) => {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject();
+            });
+        };
+
+        const dbGetAll = (storeName) => {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject();
+            });
+        };
+
+        const dbDelete = (storeName, key) => {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.delete(key);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject();
+            });
+        };
+
+        const dbClear = (storeName) => {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.clear();
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject();
+            });
+        };
+
+        // --- APPLICATION STATE ---
+        let currentUser = null;
+        let markers = [];
         let googleMap = null;
-        let googleMapsKey = localStorage.getItem('uph_gmaps_key') || ''; 
+        let googleMapsKey = '';
         let gMarkers = [];
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
-        // --- AUTH LOGIC ---
-        function handleLogin() {
+        // --- CORE FUNCTIONS ---
+        async function handleLogin() {
             const first = document.getElementById('firstNameInput').value.trim();
             const last = document.getElementById('lastNameInput').value.trim();
             if (!first || !last) return;
             currentUser = { first, last, fullName: `${first} ${last}` };
-            localStorage.setItem('uph_user', JSON.stringify(currentUser));
+            await dbPut('settings', { key: 'user', value: currentUser });
             initializeUI();
         }
 
-        function handleLogout() {
+        async function handleLogout() {
             if(confirm("Logout from current session?")) {
-                localStorage.removeItem('uph_user');
+                await dbDelete('settings', 'user');
                 location.reload();
             }
         }
 
-        function initializeUI() {
-            if (!currentUser) {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-            } else {
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('mainDashboard').classList.remove('hidden');
-                setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
-                document.getElementById('userNameDisplay').innerText = currentUser.fullName;
-                updateProjectDropdown();
-                renderRegistry();
-                loadGMap();
+        async function initializeUI() {
+            try {
+                await initDB();
+                
+                // Migrate from localStorage if needed (first run after update)
+                const oldMarkers = localStorage.getItem('uph_markers');
+                if (oldMarkers) {
+                    const parsed = JSON.parse(oldMarkers);
+                    for (const m of parsed) await dbPut('markers', m);
+                    localStorage.removeItem('uph_markers');
+                }
+                const oldKey = localStorage.getItem('uph_gmaps_key');
+                if (oldKey) {
+                    await dbPut('settings', { key: 'gmaps_key', value: oldKey });
+                    localStorage.removeItem('uph_gmaps_key');
+                }
+
+                // Load state from DB
+                const userSetting = await dbGet('settings', 'user');
+                currentUser = userSetting ? userSetting.value : null;
+                
+                const keySetting = await dbGet('settings', 'gmaps_key');
+                googleMapsKey = keySetting ? keySetting.value : '';
+
+                markers = await dbGetAll('markers');
+
+                if (!currentUser) {
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                } else {
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('mainDashboard').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
+                    document.getElementById('userNameDisplay').innerText = currentUser.fullName;
+                    updateProjectDropdown();
+                    renderRegistry();
+                    loadGMap();
+                }
+            } catch (err) {
+                showGlobalError("Database Initialization Failed: " + err);
             }
         }
 
-        function clearAllData() {
+        async function clearAllData() {
             if (confirm("DANGER: This will delete ALL local inventory data. Proceed?")) {
-                markers = [];
-                saveToLocal();
+                await dbClear('markers');
+                await dbClear('settings');
                 location.reload();
             }
         }
 
-        function saveToLocal() {
-            localStorage.setItem('uph_markers', JSON.stringify(markers));
+        async function syncState() {
             updateProjectDropdown();
             renderRegistry();
             updateMapMarkers();
@@ -291,16 +401,13 @@
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            // Migration handling
-            const userProjects = [...new Set(markers.map(m => m.zone || m.community))];
+            const userProjects = [...new Set(markers.map(m => m.zone || 'General'))].sort();
             dropdown.innerHTML = `<option value="all">All Zones</option>`;
             userProjects.forEach(proj => {
-                if (proj) {
-                    const opt = document.createElement('option');
-                    opt.value = proj;
-                    opt.textContent = proj;
-                    dropdown.appendChild(opt);
-                }
+                const opt = document.createElement('option');
+                opt.value = proj;
+                opt.textContent = proj;
+                dropdown.appendChild(opt);
             });
             dropdown.value = currentVal;
             handleFilterChange();
@@ -328,6 +435,7 @@
             document.getElementById('feederInput').value = '';
             document.getElementById('zoneInput').value = '';
             document.getElementById('workAreaInput').value = '';
+            document.getElementById('manualIdInput').value = ''; 
             document.getElementById('contractorInput').value = '';
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
@@ -368,15 +476,17 @@
         };
 
         window.promptNewKey = () => document.getElementById('apiKeyModal').classList.remove('hidden');
-        window.saveNewKey = () => {
+        window.saveNewKey = async () => {
             const val = document.getElementById('newApiKeyInput').value.trim();
-            if (val) { localStorage.setItem('uph_gmaps_key', val); location.reload(); }
+            if (val) { 
+                await dbPut('settings', { key: 'gmaps_key', value: val });
+                location.reload(); 
+            }
         };
 
         window.handleFilterChange = () => {
             const filterVal = document.getElementById('projectFilter').value;
             const title = document.getElementById('activeOpTitle');
-            
             if (filterVal !== 'all') {
                 title.classList.add('animate-blink-green');
                 title.classList.remove('text-slate-500');
@@ -384,112 +494,119 @@
                 title.classList.remove('animate-blink-green');
                 title.classList.add('text-slate-500');
             }
-
             renderRegistry();
             updateMapMarkers();
         };
 
-        window.addMarker = () => {
+        window.addMarker = async () => {
             let inputString = document.getElementById('coordInput').value.trim();
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
             const zoneVal = document.getElementById('zoneInput').value.trim() || 'General';
             const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
+            const manualIdVal = document.getElementById('manualIdInput').value.trim(); 
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
-            
             const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
 
-            const urlPatterns = [
-                /@(-?\d+\.\d+),(-?\d+\.\d+)/,
-                /place\/(-?\d+\.\d+),(-?\d+\.\d+)/,
-                /q=(-?\d+\.\d+),(-?\d+\.\d+)/
-            ];
-
-            let lat = null;
-            let lng = null;
+            const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
+            let lat = null, lng = null;
 
             if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
                 for (let pattern of urlPatterns) {
                     const match = inputString.match(pattern);
-                    if (match) {
-                        lat = parseFloat(match[1]);
-                        lng = parseFloat(match[2]);
-                        break;
-                    }
+                    if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); break; }
                 }
             }
-
             if (lat === null || lng === null) {
                 const manualRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
                 const match = inputString.match(manualRegex);
-                if (match) {
-                    lat = parseFloat(match[1]);
-                    lng = parseFloat(match[2]);
-                }
+                if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
             }
-
             if (lat === null || lng === null) return showGlobalError("Invalid Format. Use 'lat, lng' or Google Maps URL");
             
-            const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-            const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
-            const uniqueId = `${prefix}-H${areaCount + 1}`;
+            let uniqueId;
+            if (manualIdVal) {
+                const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
+                if (collision) return showGlobalError("Duplicate Manual ID detected in this Work Area.");
+                uniqueId = manualIdVal;
+            } else {
+                const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
+                const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
+                uniqueId = `${prefix}-H${areaCount + 1}`;
+            }
             
             const newHole = {
                 id: Date.now().toString(),
-                uniqueId,
-                feeder: feederVal,
-                zone: zoneVal,
-                workArea: workAreaVal,
-                contractor: contractorVal,
-                workPlan: workPlanFormatted,
-                createdBy: currentUser.fullName,
-                lat, lng,
-                status: 'pending',
-                digMethod: 'M',
-                holeType: 'Pole', 
-                image: null,
-                timestamp: new Date().toLocaleString()
+                uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
+                contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
+                lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
             };
             
             markers.push(newHole);
+            await dbPut('markers', newHole);
             document.getElementById('coordInput').value = '';
-            saveToLocal();
+            document.getElementById('manualIdInput').value = ''; 
+            syncState();
         };
 
-        window.deleteMarker = (id) => { 
+        window.deleteMarker = async (id) => { 
             if (confirm("Delete entry?")) {
                 markers = markers.filter(m => m.id !== id);
-                saveToLocal();
+                await dbDelete('markers', id);
+                syncState();
             }
         };
 
-        window.toggleStatus = (id) => {
+        window.toggleStatus = async (id) => {
             const idx = markers.findIndex(m => m.id === id);
             markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
-            saveToLocal();
+            await dbPut('markers', markers[idx]);
+            syncState();
         };
 
-        window.toggleMethod = (id, method) => {
+        window.toggleMethod = async (id, method) => {
             const idx = markers.findIndex(m => m.id === id);
             markers[idx].digMethod = method;
-            saveToLocal();
+            await dbPut('markers', markers[idx]);
+            syncState();
         };
 
-        window.toggleHoleType = (id, type) => {
+        window.toggleHoleType = async (id, type) => {
             const idx = markers.findIndex(m => m.id === id);
             markers[idx].holeType = type;
-            saveToLocal();
+            await dbPut('markers', markers[idx]);
+            syncState();
         };
+
+        async function compressImage(base64Str, maxWidth = 800, maxHeight = 800) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = base64Str;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } }
+                    else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            });
+        }
 
         window.triggerUpload = (id) => { window.pendingId = id; document.getElementById('imageInput').click(); };
         document.getElementById('imageInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file && window.pendingId) {
                 const reader = new FileReader();
-                reader.onloadend = () => {
+                reader.onloadend = async () => {
+                    const compressed = await compressImage(reader.result);
                     const idx = markers.findIndex(m => m.id === window.pendingId);
-                    markers[idx].image = reader.result;
-                    saveToLocal();
+                    markers[idx].image = compressed;
+                    await dbPut('markers', markers[idx]);
+                    renderRegistry();
+                    showGlobalError("Photo Optimized & Attached");
                 };
                 reader.readAsDataURL(file);
             }
@@ -497,8 +614,7 @@
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
@@ -509,17 +625,12 @@
             const filterProj = document.getElementById('projectFilter').value;
             
             const filtered = markers.filter(m => {
-                const zone = m.zone || m.community;
-                const matchesSearch = 
-                    m.uniqueId.toLowerCase().includes(search) || 
-                    m.contractor.toLowerCase().includes(search) ||
-                    (m.workPlan && m.workPlan.toLowerCase().includes(search));
-                const matchesProject = filterProj === 'all' || zone === filterProj;
+                const matchesSearch = m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search) || (m.workPlan && m.workPlan.toLowerCase().includes(search));
+                const matchesProject = filterProj === 'all' || (m.zone || 'General') === filterProj;
                 return matchesSearch && matchesProject;
             });
             
             document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0 || markers.length === 0);
-            
             const completedCount = filtered.filter(m => m.status === 'complete').length;
             const total = filtered.length;
             const percent = Math.round((completedCount / total) * 100) || 0;
@@ -530,16 +641,14 @@
             
             let totalDist = 0;
             list.innerHTML = filtered.map((m, idx) => {
-                const prev = idx > 0 ? filtered[idx - 1] : null;
-                const dist = prev ? calculateDistance(prev.lat, prev.lng, m.lat, m.lng) : 0;
+                const dist = idx > 0 ? calculateDistance(filtered[idx - 1].lat, filtered[idx - 1].lng, m.lat, m.lng) : 0;
                 totalDist += dist;
                 const isComplete = m.status === 'complete';
-
                 return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isComplete ? 'border-yellow-500/60 ring-1 ring-yellow-500/20' : 'border-slate-800'}">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-4">
                             <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
-                                ${m.uniqueId.split('-H').pop()}
+                                ${m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : '#'}
                                 ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
                             </div>
                             <div class="space-y-1">
@@ -549,21 +658,15 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
-                                    <span class="text-[8px] text-slate-600 font-black tracking-widest">•</span>
                                     <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </button>
-                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
-                            </button>
+                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
                         </div>
                     </div>
-                    
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Dig Method</p>
@@ -580,15 +683,9 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                        <div class="flex flex-col">
-                            <p class="text-[8px] font-black uppercase text-slate-600 tracking-tight">Contractor</p>
-                            <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
-                        </div>
+                        <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p>
+                        <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
                     </div>
                 </div>`;
             }).join('');
@@ -601,95 +698,77 @@
             gMarkers = [];
             const bounds = new google.maps.LatLngBounds();
             const filterProj = document.getElementById('projectFilter').value;
-            
-            const filtered = markers.filter(m => {
-                const zone = m.zone || m.community;
-                return filterProj === 'all' || zone === filterProj;
-            });
-            
+            const filtered = markers.filter(m => filterProj === 'all' || (m.zone || 'General') === filterProj);
             filtered.forEach(m => {
-                const isComplete = m.status === 'complete';
-                const isGuy = m.holeType === 'Guy';
+                const isComplete = m.status === 'complete', isGuy = m.holeType === 'Guy';
                 const primaryColor = isComplete ? "#eab308" : "#dc2626";
-                
                 let iconConfig;
-                
                 if (isGuy) {
-                    // HAZARD STRIPE MARKER Logic
-                    const stripeColor = isComplete ? "#eab308" : "#dc2626"; // Yellow or Red
-                    const svg = `
-                        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-                                    <rect width="4" height="8" fill="${stripeColor}"/>
-                                    <rect x="4" width="4" height="8" fill="black"/>
-                                </pattern>
-                            </defs>
-                            <circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/>
-                        </svg>`;
-                    
-                    iconConfig = {
-                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-                        anchor: new google.maps.Point(16, 16),
-                        labelOrigin: new google.maps.Point(16, 16)
-                    };
+                    const stripeColor = isComplete ? "#eab308" : "#dc2626";
+                    const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${stripeColor}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/></svg>`;
+                    iconConfig = { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), anchor: new google.maps.Point(16, 16), labelOrigin: new google.maps.Point(16, 16) };
                 } else {
-                    // Standard solid circle for Pole holes
-                    iconConfig = { 
-                        path: google.maps.SymbolPath.CIRCLE, 
-                        fillColor: primaryColor, 
-                        fillOpacity: 1, 
-                        strokeWeight: 2, 
-                        scale: 15, 
-                        strokeColor: 'white' 
-                    };
+                    iconConfig = { path: google.maps.SymbolPath.CIRCLE, fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
                 }
-
-                const gMarker = new google.maps.Marker({
-                    position: { lat: m.lat, lng: m.lng },
-                    map: googleMap,
-                    label: { 
-                        text: m.uniqueId.split('-H').pop(), 
-                        color: (isComplete && !isGuy) ? "black" : "white", 
-                        fontWeight: "900", 
-                        fontSize: "10px" 
-                    },
-                    icon: iconConfig
-                });
+                const labelText = m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : 'M';
+                const gMarker = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, label: { text: labelText, color: (isComplete && !isGuy) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: iconConfig });
                 gMarkers.push(gMarker);
                 bounds.extend(gMarker.getPosition());
             });
-
-            if (filtered.length > 0) {
-                googleMap.fitBounds(bounds);
-            } else if (filterProj === 'all' && markers.length === 0) {
-                googleMap.setCenter(JAMAICA_CENTER);
-                googleMap.setZoom(8);
-            }
+            if (filtered.length > 0) googleMap.fitBounds(bounds);
         }
 
         window.generateReport = () => {
             if (markers.length === 0) return;
-            const rawData = markers.map(m => ({ 
-                "Work Plan #": m.workPlan || 'N/A',
-                "Hole ID": m.uniqueId, 
-                "Feeder": m.feeder, 
-                "Zone": m.zone || m.community || 'N/A', 
-                "Work Area": m.workArea || 'N/A',
-                "Contractor": m.contractor, 
-                "Hole Type": m.holeType || 'Pole',
-                "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
-                "Status": m.status.toUpperCase(), 
-                "Latitude": m.lat,
-                "Longitude": m.lng,
-                "Operator": m.createdBy,
-                "Timestamp": m.timestamp 
+            const sortedMarkers = [...markers].sort((a, b) => {
+                const zoneSort = (a.zone || '').localeCompare(b.zone || '');
+                if (zoneSort !== 0) return zoneSort;
+                return (a.workArea || '').localeCompare(b.workArea || '');
+            });
+
+            const logData = sortedMarkers.map(m => ({ 
+                "Project (Zone)": m.zone || 'N/A', "Work Area": m.workArea || 'N/A', "Work Plan #": m.workPlan || 'N/A',
+                "Hole ID": m.uniqueId, "Feeder": m.feeder, "Contractor": m.contractor, "Hole Type": m.holeType || 'Pole',
+                "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe', "Status": m.status.toUpperCase(), 
+                "Latitude": m.lat, "Longitude": m.lng, "Operator": m.createdBy, "Timestamp": m.timestamp 
             }));
 
+            const uphReportData = [];
+            const zones = [...new Set(markers.map(m => m.zone || 'General'))].sort();
+            let gComplete = 0, gPending = 0;
+
+            zones.forEach(zone => {
+                const zoneMarkers = markers.filter(m => (m.zone || 'General') === zone);
+                const workAreas = [...new Set(zoneMarkers.map(m => m.workArea || 'General'))].sort();
+                let zComplete = 0, zPending = 0;
+
+                uphReportData.push({ "Project / Zone": zone.toUpperCase(), "Work Area": "---", "Classification": "---", "Completed": "---", "Pending": "---", "Total": "---" });
+
+                workAreas.forEach(wa => {
+                    const waMarkers = zoneMarkers.filter(m => (m.workArea || 'General') === wa);
+                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
+                    const pp = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
+                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
+                    const gp = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
+
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Pole Holes", "Completed": pc, "Pending": pp, "Total": pc + pp });
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Guy Holes", "Completed": gc, "Pending": gp, "Total": gc + gp });
+                    uphReportData.push({ "Project / Zone": zone, "Work Area": `${wa} SUBTOTAL`, "Classification": "All Types", "Completed": pc + gc, "Pending": pp + gp, "Total": pc + gc + pp + gp });
+                    uphReportData.push({ "Project / Zone": "", "Work Area": "", "Classification": "", "Completed": "", "Pending": "", "Total": "" });
+                    zComplete += (pc + gc); zPending += (pp + gp);
+                });
+
+                uphReportData.push({ "Project / Zone": `${zone} TOTAL`, "Work Area": "ALL", "Classification": "Zone Summary", "Completed": zComplete, "Pending": zPending, "Total": zComplete + zPending });
+                uphReportData.push({ "Project / Zone": "==========", "Work Area": "==========", "Classification": "==========", "Completed": "===", "Pending": "===", "Total": "===" });
+                gComplete += zComplete; gPending += zPending;
+            });
+
+            uphReportData.push({ "Project / Zone": "GRAND TOTAL", "Work Area": "GLOBAL", "Classification": "All Projects", "Completed": gComplete, "Pending": gPending, "Total": gComplete + gPending });
+
             const wb = XLSX.utils.book_new();
-            const wsDetails = XLSX.utils.json_to_sheet(rawData);
-            XLSX.utils.book_append_sheet(wb, wsDetails, "Operations Log");
-            XLSX.writeFile(wb, `UPH_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uphReportData), "UPH Summary");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
+            XLSX.writeFile(wb, `UPH_ENTERPRISE_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
