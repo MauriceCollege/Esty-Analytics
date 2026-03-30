@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counseling Exam Mastery Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .chapter-card {
+            transition: all 0.3s ease;
+        }
+        .chapter-card:hover {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div id="app" class="w-full max-w-2xl mx-auto">
+        <div class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            <p class="mt-4 text-slate-400">Loading Comprehensive Question Bank...</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo } = React;
+
+        const CHAPTERS = [
+            { id: "ch3", title: "Human Growth & Development", color: "#6C63FF" },
+            { id: "ch4", title: "Social & Cultural Diversity", color: "#FF6584" },
+            { id: "ch5", title: "Counseling & Helping Relationships", color: "#43B89C" },
+            { id: "ch6", title: "Group Counseling & Group Work", color: "#F9A825" },
+            { id: "ch7", title: "Career Development", color: "#E91E8C" },
+            { id: "ch8", title: "Assessment & Testing", color: "#00BCD4" },
+            { id: "ch9", title: "Research & Program Evaluation", color: "#8BC34A" },
+            { id: "ch10", title: "Professional Orientation & Ethics", color: "#FF5722" },
+            { id: "ch11", title: "Families, Diagnosis & Neurocounseling", color: "#9C27B0" },
+            { id: "mixed", title: "Mixed Mastery (Exam Mode)", color: "#37474F", difficult: true },
+        ];
+
+        const QUESTIONS = {
+            ch3: [
+                { q: "Which theorist is most closely associated with the concept of 'object relations' and the stages of separation-individuation?", options: ["Margaret Mahler", "Jean Piaget", "Erik Erikson", "Lev Vygotsky"], answer: 0, page: 52, explanation: "Margaret Mahler's theory focuses on the symbiosis and separation-individuation process in early childhood development." },
+                { q: "In Kohlberg's theory of moral development, a person who maintains the social order by following rules out of duty is in which stage?", options: ["Preconventional Level", "Conventional Level, Stage 4", "Postconventional Level, Stage 5", "Universal Ethical Principle Orientation"], answer: 1, page: 48, explanation: "Stage 4 (Law and Order) of the Conventional level involves respecting authority and maintaining social systems." },
+                { q: "Lev Vygotsky's 'Zone of Proximal Development' (ZPD) refers to:", options: ["Biological maturation limits", "The gap between what a learner can do with help and without help", "Stages of cognitive development in infants", "The critical period for language acquisition"], answer: 1, page: 61, explanation: "ZPD represents the difference between a child's independent problem-solving ability and their potential with guidance." },
+                { q: "Konrad Lorenz is best known for his work on 'imprinting,' which suggests that:", options: ["Behavior is strictly learned", "There is a 'critical period' for social and emotional bonding", "Conditioning occurs immediately", "Genetic factors are irrelevant"], answer: 1, page: 59, explanation: "Lorenz's work with goslings highlighted the 'critical period' concept in attachment and development." },
+                { q: "In Piaget's theory, 'Centration' (focusing on one aspect of a situation and ignoring others) is a characteristic of which stage?", options: ["Sensorimotor", "Preoperational", "Concrete Operational", "Formal Operational"], answer: 1, page: 45, explanation: "Preoperational children often show centration, such as focusing on height but not width in the liquid conservation task." },
+                { q: "The term 'maturationist' is most often applied to which developmental theorist?", options: ["Arnold Gesell", "B.F. Skinner", "Albert Bandura", "Lev Vygotsky"], answer: 0, page: 42, explanation: "Gesell believed development is primarily determined by biological maturation and genetic factors." },
+                { q: "Carol Gilligan's critique of Lawrence Kohlberg's theory centered on:", options: ["Age appropriateness", "The exclusion of women in the research", "Cross-cultural bias", "Statistical errors"], answer: 1, page: 49, explanation: "Gilligan argued that Kohlberg's model reflected male-oriented justice reasoning and ignored female-oriented care reasoning." },
+                { q: "According to Erikson, the primary conflict for a child between the ages of 3 and 5 is:", options: ["Trust vs. Mistrust", "Autonomy vs. Shame", "Initiative vs. Guilt", "Industry vs. Inferiority"], answer: 2, page: 39, explanation: "Initiative vs. Guilt occurs during the preschool years as children begin to assert control and power over their environment." },
+                { q: "The 'A-Not-B Error' is a phenomenon observed in which Piagetian stage?", options: ["Sensorimotor", "Preoperational", "Concrete Operational", "Formal Operational"], answer: 0, page: 44, explanation: "It is a characteristic error in the sensorimotor stage where infants look for an object where it was last found rather than where it was seen being hidden." },
+                { q: "Which of the following is an example of an 'alloplastic' approach to change?", options: ["Changing one's own beliefs", "Adjusting to the environment", "Modifying the external environment", "Practicing mindfulness"], answer: 2, page: 104, explanation: "Alloplastic refers to attempts to change the external world or system rather than oneself (autoplastic)." },
+                { q: "The concept of 'Animism' (assigning life-like qualities to inanimate objects) is common in which stage?", options: ["Sensorimotor", "Preoperational", "Concrete Operational", "Formal Operational"], answer: 1, page: 45, explanation: "Animism is a hallmark of the Preoperational stage (ages 2-7)." },
+                { q: "Which theorist emphasized the role of 'social learning' through observation and modeling?", options: ["Albert Bandura", "Abraham Maslow", "Carl Jung", "Alfred Adler"], answer: 0, page: 56, explanation: "Bandura's Social Learning Theory posits that people learn by observing others (the Bobo doll experiment)." },
+                { q: "The 'Strange Situation' procedure used to assess attachment styles was developed by:", options: ["John Bowlby", "Mary Ainsworth", "Harry Harlow", "Sigmund Freud"], answer: 1, page: 60, explanation: "Ainsworth developed the procedure to categorize secure, avoidant, and ambivalent attachment." },
+                { q: "In Freud's theory, the 'Oedipus Complex' occurs during which stage?", options: ["Oral", "Anal", "Phallic", "Latency"], answer: 2, page: 41, explanation: "The Phallic stage (ages 3-5) is characterized by the Oedipus/Electra complex." },
+                { q: "Which theorist focused on the 'Ego' as the rational part of the personality that manages impulses?", options: ["Freud", "Erikson", "Heinz Kohut", "Donald Winnicott"], answer: 1, page: 40, explanation: "Erikson is considered an 'ego psychologist' because he emphasized the ego's ability to navigate psychosocial tasks." },
+                { q: "The 'Heinz Dilemma' was used by which researcher to study development?", options: ["Piaget", "Gilligan", "Kohlberg", "Bowlby"], answer: 2, page: 48, explanation: "Kohlberg used the Heinz Dilemma to categorize levels of moral reasoning." },
+                { q: "What is the primary difference between 'Negative Reinforcement' and 'Punishment'?", options: ["One is physical, the other is mental", "Reinforcement increases behavior; Punishment decreases it", "Punishment is always effective", "They are the same"], answer: 1, page: 54, explanation: "Reinforcement (positive or negative) always aims to increase behavior frequency." },
+                { q: "Harry Harlow's research with rhesus monkeys demonstrated that 'contact comfort' is:", options: ["Less important than food", "More important than food", "Only important for females", "Relevant only in infancy"], answer: 1, page: 59, explanation: "Harlow found monkeys preferred the cloth 'mother' over the wire 'mother' that provided milk." },
+                { q: "Which term describes the inability of a child to see a situation from another person's point of view?", options: ["Centration", "Conservation", "Egocentrism", "Object Permanence"], answer: 2, page: 45, explanation: "Egocentrism is a key feature of the Preoperational stage." },
+                { q: "The term 'Generativity vs. Stagnation' refers to which life stage?", options: ["Young Adulthood", "Middle Adulthood", "Late Adulthood", "Adolescence"], answer: 1, page: 39, explanation: "Middle adulthood (ages 40-65) is characterized by the need to create or nurture things that will outlast them." }
+            ],
+            ch4: [
+                { q: "A counselor who believes that universal principles apply to all clients regardless of culture is using which perspective?", options: ["Emic", "Etic", "Autoplastic", "Alloplastic"], answer: 1, page: 101, explanation: "The Etic perspective emphasizes the universal 'sameness' of human beings." },
+                { q: "Which term refers to the process where a minority group gradually adopts the customs and attitudes of the prevailing culture?", options: ["Assimilation", "Acculturation", "Marginalization", "Enculturation"], answer: 0, page: 99, explanation: "Assimilation is the process of becoming similar to the dominant culture." },
+                { q: "In the context of multicultural counseling, 'Proxemics' refers to the study of:", options: ["Voice tone and pitch", "Body language", "Personal space and distance", "Time perception"], answer: 2, page: 120, explanation: "Proxemics is the study of how people use space in communication." },
+                { q: "The 'Moynihan Report' (1965) was widely criticized for:", options: ["Pathologizing the Black family structure", "Ignoring socioeconomic status", "Promoting segregation", "Focusing only on urban populations"], answer: 0, page: 111, explanation: "The report attributed social problems to the 'deterioration' of the Black family, ignoring systemic factors." },
+                { q: "An 'Alloplastic' approach to multicultural counseling would involve:", options: ["Helping the client change their internal reaction", "Helping the client change their environment or circumstances", "Using medication to treat symptoms", "Applying Western-only techniques"], answer: 1, page: 104, explanation: "Alloplastic refers to changing the environment to fit the individual." },
+                { q: "The term 'Cultural Pluralism' means:", options: ["Forced assimilation", "Groups keeping their unique cultural identity within a larger society", "The disappearance of minority cultures", "A 'melting pot' approach"], answer: 1, page: 98, explanation: "Pluralism suggests a society where diverse cultures coexist while maintaining their distinct identities." },
+                { q: "High-context communication relies heavily on:", options: ["Explicit verbal messages", "Non-verbal cues and shared understanding", "Written contracts", "Statistical data"], answer: 1, page: 120, explanation: "High-context communication (common in many non-Western cultures) depends on the physical context or non-verbal signals." },
+                { q: "The concept of 'Race' is primarily defined as:", options: ["A biological fact", "A social construct", "A geographic location", "A religious affiliation"], answer: 1, page: 98, explanation: "Most sociologists and anthropologists view race as a social construct rather than a biological reality." },
+                { q: "Which model of acculturation involves identifying with neither the home culture nor the host culture?", options: ["Assimilation", "Separation", "Integration", "Marginalization"], answer: 3, page: 99, explanation: "Marginalization occurs when individuals lose touch with both cultures." },
+                { q: "Which researcher is known for the 'Stanford Prison Experiment'?", options: ["Milgram", "Zimbardo", "Asch", "Festinger"], answer: 1, page: 108, explanation: "Philip Zimbardo's experiment showed how social roles and situations can influence behavior." },
+                { q: "Leon Festinger is best known for his theory of:", options: ["Social exchange", "Cognitive Dissonance", "Groupthink", "Classical Conditioning"], answer: 1, page: 107, explanation: "Cognitive Dissonance is the state of having inconsistent thoughts or beliefs, leading to psychological discomfort." },
+                { q: "The 'Robbers Cave Experiment' by Muzafer Sherif demonstrated that:", options: ["Competition leads to conflict, but superordinate goals reduce it", "Groups always segregate", "Leaders are born, not made", "Violence is innate"], answer: 0, page: 109, explanation: "Cooperation on shared goals helped reconcile the hostile groups of boys." },
+                { q: "What is 'Microaggression'?", options: ["A large scale protest", "Subtle, everyday slights or insults toward marginalized groups", "An overt hate crime", "A positive stereotype"], answer: 1, page: 118, explanation: "Microaggressions are brief and commonplace daily verbal, behavioral, or environmental indignities." },
+                { q: "The 'Colorblind' approach in counseling is often criticized because it:", options: ["Focuses too much on race", "Ignores the reality of the client's cultural experience and systemic racism", "Is too expensive", "Requires specialized training"], answer: 1, page: 117, explanation: "Denying race ('I don't see color') invalidates a core part of a person's identity and experience." },
+                { q: "In Cross's Black Identity Development Model, 'Pre-encounter' is characterized by:", options: ["Pride in Black culture", "Preference for dominant white culture and values", "Anger toward white people", "Integration of multiple identities"], answer: 1, page: 112, explanation: "The pre-encounter stage involves a preference for Eurocentric worldviews." },
+                { q: "The 'Internalized Oppression' phenomenon occurs when:", options: ["A group fights back", "Members of a marginalized group believe the negative stereotypes about themselves", "The government passes a law", "A counselor refuses to see a client"], answer: 1, page: 105, explanation: "This occurs when oppressed people accept and apply the prejudices of the dominant group to themselves." },
+                { q: "What is 'Ethnocentrism'?", options: ["The study of ethnic food", "Believing one's own culture is superior to others", "Learning a second language", "Traveling to other countries"], answer: 1, page: 101, explanation: "Ethnocentrism is evaluating other cultures based on the standards of one's own." },
+                { q: "The term 'Mores' refers to:", options: ["Casual habits", "Practices that are vital to the welfare and survival of a group", "The way people dress", "Slang language"], answer: 1, page: 97, explanation: "Mores are social norms that carry moral significance; breaking them often results in social disapproval." },
+                { q: "Which therapist's work was highly controversial for its focus on 'sociobiology'?", options: ["E.O. Wilson", "Carl Rogers", "B.F. Skinner", "Sigmund Freud"], answer: 0, page: 101, explanation: "Wilson suggested that social behavior has a genetic basis, which was criticized for being deterministic." },
+                { q: "In multicultural terms, 'Worldview' consists of:", options: ["Only religious beliefs", "Locus of control and locus of responsibility", "A map of the world", "The languages one speaks"], answer: 1, page: 104, explanation: "Sue and Sue defined worldview using Internal/External Locus of Control/Responsibility." }
+            ],
+            ch5: [
+                { q: "Who is known as the father of 'Logotherapy'?", options: ["Viktor Frankl", "Carl Rogers", "Fritz Perls", "Albert Ellis"], answer: 0, page: 161, explanation: "Logotherapy is a form of existential therapy focusing on finding meaning in suffering." },
+                { q: "In Rational Emotive Behavior Therapy (REBT), what does the 'B' stand for in the A-B-C model?", options: ["Behavior", "Belief", "Basic needs", "Biological"], answer: 1, page: 172, explanation: "The sequence is Activating Event, Belief, and Consequence." },
+                { q: "Which counselor response is 'subtractive' according to Carkhuff’s scale?", options: ["Paraphrasing accurately", "Asking a deep question", "Providing a response that doesn't capture the client's feelings at all", "Identifying a hidden emotion"], answer: 2, page: 156, explanation: "A subtractive response ignores or minimizes what the client has expressed." },
+                { q: "Reality Therapy, developed by William Glasser, focuses on:", options: ["The past", "The 'here and now' and personal responsibility", "Dream analysis", "The unconscious mind"], answer: 1, page: 177, explanation: "Reality therapy emphasizes present behavior and making better choices to meet basic needs." },
+                { q: "According to Carl Rogers, the three 'core conditions' for change are:", options: ["Insight, Action, Reality", "Empathy, Congruence, Unconditional Positive Regard", "Dream work, Analysis, Interpretation", "Logic, Reason, Behavior"], answer: 1, page: 155, explanation: "These are the necessary and sufficient conditions for therapeutic growth in Person-Centered therapy." },
+                { q: "The term 'Transference' in psychoanalysis refers to:", options: ["The therapist's feelings for the client", "The client projecting feelings for someone else onto the therapist", "Moving from one room to another", "Ending the session"], answer: 1, page: 147, explanation: "Transference allows the client to work through past relationships in the present therapeutic dynamic." },
+                { q: "Which theorist developed 'Individual Psychology' and the concept of 'lifestyle'?", options: ["Sigmund Freud", "Alfred Adler", "Carl Jung", "Fritz Perls"], answer: 1, page: 149, explanation: "Adler's Individual Psychology emphasizes birth order, social interest, and the striving for superiority." },
+                { q: "In Gestalt therapy, 'Unfinished Business' refers to:", options: ["Not paying the bill", "Unexpressed feelings from the past that interfere with current functioning", "Incomplete homework assignments", "A client's job"], answer: 1, page: 164, explanation: "Gestalt therapy aims to bring unfinished business into the present 'here and now' for resolution." },
+                { q: "What is the primary goal of Solution-Focused Brief Therapy (SFBT)?", options: ["Analyzing childhood trauma", "Identifying and utilizing client strengths and exceptions", "Correcting irrational thoughts", "Group cohesion"], answer: 1, page: 181, explanation: "SFBT looks for 'exceptions' (times the problem wasn't there) to build solutions." },
+                { q: "Which therapy uses the 'Empty Chair' technique?", options: ["Psychoanalysis", "REBT", "Gestalt", "Person-Centered"], answer: 2, page: 165, explanation: "The empty chair is a signature Gestalt technique used to work through internal or interpersonal conflicts." },
+                { q: "Adler's 'Social Interest' refers to:", options: ["Being popular", "A sense of belonging and contribution to the common good", "Having many followers", "Using social media"], answer: 1, page: 149, explanation: "Adler believed mental health is directly related to one's social interest (Gemeinschaftsgefühl)." },
+                { q: "In Existential therapy, 'Mitwelt' refers to the:", options: ["Physical world", "Relationship world (with others)", "Inner psychological world", "Spiritual world"], answer: 1, page: 161, explanation: "Existentialism uses Umwelt (physical), Mitwelt (social), and Eigenwelt (internal) to describe our being-in-the-world." },
+                { q: "Transactional Analysis (TA) uses the 'P-A-C' model, which stands for:", options: ["Past-Always-Changes", "Parent-Adult-Child", "Problem-Action-Consequence", "People-And-Culture"], answer: 1, page: 168, explanation: "TA focuses on these three ego states and how they interact (transactions)." },
+                { q: "The 'Miracle Question' is a signature technique of:", options: ["Reality Therapy", "Solution-Focused Brief Therapy", "Behavior Therapy", "Adlerian Therapy"], answer: 1, page: 181, explanation: "It asks the client to imagine their life if the problem was suddenly gone." },
+                { q: "Which approach uses 'paradoxical intention'?", options: ["Person-Centered", "Logotherapy/Existential", "Behavioral", "Psychoanalytic"], answer: 1, page: 161, explanation: "Frankl used paradoxical intention to help clients overcome anxiety by 'wishing' for the symptom." },
+                { q: "What is 'Catharsis'?", options: ["An emotional release", "A type of medicine", "The end of a session", "A logical argument"], answer: 0, page: 146, explanation: "Catharsis involves the discharge of pent-up emotions during the therapeutic process." },
+                { q: "Biofeedback is most often used to treat:", options: ["Schizophrenia", "Psychosomatic and stress-related disorders", "Borderline Personality Disorder", "Depression"], answer: 1, page: 171, explanation: "Biofeedback helps clients gain voluntary control over involuntary physiological functions like heart rate." },
+                { q: "Which therapist is associated with 'Multimodal Therapy' (BASIC ID)?", options: ["Arnold Lazarus", "Albert Ellis", "Aaron Beck", "Donald Meichenbaum"], answer: 0, page: 182, explanation: "BASIC ID stands for Behavior, Affect, Sensation, Imagery, Cognition, Interpersonal, and Drugs/Biology." },
+                { q: "Meichenbaum's 'Stress Inoculation Training' (SIT) involves:", options: ["Physical exercise", "Providing coping skills before the stress occurs", "Hypnosis", "Intensive group therapy"], answer: 1, page: 174, explanation: "SIT aims to help clients 'vaccinate' themselves against stress by learning coping strategies beforehand." },
+                { q: "A 'Flooding' technique in behavior therapy involves:", options: ["Slow exposure", "Sudden, prolonged exposure to a feared stimulus", "Drowning metaphors", "Inundating the client with advice"], answer: 1, page: 170, explanation: "Flooding (implosive therapy if done in the imagination) aims to extinguish a fear response through intense exposure." }
+            ],
+            ch6: [
+                { q: "According to Irvin Yalom, the 'curative factor' that involves realizing others share similar problems is called:", options: ["Altruism", "Universality", "Cohesiveness", "Catharsis"], answer: 1, page: 204, explanation: "Universality helps group members feel less isolated and 'broken'." },
+                { q: "What is the primary role of a 'Gatekeeper' in a group?", options: ["Preventing people from entering", "Ensuring everyone has a chance to speak and follows the rules", "Handling the finances", "Analyzing the leader"], answer: 1, page: 201, explanation: "The gatekeeper role helps maintain group balance and participation." },
+                { q: "In the 'Tuckman' model of group development, which stage follows 'Storming'?", options: ["Forming", "Norming", "Performing", "Adjourning"], answer: 1, page: 202, explanation: "The stages are Forming, Storming, Norming, Performing, and Adjourning." },
+                { q: "A 'Laissez-faire' group leader is one who:", options: ["Takes total control", "Is hands-off and allows the group to move on its own", "Is overly aggressive", "Is democratically chosen"], answer: 1, page: 200, explanation: "Laissez-faire (French for 'let them do') is a non-directive leadership style." },
+                { q: "The 'Risky Shift' phenomenon in groups refers to:", options: ["Groups becoming more conservative", "Groups making riskier decisions than individuals would alone", "People leaving the group", "Fights breaking out"], answer: 1, page: 205, explanation: "Group discussion often leads to a polarization of risk-taking behavior." },
+                { q: "What is the 'Scapegoat' role in a group?", options: ["The person who brings snacks", "The member the group blames for all its problems", "The strongest member", "The leader's favorite"], answer: 1, page: 201, explanation: "The scapegoat is often targeted by others' projections and frustrations." },
+                { q: "In a 'Closed' group, the membership:", options: ["Is always secret", "Does not change after the group begins", "Is open to the public", "Changes every week"], answer: 1, page: 198, explanation: "Closed groups offer more stability but less flexibility than open groups." },
+                { q: "What is 'Groupthink'?", options: ["Deep meditation", "The tendency of a group to prioritize consensus over critical thinking", "A creative brainstorming technique", "A type of IQ test"], answer: 1, page: 205, explanation: "Irving Janis identified groupthink as a cause of poor group decision-making." },
+                { q: "A 'Heterogeneous' group is composed of:", options: ["People with the same problem", "People with diverse backgrounds and problems", "Only men", "Only women"], answer: 1, page: 199, explanation: "Heterogeneous groups provide a microcosm of society; homogeneous groups focus on a specific niche." },
+                { q: "Which Yalom curative factor involves members helping one another?", options: ["Altruism", "Universality", "Instillation of hope", "Existential factors"], answer: 0, page: 204, explanation: "Altruism allows members to experience being helpful, which boosts self-esteem." },
+                { q: "The term 'Group Process' refers to:", options: ["The actual words spoken", "The dynamics and interactions between members", "The paperwork", "The length of the session"], answer: 1, page: 203, explanation: "Process is the 'how' of the group; content is the 'what'." },
+                { q: "Who is known for developing 'Psychodrama'?", options: ["Jacob Moreno", "Irvin Yalom", "Carl Rogers", "Kurt Lewin"], answer: 0, page: 195, explanation: "Moreno's psychodrama uses role-playing and dramatization to work through conflicts." },
+                { q: "An 'Autocratic' leader is best described as:", options: ["Hands-off", "Highly directive and controlling", "Passive", "Democratically oriented"], answer: 1, page: 200, explanation: "Autocratic leaders make decisions for the group without significant input." },
+                { q: "What is the recommended size for an effective adult counseling group?", options: ["2-3 members", "8 members", "20 members", "50 members"], answer: 1, page: 199, explanation: "8 is widely considered the ideal size for a process group." },
+                { q: "A 'Screening' interview for a group is intended to:", options: ["Choose only the smartest people", "Ensure the member is appropriate for the group and won't be harmed", "Sell a product", "Collect a fee"], answer: 1, page: 197, explanation: "Screening protects both the prospective member and the group's stability." },
+                { q: "In group work, 'Linking' is a skill where the leader:", options: ["Connects two people with string", "Points out commonalities between members' experiences", "Moves from one topic to another", "Ends the group"], answer: 1, page: 200, explanation: "Linking promotes cohesiveness and universality." },
+                { q: "A 'Blocking' skill is used by a leader to:", options: ["Prevent people from entering", "Stop counterproductive behaviors like storytelling or gossip", "Block out the light", "Forget what happened"], answer: 1, page: 200, explanation: "Leaders block behaviors that interfere with the group's therapeutic goals." },
+                { q: "The 'Initial Stage' of a group is characterized by:", options: ["Intense conflict", "High productivity", "Testing limits and establishing trust", "Sadness at ending"], answer: 2, page: 202, explanation: "Forming/Initial stage involves orientation and trust-building." },
+                { q: "Self-help groups (like AA) differ from counseling groups primarily in that they:", options: ["Are always free", "Are usually led by peers rather than a professional", "Are smaller", "Meet more often"], answer: 1, page: 196, explanation: "Self-help/support groups are led by laypeople who share the same challenge." },
+                { q: "What is the 'Monopolizer' role?", options: ["The leader", "The person who talks too much and dominates the group time", "The silent member", "The treasurer"], answer: 1, page: 201, explanation: "The monopolizer usually speaks to manage their own anxiety, often at the expense of others." }
+            ],
+            ch7: [
+                { q: "Which theorist is associated with the 'Trait-and-Factor' approach to career counseling?", options: ["Frank Parsons", "Donald Super", "John Holland", "John Krumboltz"], answer: 0, page: 226, explanation: "Parsons (the Father of Guidance) emphasized matching an individual's traits to job factors." },
+                { q: "Holland’s RIASEC model includes which six personality types?", options: ["Realistic, Intellectual, Artistic, Social, Enterprising, Conventional", "Realistic, Investigative, Artistic, Social, Enterprising, Conventional", "Rational, Investigative, Academic, Strong, Eager, Clever", "Ready, Interested, Active, Smart, Efficient, Calm"], answer: 1, page: 231, explanation: "Investigative (not Intellectual) is the 'I' in RIASEC." },
+                { q: "According to Donald Super, the 'Life-Career Rainbow' includes:", options: ["Five colors", "Nine roles and five stages", "Six personality types", "A pot of gold"], answer: 1, page: 230, explanation: "Super's rainbow illustrates the various roles and stages we move through across the lifespan." },
+                { q: "Which theorist focused on the impact of early childhood and parent-child interactions on career choice?", options: ["Anne Roe", "John Holland", "John Krumboltz", "Linda Gottfredson"], answer: 0, page: 228, explanation: "Roe proposed a personality-based theory using Maslow's hierarchy, focusing on 'towards' or 'away' from people." },
+                { q: "Krumboltz's Social Learning Theory of Career Choice (SLTCC) identifies which four factors?", options: ["Genetics, Environment, Learning, Task Approach Skills", "Personality, Interests, Values, Skills", "Luck, Skill, Effort, Difficulty", "Parenting, Schooling, Religion, Peers"], answer: 0, page: 233, explanation: "Krumboltz emphasizes that career choice is a result of complex learning experiences." },
+                { q: "The 'DOT' (Dictionary of Occupational Titles) has been replaced by which online system?", options: ["O*NET", "Occupational Outlook Handbook", "Indeed", "CareerOneStop"], answer: 0, page: 237, explanation: "O*NET is the modern electronic database of occupational information." },
+                { q: "Linda Gottfredson's theory focuses on which two key processes?", options: ["Growth and Decline", "Circumscription and Compromise", "Matching and Testing", "Education and Experience"], answer: 1, page: 234, explanation: "Circumscription is narrowing down choices; Compromise is giving up preferred choices for realistic ones." },
+                { q: "What is 'Glass Ceiling'?", options: ["A fancy skylight", "The invisible barrier preventing women and minorities from reaching top positions", "A type of insurance", "A career in window installation"], answer: 1, page: 225, explanation: "The glass ceiling represents systemic barriers to advancement." },
+                { q: "A 'Portfolio' in career counseling is:", options: ["A collection of stocks", "A purposeful collection of student/professional work demonstrating skills", "A briefcase", "A map of local jobs"], answer: 1, page: 238, explanation: "Portfolios showcase achievements and competencies to potential employers." },
+                { q: "The 'Strong Interest Inventory' (SII) is based on the work of:", options: ["John Holland", "Donald Super", "E.K. Strong", "Frank Parsons"], answer: 2, page: 239, explanation: "The SII is one of the most widely used interest assessments in the world." },
+                { q: "In Holland's hexagon, 'Consistency' refers to:", options: ["Doing the same job forever", "How close one's primary types are on the hexagon", "Always being on time", "Having a steady salary"], answer: 1, page: 232, explanation: "Adjacent types (e.g., Social and Artistic) show higher consistency." },
+                { q: "Which theorist is associated with the 'Social Cognitive Career Theory' (SCCT)?", options: ["Lent, Brown, and Hackett", "Savickas", "Parsons", "Roe"], answer: 0, page: 234, explanation: "SCCT is based on Bandura's self-efficacy theory." },
+                { q: "What is 'Underemployment'?", options: ["Working at a low height", "Working in a job for which one is overqualified", "Having no job", "Being a minor"], answer: 1, page: 224, explanation: "Underemployment involves a mismatch between a worker's skills and their job requirements." },
+                { q: "The 'Occupational Outlook Handbook' (OOH) is published every two years by:", options: ["The APA", "The Bureau of Labor Statistics (BLS)", "The NBCC", "The IRS"], answer: 1, page: 236, explanation: "The OOH provides detailed info on job duties, earnings, and growth prospects." },
+                { q: "Mark Savickas is associated with which career theory?", options: ["Trait-and-Factor", "Career Construction Theory", "Psychoanalytic", "Social Learning"], answer: 1, page: 235, explanation: "Savickas uses a postmodern, narrative approach to career counseling." },
+                { q: "The 'Ginzberg Group' proposed that career choice is a process that occurs in which three stages?", options: ["Fantasy, Tentative, Realistic", "Forming, Storming, Norming", "Early, Middle, Late", "Birth, Life, Death"], answer: 0, page: 229, explanation: "Ginzberg and his colleagues suggested that career development takes place over at least 10 years." },
+                { q: "What is 'Self-Efficacy' in career terms?", options: ["Liking yourself", "Belief in one's ability to successfully perform a task", "A high salary", "Good networking skills"], answer: 1, page: 234, explanation: "Self-efficacy is a core component of SCCT and Krumboltz’s theories." },
+                { q: "A 'Horizontal Career Path' involves:", options: ["Moving up to a manager role", "Moving to a different role at a similar level", "Quitting your job", "Working from home"], answer: 1, page: 224, explanation: "A lateral move rather than a vertical promotion." },
+                { q: "The term 'Locus of Control' refers to:", options: ["Where you live", "Whether you believe you or external forces control your life", "A type of remote control", "Management styles"], answer: 1, page: 233, explanation: "Internal locus of control is generally associated with more proactive career behavior." },
+                { q: "What is 'Planned Happenstance'?", options: ["A lucky accident", "Turning chance events into career opportunities (Krumboltz)", "Failing a test on purpose", "A retirement party"], answer: 1, page: 233, explanation: "Krumboltz encourages clients to be open to and create 'lucky' breaks." }
+            ],
+            ch8: [
+                { q: "The 'Standard Error of Measurement' (SEM) is used to:", options: ["Predict future performance", "Determine the range within which a 'true' score likely falls", "Calculate the mean", "Measure intelligence"], answer: 1, page: 264, explanation: "SEM accounts for the inherent inconsistency in any test score." },
+                { q: "What is the difference between 'Reliability' and 'Validity'?", options: ["They are the same", "Reliability is consistency; Validity is accuracy (measuring what it's supposed to)", "Validity is consistency; Reliability is accuracy", "Reliability is for personality; Validity is for IQ"], answer: 1, page: 259, explanation: "A test can be reliable (consistent) without being valid (accurate)." },
+                { q: "A 'Z-score' of +1.0 represents a score that is:", options: ["At the mean", "One standard deviation above the mean", "Better than 99% of people", "One standard deviation below the mean"], answer: 1, page: 270, explanation: "Z-scores indicate how many standard deviations a score is from the mean." },
+                { q: "Which type of validity compares a test to a well-established existing test?", options: ["Face validity", "Concurrent validity", "Predictive validity", "Content validity"], answer: 1, page: 261, explanation: "Concurrent validity is a type of criterion-related validity measured at the same time." },
+                { q: "The 'MMPI-2' is primarily used to assess:", options: ["Intelligence", "Personality and psychopathology", "Career interests", "Aptitude"], answer: 1, page: 282, explanation: "The Minnesota Multiphasic Personality Inventory is the most widely used clinical personality test." },
+                { q: "A 'Norm-referenced' test compares a student's score to:", options: ["A set of criteria", "The scores of other students", "The student's past scores", "A perfect score"], answer: 1, page: 258, explanation: "Norm-referenced tests (like the SAT) compare performance to a peer group." },
+                { q: "The 'WAIS-IV' is a popular test for measuring:", options: ["Adult intelligence", "Children's intelligence", "Depression", "Anxiety"], answer: 0, page: 278, explanation: "The Wechsler Adult Intelligence Scale is the gold standard for adult IQ testing." },
+                { q: "Which 'Scale of Measurement' has a true zero point?", options: ["Nominal", "Ordinal", "Interval", "Ratio"], answer: 3, page: 267, explanation: "Ratio scales (like height or weight) allow for mathematical comparison because zero means 'none'." },
+                { q: "The 'Rorschach' and 'TAT' are examples of:", options: ["Objective tests", "Projective tests", "Intelligence tests", "Aptitude tests"], answer: 1, page: 285, explanation: "Projective tests use ambiguous stimuli to reveal a person's unconscious thoughts/feelings." },
+                { q: "What is a 'Type II Error' in testing/research?", options: ["Rejecting a true null hypothesis", "Failing to reject a false null hypothesis", "Measuring the wrong variable", "A calculation mistake"], answer: 1, page: 266, explanation: "Type II error is a 'false negative' (missing a real effect)." },
+                { q: "The 'Bender Gestalt II' is used to screen for:", options: ["Neuropsychological impairment and visual-motor integration", "Schizophrenia", "Career success", "Social skills"], answer: 0, page: 287, explanation: "It is often used to detect brain damage or developmental delays." },
+                { q: "What does 'Test-Retest Reliability' measure?", options: ["The content of the test", "Stability of scores over time", "The difficulty of the test", "Cultural bias"], answer: 1, page: 259, explanation: "Giving the same test to the same group twice to check for consistency." },
+                { q: "An 'Aptitude Test' is designed to measure:", options: ["Current knowledge", "Potential or capacity for future learning", "Interests", "Personality"], answer: 1, page: 275, explanation: "Achievement tests measure what you know; aptitude tests measure what you *could* do." },
+                { q: "The 'Flynn Effect' refers to:", options: ["Decreasing IQ scores", "The observed rise in average IQ scores over generations", "A type of statistics", "The effect of drugs on memory"], answer: 1, page: 280, explanation: "Average IQ scores increase by about 3 points per decade globally." },
+                { q: "In a 'Normal Distribution' (Bell Curve), what percentage of scores fall within one standard deviation of the mean?", options: ["34%", "68%", "95%", "99.7%"], answer: 1, page: 269, explanation: "34% on each side of the mean = 68% total." },
+                { q: "What is 'Halo Effect' in assessment?", options: ["Being an angel", "Generalizing one positive trait to a person's entire character", "Seeing things that aren't there", "A circle around a score"], answer: 1, page: 289, explanation: "If a student is well-behaved, a teacher might mistakenly rate them as more intelligent." },
+                { q: "The 'MBTI' is based on the personality theory of:", options: ["Sigmund Freud", "Carl Jung", "Alfred Adler", "Carl Rogers"], answer: 1, page: 284, explanation: "The Myers-Briggs Type Indicator uses Jungian functions (Introversion/Extroversion, etc.)." },
+                { q: "A 'Likert Scale' usually measures:", options: ["Intelligence", "Attitudes or intensity of agreement", "Physical strength", "Memory"], answer: 1, page: 268, explanation: "Examples include 'Strongly Agree' to 'Strongly Disagree'." },
+                { q: "What is 'Social Desirability Bias'?", options: ["Being popular", "The tendency of respondents to answer in a way that will be viewed favorably by others", "Wishing to be social", "The need for friends"], answer: 1, page: 289, explanation: "Clients may hide 'bad' behaviors to look better to the counselor." },
+                { q: "The 'Square of the Correlation Coefficient' (r²) is called the:", options: ["Standard deviation", "Coefficient of determination", "Variance", "Standard error"], answer: 1, page: 318, explanation: "It explains the percentage of shared variance between two variables." }
+            ],
+            ch9: [
+                { q: "In an experiment, the variable that the researcher manipulates is the:", options: ["Dependent Variable", "Independent Variable", "Confounding Variable", "Control Variable"], answer: 1, page: 308, explanation: "The Independent Variable (IV) is the 'cause'; the Dependent Variable (DV) is the 'effect'." },
+                { q: "What is 'External Validity'?", options: ["The test looks good", "The extent to which results can be generalized to the population", "Correct math", "Internal consistency"], answer: 1, page: 310, explanation: "High external validity means the study applies to the 'real world'." },
+                { q: "A 'Type I Error' occurs when the researcher:", options: ["Fails to reject a false null hypothesis", "Rejects a true null hypothesis", "Uses the wrong test", "Forgets to collect data"], answer: 1, page: 312, explanation: "Type I error is a 'false positive' (claiming an effect when there is none)." },
+                { q: "Which correlation coefficient represents the strongest relationship?", options: ["0.00", "+0.50", "-0.85", "+0.80"], answer: 2, page: 317, explanation: "The strength is determined by the absolute value (distance from zero). -0.85 is stronger than +0.80." },
+                { q: "The 'Hawthorne Effect' refers to:", options: ["A type of statistics", "Participants changing behavior because they know they are being studied", "The influence of the moon", "Researcher bias"], answer: 1, page: 311, explanation: "Being observed often leads to increased productivity or different behavior." },
+                { q: "What is the 'Null Hypothesis' (H₀)?", options: ["The researcher's prediction", "The statement that there is no significant difference or relationship", "A failed experiment", "A secret hypothesis"], answer: 1, page: 312, explanation: "The null hypothesis is what the researcher tries to disprove." },
+                { q: "A 'T-test' is used to compare:", options: ["Three or more groups", "The means of two groups", "The correlation of two variables", "Qualitative data"], answer: 1, page: 320, explanation: "T-tests look for significant differences between two averages." },
+                { q: "What is 'ANOVA' (Analysis of Variance)?", options: ["A type of interview", "A test to compare the means of three or more groups", "A way to measure personality", "An acronym for an association"], answer: 1, page: 320, explanation: "ANOVA is used when you have more than two groups to compare." },
+                { q: "The 'Mean' is most sensitive to:", options: ["Sample size", "Extreme scores (outliers)", "The median", "Alphabetical order"], answer: 1, page: 315, explanation: "A few very high or very low scores will pull the mean away from the center." },
+                { q: "In a 'Positively Skewed' distribution, the tail points toward the:", options: ["Left (Lower scores)", "Right (Higher scores)", "Middle", "Sky"], answer: 1, page: 316, explanation: "Positive skew = tail to the right; Negative skew = tail to the left." },
+                { q: "What is 'Qualitative Research'?", options: ["Research using only numbers", "Research focused on in-depth descriptions and meanings", "Fast research", "Bad research"], answer: 1, page: 307, explanation: "Qualitative research (interviews, case studies) focuses on the 'why' and 'how'." },
+                { q: "A 'Double-Blind' study is used to prevent:", options: ["Eye injuries", "Both participant and researcher bias", "Losing data", "Spending too much money"], answer: 1, page: 311, explanation: "Neither the subject nor the person giving the treatment knows who is in the control group." },
+                { q: "What is 'Standard Deviation'?", options: ["The average score", "The measure of how spread out the scores are from the mean", "The highest score", "A math error"], answer: 1, page: 315, explanation: "A high SD means scores are very spread out; a low SD means they are clustered near the mean." },
+                { q: "The 'Median' is the:", options: ["Average", "Middle score in an ordered list", "Most frequent score", "Difference between high and low"], answer: 1, page: 315, explanation: "The median is the 50th percentile." },
+                { q: "What is 'Random Sampling'?", options: ["Picking people you know", "Giving everyone in the population an equal chance of being selected", "Picking the first 10 people you see", "Using a computer"], answer: 1, page: 309, explanation: "Random sampling is essential for a representative study." },
+                { q: "Which level of measurement provides the most information?", options: ["Nominal", "Ordinal", "Interval", "Ratio"], answer: 3, page: 314, explanation: "Ratio has all the properties of the others plus a true zero." },
+                { q: "A 'Longitudinal Study' follows participants:", options: ["Across many countries", "Over a long period of time", "In a straight line", "Only once"], answer: 1, page: 308, explanation: "Longitudinal research tracks the same individuals over years or decades." },
+                { q: "What is 'Triangulation' in research?", options: ["Using three people", "Using multiple methods or sources to validate findings", "A type of geometry", "Drawing triangles"], answer: 1, page: 323, explanation: "Triangulation increases the credibility/validity of qualitative research." },
+                { q: "The 'P-value' (e.g., p < .05) tells us the:", options: ["Strength of the effect", "Probability that the results occurred by chance", "The number of participants", "The price of the study"], answer: 1, page: 313, explanation: "If p < .05, there is a less than 5% chance the results were random (statistically significant)." },
+                { q: "What is a 'Case Study'?", options: ["A suitcase", "An in-depth investigation of a single individual or group", "A legal battle", "A box of files"], answer: 1, page: 308, explanation: "Case studies provide rich, detailed data but have low generalizability." }
+            ],
+            ch10: [
+                { q: "What does 'Tarasoff v. Regents of the University of California' (1976) establish?", options: ["Confidentiality is absolute", "The duty to warn/protect an identifiable victim", "Right to a lawyer", "Licensure requirements"], answer: 1, page: 345, explanation: "The Tarasoff ruling requires counselors to break confidentiality if a client poses a threat to someone else." },
+                { q: "The 'Ethical Principle' of 'Beneficence' means:", options: ["Doing no harm", "Doing good or working in the client's best interest", "Being fair", "Being truthful"], answer: 1, page: 335, explanation: "Beneficence is the duty to promote the welfare of the client." },
+                { q: "What is 'Informed Consent'?", options: ["A signed contract only", "The ongoing process of providing info about therapy so the client can make a choice", "Paying the bill", "Being over 18"], answer: 1, page: 337, explanation: "Informed consent is a ethical and legal requirement that continues throughout the relationship." },
+                { q: "A 'Dual Relationship' (or Multiple Relationship) occurs when:", options: ["The counselor sees two clients at once", "The counselor has a professional and a non-professional relationship with the client", "A client has two counselors", "The counselor is married"], answer: 1, page: 341, explanation: "Dual relationships can be unethical if they lead to exploitation or impaired judgment." },
+                { q: "What is 'Privileged Communication'?", options: ["A secret", "A legal concept that protects a client from having their records shared in court", "A type of email", "A counselor's right to speak"], answer: 1, page: 344, explanation: "Privilege is a legal right belonging to the client, not the counselor." },
+                { q: "According to the ACA Code of Ethics, how long must a counselor wait before having a sexual relationship with a former client?", options: ["1 year", "2 years", "5 years", "Never"], answer: 2, page: 341, explanation: "The ACA requires a 5-year wait; NBCC and other boards may vary." },
+                { q: "What is 'Scope of Practice'?", options: ["Using a microscope", "The limits of what a counselor is trained and qualified to do", "A type of insurance", "The size of the office"], answer: 1, page: 333, explanation: "Counselors must only practice within their areas of competence." },
+                { q: "The term 'Nonmaleficence' means:", options: ["Doing good", "Above all, do no harm", "Justice", "Fidelity"], answer: 1, page: 335, explanation: "Nonmaleficence is the core ethical obligation to avoid harming clients." },
+                { q: "What is 'Self-Disclosure'?", options: ["The client telling a secret", "The counselor sharing personal information with the client", "A type of clothing", "Opening a window"], answer: 1, page: 338, explanation: "Counselor self-disclosure should only be used if it is therapeutically beneficial for the client." },
+                { q: "If a counselor receives a subpoena for records, what is the first step?", options: ["Burn the records", "Hand them over immediately", "Contact the client or the client's attorney and your own legal counsel", "Ignore it"], answer: 2, page: 344, explanation: "A subpoena is not a court order; the counselor must protect the client's privilege first." },
+                { q: "What does 'FERPA' (Buckley Amendment) protect?", options: ["Medical records", "Educational records of students", "Criminal records", "Tax records"], answer: 1, page: 346, explanation: "FERPA gives parents and students over 18 access to educational records." },
+                { q: "A 'Guardian ad Litem' is a person appointed by the court to:", options: ["Represent the interests of a minor or incapacitated person", "Prosecute the case", "Guard the building", "Collect fees"], answer: 0, page: 347, explanation: "Common in custody or child abuse cases." },
+                { q: "What is 'Fee Splitting'?", options: ["Paying half the bill", "Giving a portion of a fee to someone for a referral (usually unethical)", "Using two credit cards", "Giving a discount"], answer: 1, page: 349, explanation: "Referral fees or fee splitting is generally considered unethical in counseling." },
+                { q: "The 'Duty to Protect' applies when a client is:", options: ["Sad", "Suicidal or homicidal", "Jobless", "Late for a session"], answer: 1, page: 345, explanation: "Counselors must take action (hospitalization, warning others) to prevent loss of life." },
+                { q: "What is 'Vicarious Liability'?", options: ["Liking someone else's car", "A supervisor being held responsible for the actions of a supervisee", "A type of insurance", "Being a witness"], answer: 1, page: 350, explanation: "Supervisors are legally responsible for the clinical work of those they oversee." },
+                { q: "What is 'Bartering'?", options: ["Arguing over a price", "Exchanging services or goods for counseling", "Going to a bar", "Buying a gift"], answer: 1, page: 341, explanation: "Bartering is discouraged but may be acceptable in some cultures if it isn't exploitative." },
+                { q: "The term 'Abandonment' in counseling refers to:", options: ["A client leaving", "The counselor ending the relationship abruptly without proper referral", "Moving houses", "Forgetting a name"], answer: 1, page: 338, explanation: "Counselors must provide referrals and a transition when ending therapy." },
+                { q: "Which federal law protects the privacy of health information (PHI)?", options: ["HIPAA", "FERPA", "ADA", "NCLB"], answer: 0, page: 346, explanation: "The Health Insurance Portability and Accountability Act sets national standards for data privacy." },
+                { q: "What is 'Pro Bono' work?", options: ["Professional boxing", "Counseling provided for free for the public good", "Working for a bank", "Expensive therapy"], answer: 1, page: 349, explanation: "Ethical codes encourage counselors to contribute some services for free." },
+                { q: "In ethics, 'Justice' means:", options: ["Going to jail", "Fairness and equality in the distribution of resources and treatment", "Being a judge", "The police"], answer: 1, page: 335, explanation: "Justice involves treating clients fairly and providing equal access to services." }
+            ],
+            ch11: [
+                { q: "Which family therapy theorist is known for the 'Circumplex Model' of family systems?", options: ["David Olson", "Murray Bowen", "Virginia Satir", "Jay Haley"], answer: 0, page: 372, explanation: "The model measures cohesion and adaptability in family systems." },
+                { q: "In Bowenian therapy, 'Triangulation' refers to:", options: ["A love triangle", "Bringing a third person into a dyadic relationship to reduce anxiety", "A type of math", "A three-way call"], answer: 1, page: 365, explanation: "Triangles are the smallest stable relationship unit but can become dysfunctional." },
+                { q: "Virginia Satir identified four 'communication stances' under stress. Which one involves agreeing with everything to please others?", options: ["Blamer", "Placater", "Computer", "Distractor"], answer: 1, page: 367, explanation: "Placaters sacrifice their own needs to keep the peace." },
+                { q: "Salvador Minuchin developed 'Structural Family Therapy,' which focuses on:", options: ["The past", "Boundaries, subsystems, and hierarchies", "Dreams", "Neurotransmitters"], answer: 1, page: 369, explanation: "Minuchin believed family problems stem from dysfunctional structures and boundaries." },
+                { q: "In 'Strategic Family Therapy' (Jay Haley), a 'Paradoxical Intervention' involves:", options: ["Telling the client exactly what to do", "Instructing the family to continue or exaggerate the symptomatic behavior", "A logical puzzle", "Hypnosis"], answer: 1, page: 371, explanation: "Prescribing the symptom helps the family realize they have control over it." },
+                { q: "What is 'Enmeshment' in family systems?", options: ["Being very close", "A lack of boundaries where individuals lose their sense of self", "A type of net", "Fighting"], answer: 1, page: 370, explanation: "Enmeshed families have 'diffuse' boundaries and over-involvement." },
+                { q: "Murray Bowen's concept of 'Differentiation of Self' refers to:", options: ["Being different from others", "The ability to distinguish between thoughts and feelings and stay autonomous from the family", "A math problem", "Changing your name"], answer: 1, page: 364, explanation: "Higher differentiation leads to better emotional health and relationship functioning." },
+                { q: "The 'Genogram' is a tool used to map:", options: ["Genetic diseases only", "At least three generations of family history and patterns", "A house floor plan", "A budget"], answer: 1, page: 366, explanation: "Bowenians use genograms to identify multi-generational transmissions of trauma or anxiety." },
+                { q: "Which neurotransmitter is most closely linked to 'reward' and 'addiction'?", options: ["Serotonin", "Dopamine", "GABA", "Acetylcholine"], answer: 1, page: 388, explanation: "Dopamine is the primary chemical in the brain's reward pathway." },
+                { q: "The 'DSM-5' uses which type of system for diagnosis?", options: ["Multiaxial", "Non-axial (single axis)", "Alphabetical", "Roman Numerals"], answer: 1, page: 379, explanation: "The DSM-5 removed the five-axis system used in the DSM-IV-TR." },
+                { q: "What is 'Neuroplasticity'?", options: ["Plastic surgery", "The brain's ability to reorganize and form new neural connections", "Brain damage", "A type of tumor"], answer: 1, page: 387, explanation: "Neuroplasticity allows the brain to heal and learn throughout life." },
+                { q: "In the DSM-5, 'Asperger's Syndrome' is now classified under:", options: ["Mental Retardation", "Autism Spectrum Disorder", "Social Anxiety", "ADHD"], answer: 1, page: 381, explanation: "It is now part of the broader ASD category." },
+                { q: "Which part of the brain is known as the 'emotional center' and processes fear?", options: ["Prefrontal Cortex", "Amygdala", "Hippocampus", "Cerebellum"], answer: 1, page: 388, explanation: "The amygdala is the 'smoke detector' of the brain." },
+                { q: "A 'First-Order Change' in family therapy is:", options: ["A permanent shift in structure", "A superficial change that doesn't alter the family's rules", "The first thing that happens", "A change in the leader"], answer: 1, page: 371, explanation: "Second-order change is required for lasting systemic resolution." },
+                { q: "What is 'Reframing'?", options: ["Buying a new picture frame", "Changing the conceptual or emotional viewpoint of a situation", "Taking a new photo", "Lying"], answer: 1, page: 372, explanation: "Reframing (e.g., 'your child isn't being stubborn, they are being persistent') changes the meaning of behavior." },
+                { q: "The 'Miracle Question' originated from which therapeutic school?", options: ["Strategic", "Solution-Focused", "Narrative", "Structural"], answer: 1, page: 181, explanation: "De Shazer and Berg's SFBT uses it to find goals." },
+                { q: "What is the primary role of 'GABA' in the brain?", options: ["Excitation", "Inhibition (calming the nervous system)", "Memory", "Muscle movement"], answer: 1, page: 388, explanation: "Low levels of GABA are often associated with anxiety." },
+                { q: "In the DSM-5, 'Dysthymia' is now called:", options: ["Major Depression", "Persistent Depressive Disorder", "Bipolar III", "Melancholia"], answer: 1, page: 383, explanation: "PDD combines chronic major depressive disorder and dysthymic disorder." },
+                { q: "A 'Joining' technique in Structural Family Therapy involves:", options: ["Tying people together", "The therapist connecting with the family to build rapport and trust", "Adding a new member", "A group hug"], answer: 1, page: 370, explanation: "Minuchin believed you must 'join' a family before you can 'restructure' it." },
+                { q: "Which theorist is associated with 'Narrative Therapy' and 'externalizing the problem'?", options: ["Michael White", "Carl Rogers", "Fritz Perls", "Albert Ellis"], answer: 0, page: 374, explanation: "Narrative therapy separates the person from the problem ('The depression is making you tired,' rather than 'You are depressed')." }
+            ],
+            mixed: [] // Will be populated dynamically
+        };
+
+        function App() {
+            const [view, setView] = useState('menu');
+            const [currentChapter, setCurrentChapter] = useState(null);
+            const [questionIndex, setQuestionIndex] = useState(0);
+            const [score, setScore] = useState(0);
+            const [wrongAnswers, setWrongAnswers] = useState([]);
+            const [timeLeft, setTimeLeft] = useState(45);
+            const [timerActive, setTimerActive] = useState(false);
+            const [shuffledQuestions, setShuffledQuestions] = useState([]);
+
+            const startQuiz = (chapter) => {
+                let qs = [];
+                if (chapter.id === 'mixed') {
+                    // Collect 40 random questions from across all chapters
+                    const allQs = Object.values(QUESTIONS).flat();
+                    qs = [...allQs].sort(() => 0.5 - Math.random()).slice(0, 40);
+                } else {
+                    qs = [...QUESTIONS[chapter.id]];
+                }
+                
+                // Final shuffle
+                for (let i = qs.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [qs[i], qs[j]] = [qs[j], qs[i]];
+                }
+                
+                setShuffledQuestions(qs);
+                setCurrentChapter(chapter);
+                setQuestionIndex(0);
+                setScore(0);
+                setWrongAnswers([]);
+                setView('quiz');
+                resetTimer();
+            };
+
+            const resetTimer = () => {
+                setTimeLeft(45);
+                setTimerActive(true);
+            };
+
+            useEffect(() => {
+                let timer;
+                if (timerActive && timeLeft > 0 && view === 'quiz') {
+                    timer = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
+                } else if (timeLeft === 0 && timerActive) {
+                    handleAnswer(-1);
+                }
+                return () => clearTimeout(timer);
+            }, [timeLeft, timerActive, view]);
+
+            const handleAnswer = (index) => {
+                setTimerActive(false);
+                const currentQ = shuffledQuestions[questionIndex];
+                const isCorrect = index === currentQ.answer;
+
+                if (isCorrect) {
+                    setScore(prev => prev + 1);
+                } else {
+                    setWrongAnswers(prev => [...prev, {
+                        ...currentQ,
+                        userAnswer: index,
+                        timedOut: index === -1
+                    }]);
+                }
+
+                setTimeout(() => {
+                    if (questionIndex < shuffledQuestions.length - 1) {
+                        setQuestionIndex(prev => prev + 1);
+                        resetTimer();
+                    } else {
+                        setView('results');
+                    }
+                }, 600);
+            };
+
+            const renderMenu = () => (
+                <div className="animate-fade-in space-y-6">
+                    <header className="text-center mb-10">
+                        <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">Counseling Mastery</h1>
+                        <p className="text-slate-400">180 Rosenthal-Aligned Expert Questions</p>
+                    </header>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {CHAPTERS.map(ch => (
+                            <button 
+                                key={ch.id}
+                                onClick={() => startQuiz(ch)}
+                                className="chapter-card glass-panel p-5 rounded-2xl flex items-center gap-4 text-left group"
+                            >
+                                <div 
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
+                                    style={{ backgroundColor: ch.color }}
+                                >
+                                    <span className="text-white font-bold text-lg">{ch.id === 'mixed' ? '★' : ch.id.replace('ch', '')}</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-200 group-hover:text-white">{ch.title}</h3>
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mt-1">
+                                        {ch.id === 'mixed' ? '40 Mixed' : '20 High-Difficulty'} Questions
+                                    </p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const renderQuiz = () => {
+                const q = shuffledQuestions[questionIndex];
+                const progress = ((questionIndex) / shuffledQuestions.length) * 100;
+                
+                return (
+                    <div className="animate-fade-in space-y-6">
+                        <div className="flex justify-between items-end mb-2">
+                            <div className="max-w-[70%]">
+                                <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest block mb-1">
+                                    {currentChapter.title}
+                                </span>
+                                <h2 className="text-slate-400 text-sm">Question {questionIndex + 1} of {shuffledQuestions.length}</h2>
+                            </div>
+                            <div className={`text-2xl font-mono font-bold ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-slate-300'}`}>
+                                {timeLeft}s
+                            </div>
+                        </div>
+
+                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-8">
+                            <div 
+                                className="h-full bg-indigo-500 progress-bar" 
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="glass-panel p-8 rounded-3xl mb-6 min-h-[160px] flex items-center">
+                            <h3 className="text-xl md:text-2xl font-medium leading-relaxed text-white">
+                                {q.q}
+                            </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            {q.options.map((opt, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => handleAnswer(i)}
+                                    className="option-btn glass-panel p-5 rounded-xl text-left hover:border-indigo-500/50 flex gap-4 items-center group"
+                                >
+                                    <span className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 transition-colors">
+                                        {String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span className="text-slate-300 group-hover:text-white transition-colors">{opt}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderResults = () => {
+                const percentage = Math.round((score / shuffledQuestions.length) * 100);
+                const isPass = percentage >= 75;
+
+                return (
+                    <div className="animate-fade-in space-y-8 pb-10">
+                        <div className="glass-panel p-10 rounded-3xl text-center">
+                            <div className={`text-6xl font-black mb-4 ${isPass ? 'text-emerald-400' : 'text-orange-400'}`}>
+                                {percentage}%
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2">
+                                {isPass ? "NCE Mastery Level!" : "Keep Studying..."}
+                            </h2>
+                            <p className="text-slate-400 mb-8">
+                                You scored {score} out of {shuffledQuestions.length}.
+                            </p>
+                            <button 
+                                onClick={() => setView('menu')}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg shadow-indigo-500/20"
+                            >
+                                Practice More Chapters
+                            </button>
+                        </div>
+
+                        {wrongAnswers.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-bold text-slate-300 flex items-center gap-2">
+                                    <span className="w-2 h-6 bg-red-500 rounded-full"></span>
+                                    Review Critical Gaps
+                                </h3>
+                                {wrongAnswers.map((w, i) => (
+                                    <div key={i} className="glass-panel p-6 rounded-2xl border-l-4 border-red-500/50">
+                                        <div className="text-white font-semibold mb-3 leading-snug">{w.q}</div>
+                                        <div className="space-y-2 mb-4">
+                                            {w.timedOut ? (
+                                                <div className="text-sm text-orange-400 font-medium">⏰ Time Limit Reached</div>
+                                            ) : (
+                                                <div className="text-sm text-red-400">❌ Your Choice: <span className="font-bold">{w.options[w.userAnswer]}</span></div>
+                                            )}
+                                            <div className="text-sm text-emerald-400">✅ Correct: <span className="font-bold">{w.options[w.answer]}</span></div>
+                                        </div>
+                                        <div className="bg-slate-900/50 p-4 rounded-xl text-sm leading-relaxed text-slate-400 border border-slate-800">
+                                            <div className="text-xs font-bold text-indigo-400 uppercase mb-1 tracking-wider">Expert Analysis (Page {w.page})</div>
+                                            {w.explanation}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            return (
+                <main className="w-full">
+                    {view === 'menu' && renderMenu()}
+                    {view === 'quiz' && renderQuiz()}
+                    {view === 'results' && renderResults()}
+                </main>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
