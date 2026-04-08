@@ -224,7 +224,7 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.2</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.3</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -927,57 +927,68 @@
 
         /**
          * --- HIERARCHICAL REPORTING ENGINE (ENHANCED 2-SHEET VERSION) ---
+         * Now includes Work Area level breakdown within each Zone.
          */
         window.generateReport = () => {
             if (markers.length === 0) return;
 
-            // 1. Prepare Detailed Analysis Data (Sheet 1)
+            // 1. Prepare Hierarchical Analysis Data (Sheet 1)
+            // Structure: stats[zone][workArea][type]
             const stats = {};
             markers.forEach(m => {
                 const zone = m.zone || 'General';
-                if (!stats[zone]) {
-                    stats[zone] = {
+                const area = m.workArea || 'General';
+                
+                if (!stats[zone]) stats[zone] = {};
+                if (!stats[zone][area]) {
+                    stats[zone][area] = {
                         poles: { total: 0, planted: 0, complete: 0, pending: 0 },
                         guys: { total: 0, planted: 0, complete: 0, pending: 0 }
                     };
                 }
                 
                 const type = (m.holeType || 'Pole') === 'Guy' ? 'guys' : 'poles';
-                stats[zone][type].total++;
+                stats[zone][area][type].total++;
                 
-                if (m.status === 'planted') stats[zone][type].planted++;
-                else if (m.status === 'complete') stats[zone][type].complete++;
-                else stats[zone][type].pending++;
+                if (m.status === 'planted') stats[zone][area][type].planted++;
+                else if (m.status === 'complete') stats[zone][area][type].complete++;
+                else stats[zone][area][type].pending++;
             });
 
-            const analysisData = Object.keys(stats).sort().map(zone => {
-                const p = stats[zone].poles;
-                const g = stats[zone].guys;
-                
-                const poleCompleteTotal = p.planted + p.complete;
-                const guyCompleteTotal = g.planted + g.complete;
-                
-                const polePct = p.total > 0 ? ((poleCompleteTotal / p.total) * 100).toFixed(1) + '%' : 'N/A';
-                const guyPct = g.total > 0 ? ((guyCompleteTotal / g.total) * 100).toFixed(1) + '%' : 'N/A';
-                
-                const overallComplete = poleCompleteTotal + guyCompleteTotal;
-                const overallTotal = p.total + g.total;
-                const overallPct = overallTotal > 0 ? ((overallComplete / overallTotal) * 100).toFixed(1) + '%' : '0%';
+            const analysisData = [];
+            // Sort Zones
+            Object.keys(stats).sort().forEach(zone => {
+                // Sort Work Areas within Zone
+                Object.keys(stats[zone]).sort().forEach(area => {
+                    const p = stats[zone][area].poles;
+                    const g = stats[zone][area].guys;
+                    
+                    const poleCompleteTotal = p.planted + p.complete;
+                    const guyCompleteTotal = g.planted + g.complete;
+                    
+                    const polePct = p.total > 0 ? ((poleCompleteTotal / p.total) * 100).toFixed(1) + '%' : '0%';
+                    const guyPct = g.total > 0 ? ((guyCompleteTotal / g.total) * 100).toFixed(1) + '%' : '0%';
+                    
+                    const areaComplete = poleCompleteTotal + guyCompleteTotal;
+                    const areaTotal = p.total + g.total;
+                    const areaPct = areaTotal > 0 ? ((areaComplete / areaTotal) * 100).toFixed(1) + '%' : '0%';
 
-                return {
-                    "Zone ID": zone,
-                    "Total Poles": p.total,
-                    "Poles Planted": p.planted,
-                    "Poles Complete (Hole Only)": p.complete,
-                    "Poles Incomplete": p.pending,
-                    "Pole Progress %": polePct,
-                    "Total Guys": g.total,
-                    "Guys Planted": g.planted,
-                    "Guys Complete (Hole Only)": g.complete,
-                    "Guys Incomplete": g.pending,
-                    "Guy Progress %": guyPct,
-                    "Zone Overall Progress %": overallPct
-                };
+                    analysisData.push({
+                        "Zone ID": zone,
+                        "Work Area": area,
+                        "Poles (Total)": p.total,
+                        "Poles (Planted)": p.planted,
+                        "Poles (Hole Complete)": p.complete,
+                        "Poles (Incomplete)": p.pending,
+                        "Pole Progress %": polePct,
+                        "Guys (Total)": g.total,
+                        "Guys (Planted)": g.planted,
+                        "Guys (Hole Complete)": g.complete,
+                        "Guys (Incomplete)": g.pending,
+                        "Guy Progress %": guyPct,
+                        "Area Overall Progress %": areaPct
+                    });
+                });
             });
 
             // 2. Prepare Summary Log Data (Sheet 2)
@@ -1007,7 +1018,7 @@
             const wb = XLSX.utils.book_new();
             
             const ws1 = XLSX.utils.json_to_sheet(analysisData);
-            XLSX.utils.book_append_sheet(wb, ws1, "Detailed Analysis");
+            XLSX.utils.book_append_sheet(wb, ws1, "Detailed Area Analysis");
             
             const ws2 = XLSX.utils.json_to_sheet(logData);
             XLSX.utils.book_append_sheet(wb, ws2, "Summary Log");
