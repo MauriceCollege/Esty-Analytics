@@ -926,7 +926,7 @@
         }
 
         /**
-         * --- HIERARCHICAL REPORTING ENGINE (2-SHEET VERSION) ---
+         * --- HIERARCHICAL REPORTING ENGINE (ENHANCED 2-SHEET VERSION) ---
          */
         window.generateReport = () => {
             if (markers.length === 0) return;
@@ -935,20 +935,50 @@
             const stats = {};
             markers.forEach(m => {
                 const zone = m.zone || 'General';
-                if (!stats[zone]) stats[zone] = { complete: 0, pending: 0, total: 0 };
-                stats[zone].total++;
-                if (m.status === 'complete' || m.status === 'planted') stats[zone].complete++;
-                else stats[zone].pending++;
+                if (!stats[zone]) {
+                    stats[zone] = {
+                        poles: { total: 0, planted: 0, complete: 0, pending: 0 },
+                        guys: { total: 0, planted: 0, complete: 0, pending: 0 }
+                    };
+                }
+                
+                const type = (m.holeType || 'Pole') === 'Guy' ? 'guys' : 'poles';
+                stats[zone][type].total++;
+                
+                if (m.status === 'planted') stats[zone][type].planted++;
+                else if (m.status === 'complete') stats[zone][type].complete++;
+                else stats[zone][type].pending++;
             });
 
-            const analysisData = Object.keys(stats).sort().map(zone => ({
-                "Operational Category": "Hole Management",
-                "Zone ID": zone,
-                "Complete": stats[zone].complete,
-                "Incomplete": stats[zone].pending,
-                "Total Holes": stats[zone].total,
-                "Progress Percentage": ((stats[zone].complete / stats[zone].total) * 100).toFixed(2) + '%'
-            }));
+            const analysisData = Object.keys(stats).sort().map(zone => {
+                const p = stats[zone].poles;
+                const g = stats[zone].guys;
+                
+                const poleCompleteTotal = p.planted + p.complete;
+                const guyCompleteTotal = g.planted + g.complete;
+                
+                const polePct = p.total > 0 ? ((poleCompleteTotal / p.total) * 100).toFixed(1) + '%' : 'N/A';
+                const guyPct = g.total > 0 ? ((guyCompleteTotal / g.total) * 100).toFixed(1) + '%' : 'N/A';
+                
+                const overallComplete = poleCompleteTotal + guyCompleteTotal;
+                const overallTotal = p.total + g.total;
+                const overallPct = overallTotal > 0 ? ((overallComplete / overallTotal) * 100).toFixed(1) + '%' : '0%';
+
+                return {
+                    "Zone ID": zone,
+                    "Total Poles": p.total,
+                    "Poles Planted": p.planted,
+                    "Poles Complete (Hole Only)": p.complete,
+                    "Poles Incomplete": p.pending,
+                    "Pole Progress %": polePct,
+                    "Total Guys": g.total,
+                    "Guys Planted": g.planted,
+                    "Guys Complete (Hole Only)": g.complete,
+                    "Guys Incomplete": g.pending,
+                    "Guy Progress %": guyPct,
+                    "Zone Overall Progress %": overallPct
+                };
+            });
 
             // 2. Prepare Summary Log Data (Sheet 2)
             const sortedMarkers = [...markers].sort((a, b) => {
@@ -983,7 +1013,7 @@
             XLSX.utils.book_append_sheet(wb, ws2, "Summary Log");
 
             // 4. Trigger Download
-            XLSX.writeFile(wb, `UPH_OPERATIONS_RECORDS_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(wb, `UPH_OPERATIONS_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
