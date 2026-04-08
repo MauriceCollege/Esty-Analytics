@@ -199,7 +199,7 @@
                     <div class="p-6 border-b border-slate-800/60 flex flex-col gap-4">
                         <div class="flex items-center justify-between">
                             <h2 class="font-black text-xs flex items-center gap-3 uppercase tracking-[0.25em] text-slate-400"><span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>Live Ledger</h2>
-                            <button onclick="generateReport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 hover:text-blue-300 transition-all bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">
+                            <button onclick="generateReport()" class="flex items-center gap-3 text-[10px] font-black uppercase text-blue-400 hover:text-blue-300 transition-all bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline></svg>Export
                             </button>
                         </div>
@@ -221,11 +221,10 @@
                         Wipe System Data
                     </button>
                 </div>
-                <!-- NEW STORAGE USAGE DISPLAY -->
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.1</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.2</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -551,7 +550,20 @@
 
         window.toggleStatus = async (id) => {
             const idx = markers.findIndex(m => m.id === id);
-            markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
+            // Cycle: pending -> complete -> pending (Planted is handled via double click)
+            if (markers[idx].status === 'planted') {
+                markers[idx].status = 'pending';
+            } else {
+                markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
+            }
+            await dbPut('markers', markers[idx]);
+            syncState();
+        };
+
+        window.togglePlanted = async (id) => {
+            const idx = markers.findIndex(m => m.id === id);
+            // Toggle planted status
+            markers[idx].status = markers[idx].status === 'planted' ? 'complete' : 'planted';
             await dbPut('markers', markers[idx]);
             syncState();
         };
@@ -621,11 +633,11 @@
             });
             
             document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0 || markers.length === 0);
-            const completedCount = filtered.filter(m => m.status === 'complete').length;
+            const completedCount = filtered.filter(m => m.status === 'complete' || m.status === 'planted').length;
             const total = filtered.length;
             const percent = Math.round((completedCount / total) * 100) || 0;
             
-            document.getElementById('kpiCounts').innerText = `${completedCount} / ${total} Completed`;
+            document.getElementById('kpiCounts').innerText = `${completedCount} / ${total} Operations Tracked`;
             document.getElementById('kpiPercent').innerText = `${percent}%`;
             document.getElementById('kpiProgressBar').style.width = `${percent}%`;
             
@@ -634,10 +646,23 @@
                 const dist = idx > 0 ? calculateDistance(filtered[idx - 1].lat, filtered[idx - 1].lng, m.lat, m.lng) : 0;
                 totalDist += dist;
                 const isComplete = m.status === 'complete';
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isComplete ? 'border-yellow-500/60 ring-1 ring-yellow-500/20' : 'border-slate-800'}">
+                const isPlanted = m.status === 'planted';
+
+                let borderClass = 'border-slate-800';
+                let tickClass = 'text-slate-400 bg-slate-900 border-slate-800';
+
+                if (isPlanted) {
+                    borderClass = 'border-blue-500/60 ring-1 ring-blue-500/20';
+                    tickClass = 'text-blue-500 bg-blue-500/20 border-blue-500/50';
+                } else if (isComplete) {
+                    borderClass = 'border-yellow-500/60 ring-1 ring-yellow-500/20';
+                    tickClass = 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50';
+                }
+
+                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${borderClass}">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-4">
-                            <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
+                            <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isPlanted ? 'bg-blue-600 text-white' : isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
                                 ${m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : '#'}
                                 ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
                             </div>
@@ -653,7 +678,7 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${tickClass}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
                             <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
                         </div>
                     </div>
@@ -669,14 +694,14 @@
                         <div class="space-y-2">
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
                             <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleHoleType('${m.id}', 'Pole')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? 'bg-slate-800 text-white' : 'text-slate-600'}">Pole</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-slate-800 text-white') : 'text-slate-600'}" title="Double click for Planted status">Pole</button>
                                 <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Guy</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                        <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p>
+                        <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px] tracking-tight">${m.contractor}</p>
                         <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
                     </div>
                 </div>`;
@@ -692,18 +717,21 @@
             const filterProj = document.getElementById('projectFilter').value;
             const filtered = markers.filter(m => filterProj === 'all' || (m.zone || 'General') === filterProj);
             filtered.forEach(m => {
-                const isComplete = m.status === 'complete', isGuy = m.holeType === 'Guy';
-                const primaryColor = isComplete ? "#eab308" : "#dc2626";
+                const isComplete = m.status === 'complete', isPlanted = m.status === 'planted', isGuy = m.holeType === 'Guy';
+                
+                let primaryColor = "#dc2626"; // Default Red
+                if (isPlanted) primaryColor = "#3b82f6"; // Blue
+                else if (isComplete) primaryColor = "#eab308"; // Yellow
+                
                 let iconConfig;
                 if (isGuy) {
-                    const stripeColor = isComplete ? "#eab308" : "#dc2626";
-                    const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${stripeColor}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/></svg>`;
+                    const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${primaryColor}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/></svg>`;
                     iconConfig = { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), anchor: new google.maps.Point(16, 16), labelOrigin: new google.maps.Point(16, 16) };
                 } else {
                     iconConfig = { path: google.maps.SymbolPath.CIRCLE, fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
                 }
                 const labelText = m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : 'M';
-                const gMarker = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, label: { text: labelText, color: (isComplete && !isGuy) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: iconConfig });
+                const gMarker = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, label: { text: labelText, color: (isComplete && !isGuy && !isPlanted) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: iconConfig });
                 gMarkers.push(gMarker);
                 bounds.extend(gMarker.getPosition());
             });
@@ -712,12 +740,10 @@
 
         /**
          * --- HIERARCHICAL REPORTING ENGINE ---
-         * Generates a 2-sheet Excel report with detailed summary and raw logs.
          */
         window.generateReport = () => {
             if (markers.length === 0) return;
 
-            // --- 1. Operations Log (Sheet 2) ---
             const sortedMarkers = [...markers].sort((a, b) => {
                 const zoneSort = (a.zone || '').localeCompare(b.zone || '');
                 if (zoneSort !== 0) return zoneSort;
@@ -740,7 +766,6 @@
                 "Timestamp": m.timestamp 
             }));
 
-            // --- 2. UPH Summary (Sheet 1) ---
             const uphReportData = [];
             const zones = [...new Set(markers.map(m => m.zone || 'General'))].sort();
             let gComplete = 0, gPending = 0;
@@ -754,9 +779,9 @@
 
                 workAreas.forEach(wa => {
                     const waMarkers = zoneMarkers.filter(m => (m.workArea || 'General') === wa);
-                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
+                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && (m.status === 'complete' || m.status === 'planted')).length;
                     const pp = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
-                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
+                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && (m.status === 'complete' || m.status === 'planted')).length;
                     const gp = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
 
                     uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Pole Holes", "Completed": pc, "Pending": pp, "Total": pc + pp });
@@ -773,11 +798,9 @@
 
             uphReportData.push({ "Project / Zone": "GRAND TOTAL", "Work Area": "GLOBAL", "Classification": "All Operations", "Completed": gComplete, "Pending": gPending, "Total": gComplete + gPending });
 
-            // --- 3. Workbook Assembly ---
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uphReportData), "UPH Summary");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
-
             XLSX.writeFile(wb, `UPH_MANAGEMENT_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
