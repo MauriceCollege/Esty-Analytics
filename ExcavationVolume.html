@@ -224,7 +224,7 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.1</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.2</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -926,15 +926,37 @@
         }
 
         /**
-         * --- HIERARCHICAL REPORTING ENGINE ---
+         * --- HIERARCHICAL REPORTING ENGINE (2-SHEET VERSION) ---
          */
         window.generateReport = () => {
             if (markers.length === 0) return;
+
+            // 1. Prepare Detailed Analysis Data (Sheet 1)
+            const stats = {};
+            markers.forEach(m => {
+                const zone = m.zone || 'General';
+                if (!stats[zone]) stats[zone] = { complete: 0, pending: 0, total: 0 };
+                stats[zone].total++;
+                if (m.status === 'complete' || m.status === 'planted') stats[zone].complete++;
+                else stats[zone].pending++;
+            });
+
+            const analysisData = Object.keys(stats).sort().map(zone => ({
+                "Operational Category": "Hole Management",
+                "Zone ID": zone,
+                "Complete": stats[zone].complete,
+                "Incomplete": stats[zone].pending,
+                "Total Holes": stats[zone].total,
+                "Progress Percentage": ((stats[zone].complete / stats[zone].total) * 100).toFixed(2) + '%'
+            }));
+
+            // 2. Prepare Summary Log Data (Sheet 2)
             const sortedMarkers = [...markers].sort((a, b) => {
                 const zoneSort = (a.zone || '').localeCompare(b.zone || '');
                 if (zoneSort !== 0) return zoneSort;
                 return (a.workArea || '').localeCompare(b.workArea || '');
             });
+
             const logData = sortedMarkers.map(m => ({ 
                 "Project (Zone)": m.zone || 'N/A',
                 "Work Area": m.workArea || 'N/A',
@@ -950,9 +972,18 @@
                 "Operator": m.createdBy,
                 "Timestamp": m.timestamp 
             }));
+
+            // 3. Create Workbook and Append Sheets
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
-            XLSX.writeFile(wb, `UPH_MANAGEMENT_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            const ws1 = XLSX.utils.json_to_sheet(analysisData);
+            XLSX.utils.book_append_sheet(wb, ws1, "Detailed Analysis");
+            
+            const ws2 = XLSX.utils.json_to_sheet(logData);
+            XLSX.utils.book_append_sheet(wb, ws2, "Summary Log");
+
+            // 4. Trigger Download
+            XLSX.writeFile(wb, `UPH_OPERATIONS_RECORDS_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
         window.onload = initializeUI;
