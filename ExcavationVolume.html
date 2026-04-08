@@ -124,8 +124,8 @@
                     </div>
                     <div class="relative group">
                         <input type="text" id="coordInput" placeholder="Paste Coordinates (lat, lng) or Google Maps URL..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
-                        <button onclick="addMarker()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <button id="mainActionButton" onclick="addMarker()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
+                            <svg id="mainActionIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.2</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.6</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -321,6 +321,7 @@
         let googleMap = null;
         let googleMapsKey = '';
         let gMarkers = [];
+        let editingId = null;
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
         // --- CORE FUNCTIONS ---
@@ -397,11 +398,16 @@
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
             const userProjects = [...new Set(markers.map(m => m.zone || 'General'))].sort();
-            dropdown.innerHTML = `<option value="all">All Zones</option>`;
+            
+            dropdown.innerHTML = `
+                <option value="all">All Zones</option>
+                <option value="planted_filter">Status: Pole Planted</option>
+            `;
+            
             userProjects.forEach(proj => {
                 const opt = document.createElement('option');
                 opt.value = proj;
-                opt.textContent = proj;
+                opt.textContent = "Zone: " + proj;
                 dropdown.appendChild(opt);
             });
             dropdown.value = currentVal;
@@ -427,6 +433,7 @@
         };
 
         window.resetInputs = () => {
+            editingId = null;
             document.getElementById('feederInput').value = '';
             document.getElementById('zoneInput').value = '';
             document.getElementById('workAreaInput').value = '';
@@ -435,6 +442,11 @@
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
             document.getElementById('prefixDisplay').innerText = '';
+            
+            // UI Reset
+            document.getElementById('mainActionButton').classList.replace('bg-blue-600', 'bg-red-600');
+            document.getElementById('mainActionButton').classList.replace('hover:bg-blue-500', 'hover:bg-red-500');
+            document.getElementById('mainActionIcon').innerHTML = '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>';
         };
 
         window.gm_authFailure = function() {
@@ -479,12 +491,18 @@
         window.handleFilterChange = () => {
             const filterVal = document.getElementById('projectFilter').value;
             const title = document.getElementById('activeOpTitle');
-            if (filterVal !== 'all') {
+            
+            title.classList.remove('animate-blink-green', 'text-slate-500');
+            
+            if (filterVal === 'planted_filter') {
+                title.classList.add('animate-blink-green'); // Blink for visibility
+                title.innerText = "Filter: Planted Poles";
+            } else if (filterVal !== 'all') {
                 title.classList.add('animate-blink-green');
-                title.classList.remove('text-slate-500');
+                title.innerText = "Tracking Zone: " + filterVal;
             } else {
-                title.classList.remove('animate-blink-green');
                 title.classList.add('text-slate-500');
+                title.innerText = "Active Operation";
             }
             renderRegistry();
             updateMapMarkers();
@@ -500,8 +518,9 @@
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
             const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
 
-            const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
+            // Coordinates Parsing
             let lat = null, lng = null;
+            const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
             if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
                 for (let pattern of urlPatterns) {
                     const match = inputString.match(pattern);
@@ -515,29 +534,70 @@
             }
             if (lat === null || lng === null) return showGlobalError("Invalid Format.");
             
-            let uniqueId;
-            if (manualIdVal) {
-                const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
-                if (collision) return showGlobalError("Duplicate Manual ID.");
-                uniqueId = manualIdVal;
+            if (editingId) {
+                const idx = markers.findIndex(m => m.id === editingId);
+                if (idx !== -1) {
+                    markers[idx] = {
+                        ...markers[idx],
+                        feeder: feederVal,
+                        zone: zoneVal,
+                        workArea: workAreaVal,
+                        contractor: contractorVal,
+                        workPlan: workPlanFormatted,
+                        lat, lng,
+                        uniqueId: manualIdVal || markers[idx].uniqueId
+                    };
+                    await dbPut('markers', markers[idx]);
+                    editingId = null;
+                }
             } else {
-                const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-                const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
-                uniqueId = `${prefix}-H${areaCount + 1}`;
+                let uniqueId;
+                if (manualIdVal) {
+                    const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
+                    if (collision) return showGlobalError("Duplicate Manual ID.");
+                    uniqueId = manualIdVal;
+                } else {
+                    const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
+                    const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
+                    uniqueId = `${prefix}-H${areaCount + 1}`;
+                }
+                
+                const newHole = {
+                    id: Date.now().toString(),
+                    uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
+                    contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
+                    lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
+                };
+                
+                markers.push(newHole);
+                await dbPut('markers', newHole);
             }
             
-            const newHole = {
-                id: Date.now().toString(),
-                uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
-                contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
-                lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
-            };
-            
-            markers.push(newHole);
-            await dbPut('markers', newHole);
-            document.getElementById('coordInput').value = '';
-            document.getElementById('manualIdInput').value = ''; 
+            resetInputs();
             syncState();
+        };
+
+        window.editMarker = (id) => {
+            const m = markers.find(item => item.id === id);
+            if (!m) return;
+            
+            editingId = id;
+            document.getElementById('feederInput').value = m.feeder === 'N/A' ? '' : m.feeder;
+            document.getElementById('zoneInput').value = m.zone === 'General' ? '' : m.zone;
+            document.getElementById('workAreaInput').value = m.workArea === 'General' ? '' : m.workArea;
+            document.getElementById('manualIdInput').value = m.uniqueId;
+            document.getElementById('contractorInput').value = m.contractor === 'Unassigned' ? '' : m.contractor;
+            document.getElementById('workPlanInput').value = m.workPlan.replace('WP-', '') || '';
+            document.getElementById('coordInput').value = `${m.lat}, ${m.lng}`;
+            updatePrefix();
+            
+            // Switch UI to edit mode
+            const btn = document.getElementById('mainActionButton');
+            btn.classList.replace('bg-red-600', 'bg-blue-600');
+            btn.classList.replace('hover:bg-red-500', 'hover:bg-blue-500');
+            document.getElementById('mainActionIcon').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         window.deleteMarker = async (id) => { 
@@ -550,7 +610,6 @@
 
         window.toggleStatus = async (id) => {
             const idx = markers.findIndex(m => m.id === id);
-            // Cycle: pending -> complete -> pending (Planted is handled via double click)
             if (markers[idx].status === 'planted') {
                 markers[idx].status = 'pending';
             } else {
@@ -562,7 +621,6 @@
 
         window.togglePlanted = async (id) => {
             const idx = markers.findIndex(m => m.id === id);
-            // Toggle planted status
             markers[idx].status = markers[idx].status === 'planted' ? 'complete' : 'planted';
             await dbPut('markers', markers[idx]);
             syncState();
@@ -626,9 +684,15 @@
             const list = document.getElementById('registryList');
             const search = document.getElementById('searchInventory').value.toLowerCase();
             const filterProj = document.getElementById('projectFilter').value;
+            
             const filtered = markers.filter(m => {
                 const matchesSearch = m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search);
-                const matchesProject = filterProj === 'all' || (m.zone || 'General') === filterProj;
+                
+                let matchesProject = false;
+                if (filterProj === 'all') matchesProject = true;
+                else if (filterProj === 'planted_filter') matchesProject = m.status === 'planted';
+                else matchesProject = (m.zone || 'General') === filterProj;
+                
                 return matchesSearch && matchesProject;
             });
             
@@ -679,6 +743,7 @@
                         </div>
                         <div class="flex gap-2">
                             <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${tickClass}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                            <button onclick="editMarker('${m.id}')" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
                             <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
                         </div>
                     </div>
@@ -694,8 +759,8 @@
                         <div class="space-y-2">
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
                             <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-slate-800 text-white') : 'text-slate-600'}" title="Double click for Planted status">Pole</button>
-                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Guy</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-green-600 text-white') : 'text-slate-600'}" title="Double click for Planted status">Pole</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-green-600 text-white' : 'text-slate-600'}">Guy</button>
                             </div>
                         </div>
                     </div>
@@ -715,7 +780,13 @@
             gMarkers = [];
             const bounds = new google.maps.LatLngBounds();
             const filterProj = document.getElementById('projectFilter').value;
-            const filtered = markers.filter(m => filterProj === 'all' || (m.zone || 'General') === filterProj);
+            
+            const filtered = markers.filter(m => {
+                if (filterProj === 'all') return true;
+                if (filterProj === 'planted_filter') return m.status === 'planted';
+                return (m.zone || 'General') === filterProj;
+            });
+            
             filtered.forEach(m => {
                 const isComplete = m.status === 'complete', isPlanted = m.status === 'planted', isGuy = m.holeType === 'Guy';
                 
@@ -731,7 +802,13 @@
                     iconConfig = { path: google.maps.SymbolPath.CIRCLE, fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
                 }
                 const labelText = m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : 'M';
-                const gMarker = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, label: { text: labelText, color: (isComplete && !isGuy && !isPlanted) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: iconConfig });
+                const gMarker = new google.maps.Marker({ 
+                    position: { lat: m.lat, lng: m.lng }, 
+                    map: googleMap, 
+                    title: m.uniqueId, // Hover tooltip
+                    label: { text: labelText, color: (isComplete && !isGuy && !isPlanted) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, 
+                    icon: iconConfig 
+                });
                 gMarkers.push(gMarker);
                 bounds.extend(gMarker.getPosition());
             });
@@ -743,13 +820,11 @@
          */
         window.generateReport = () => {
             if (markers.length === 0) return;
-
             const sortedMarkers = [...markers].sort((a, b) => {
                 const zoneSort = (a.zone || '').localeCompare(b.zone || '');
                 if (zoneSort !== 0) return zoneSort;
                 return (a.workArea || '').localeCompare(b.workArea || '');
             });
-
             const logData = sortedMarkers.map(m => ({ 
                 "Project (Zone)": m.zone || 'N/A',
                 "Work Area": m.workArea || 'N/A',
@@ -765,41 +840,7 @@
                 "Operator": m.createdBy,
                 "Timestamp": m.timestamp 
             }));
-
-            const uphReportData = [];
-            const zones = [...new Set(markers.map(m => m.zone || 'General'))].sort();
-            let gComplete = 0, gPending = 0;
-
-            zones.forEach(zone => {
-                const zoneMarkers = markers.filter(m => (m.zone || 'General') === zone);
-                const workAreas = [...new Set(zoneMarkers.map(m => m.workArea || 'General'))].sort();
-                let zComplete = 0, zPending = 0;
-
-                uphReportData.push({ "Project / Zone": zone.toUpperCase(), "Work Area": "---", "Classification": "---", "Completed": "---", "Pending": "---", "Total": "---" });
-
-                workAreas.forEach(wa => {
-                    const waMarkers = zoneMarkers.filter(m => (m.workArea || 'General') === wa);
-                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && (m.status === 'complete' || m.status === 'planted')).length;
-                    const pp = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
-                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && (m.status === 'complete' || m.status === 'planted')).length;
-                    const gp = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
-
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Pole Holes", "Completed": pc, "Pending": pp, "Total": pc + pp });
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Guy Holes", "Completed": gc, "Pending": gp, "Total": gc + gp });
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": `${wa} SUBTOTAL`, "Classification": "All Types", "Completed": pc + gc, "Pending": pp + gp, "Total": pc + gc + pp + gp });
-                    uphReportData.push({ "Project / Zone": "", "Work Area": "", "Classification": "", "Completed": "", "Pending": "", "Total": "" });
-                    zComplete += (pc + gc); zPending += (pp + gp);
-                });
-
-                uphReportData.push({ "Project / Zone": `${zone} TOTAL`, "Work Area": "ALL AREAS", "Classification": "Zone Summary", "Completed": zComplete, "Pending": zPending, "Total": zComplete + zPending });
-                uphReportData.push({ "Project / Zone": "==========", "Work Area": "==========", "Classification": "==========", "Completed": "===", "Pending": "===", "Total": "===" });
-                gComplete += zComplete; gPending += zPending;
-            });
-
-            uphReportData.push({ "Project / Zone": "GRAND TOTAL", "Work Area": "GLOBAL", "Classification": "All Operations", "Completed": gComplete, "Pending": gPending, "Total": gComplete + gPending });
-
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uphReportData), "UPH Summary");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
             XLSX.writeFile(wb, `UPH_MANAGEMENT_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
