@@ -224,7 +224,7 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.1</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -487,14 +487,34 @@
         }
 
         window.updatePrefix = () => {
-            const input = document.getElementById('workAreaInput').value.trim();
+            const workAreaInput = document.getElementById('workAreaInput');
+            const workAreaVal = workAreaInput.value.trim() || 'General';
             const display = document.getElementById('prefixDisplay');
-            if (input.length >= 2) {
-                const prefix = input.substring(0, 3).toUpperCase();
-                display.innerText = `${prefix}-H#`; 
+            const manualIdInput = document.getElementById('manualIdInput');
+            
+            if (workAreaVal.length >= 2) {
+                const prefix = workAreaVal.substring(0, 3).toUpperCase();
+                
+                // Calculate next ID for automation display based on maximum number found
+                const areaMarkers = markers.filter(m => (m.workArea || 'General') === workAreaVal);
+                let nextNum = 1;
+                if (areaMarkers.length > 0) {
+                    const nums = areaMarkers.map(m => {
+                        const match = m.uniqueId.match(/-H(\d+)$/);
+                        return match ? parseInt(match[1]) : 0;
+                    });
+                    nextNum = Math.max(...nums) + 1;
+                }
+                
+                const nextId = `${prefix}-H${nextNum}`;
+                display.innerText = `Next: ${nextId}`; 
+                manualIdInput.placeholder = nextId; // Show user exactly what is coming next
                 return prefix;
             }
-            display.innerText = ''; return 'GEN';
+            
+            display.innerText = ''; 
+            manualIdInput.placeholder = 'Manual Hole ID';
+            return 'GEN';
         };
 
         // Reset all inputs (for starting a completely new project/area)
@@ -507,6 +527,7 @@
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
             document.getElementById('prefixDisplay').innerText = '';
+            document.getElementById('manualIdInput').placeholder = 'Manual Hole ID';
         };
 
         window.gm_authFailure = function() {
@@ -600,8 +621,17 @@
                 uniqueId = manualIdVal;
             } else {
                 const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-                const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
-                uniqueId = `${prefix}-H${areaCount + 1}`;
+                // CONTINUITY LOGIC: Find the max numeric suffix for this work area to ensure sequence
+                const areaMarkers = markers.filter(m => (m.workArea || 'General') === workAreaVal);
+                let nextNum = 1;
+                if (areaMarkers.length > 0) {
+                    const nums = areaMarkers.map(m => {
+                        const match = m.uniqueId.match(/-H(\d+)$/);
+                        return match ? parseInt(match[1]) : 0;
+                    });
+                    nextNum = Math.max(...nums) + 1;
+                }
+                uniqueId = `${prefix}-H${nextNum}`;
             }
             
             const newHole = {
@@ -615,12 +645,12 @@
             await dbPut('markers', newHole);
             
             // AUTOMATION: Keep project details static for faster logging
-            // Only clear the coordinates and manual ID fields
             document.getElementById('coordInput').value = '';
             document.getElementById('manualIdInput').value = '';
             document.getElementById('coordInput').focus(); // Ready for next paste
             
             syncState();
+            updatePrefix(); // Refresh the hint to show the next sequence number (e.g., H91)
         };
 
         /**
@@ -676,6 +706,7 @@
             await dbPut('markers', markers[idx]);
             closeEditModal();
             syncState();
+            updatePrefix(); // Sync UI hints
         };
 
         window.deleteMarker = async (id) => { 
@@ -683,6 +714,7 @@
                 markers = markers.filter(m => m.id !== id);
                 await dbDelete('markers', id);
                 syncState();
+                updatePrefix(); // Sync UI hints
             }
         };
 
@@ -838,7 +870,7 @@
                             <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
                             <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
                                 <button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-green-600 text-white') : 'text-slate-600'}" title="Double click for Planted status">Pole</button>
-                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-green-600 text-white' : 'text-slate-600'}">Guy</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Guy')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-green-600 text-white') : 'text-slate-600'}" title="Double click for Planted status">Guy</button>
                             </div>
                         </div>
                     </div>
