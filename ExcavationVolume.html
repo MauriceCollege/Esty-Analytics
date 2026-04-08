@@ -224,7 +224,7 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.3</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.9.5</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
@@ -310,6 +310,60 @@
     <input type="file" id="imageInput" class="hidden" accept="image/*">
 
     <script>
+        /**
+         * --- NORMALIZATION ENGINE ---
+         * Standardizes text input and fixes spelling errors.
+         */
+        const normalizeInput = (str) => {
+            if (!str) return 'General';
+            let normalized = str.trim();
+            if (normalized.length === 0) return 'General';
+            
+            // Spelling Correction Mapping
+            const corrections = [
+                { pattern: /Woodlnds/gi, replacement: "Woodlands" },
+                { pattern: /WoodlNDS/gi, replacement: "Woodlands" }
+            ];
+
+            corrections.forEach(c => {
+                normalized = normalized.replace(c.pattern, c.replacement);
+            });
+
+            // Proper Case: Capitalize every word (handles multi-word names correctly)
+            return normalized.split(/\s+/).map(word => {
+                if (word.length === 0) return "";
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+        };
+
+        /**
+         * --- DATABASE REPAIR ROUTINE ---
+         * Runs on startup to fix existing records in IndexedDB.
+         */
+        const repairDatabase = async () => {
+            const allMarkers = await dbGetAll('markers');
+            let repairsCount = 0;
+
+            for (let m of allMarkers) {
+                const originalZone = m.zone;
+                const originalArea = m.workArea;
+                const normalizedZone = normalizeInput(originalZone);
+                const normalizedArea = normalizeInput(originalArea);
+
+                if (originalZone !== normalizedZone || originalArea !== normalizedArea) {
+                    m.zone = normalizedZone;
+                    m.workArea = normalizedArea;
+                    await dbPut('markers', m);
+                    repairsCount++;
+                }
+            }
+
+            if (repairsCount > 0) {
+                console.log(`System: Repaired ${repairsCount} log entries (Woodlands fix/Normalization).`);
+                markers = await dbGetAll('markers'); // Refresh local state
+            }
+        };
+
         /**
          * --- INDEXED DB ENGINE ---
          */
@@ -422,6 +476,10 @@
                     document.getElementById('mainDashboard').classList.remove('hidden');
                     setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
                     document.getElementById('userNameDisplay').innerText = currentUser.fullName;
+                    
+                    // Critical: Run Data Repair before rendering anything
+                    await repairDatabase();
+                    
                     updateProjectDropdown();
                     renderRegistry();
                     loadGMap();
@@ -462,7 +520,8 @@
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            const userProjects = [...new Set(markers.map(m => m.zone || 'General'))].sort();
+            // Normalize for dropdown display
+            const userProjects = [...new Set(markers.map(m => normalizeInput(m.zone)))].sort();
             
             dropdown.innerHTML = `
                 <option value="all">All Zones</option>
@@ -488,15 +547,15 @@
 
         window.updatePrefix = () => {
             const workAreaInput = document.getElementById('workAreaInput');
-            const workAreaVal = workAreaInput.value.trim() || 'General';
+            const workAreaValRaw = workAreaInput.value.trim();
+            const workAreaVal = normalizeInput(workAreaValRaw);
             const display = document.getElementById('prefixDisplay');
             const manualIdInput = document.getElementById('manualIdInput');
             
-            if (workAreaVal.length >= 2) {
+            if (workAreaValRaw.length >= 2) {
                 const prefix = workAreaVal.substring(0, 3).toUpperCase();
                 
-                // Calculate next ID for automation display based on maximum number found
-                const areaMarkers = markers.filter(m => (m.workArea || 'General') === workAreaVal);
+                const areaMarkers = markers.filter(m => normalizeInput(m.workArea) === workAreaVal);
                 let nextNum = 1;
                 if (areaMarkers.length > 0) {
                     const nums = areaMarkers.map(m => {
@@ -508,7 +567,7 @@
                 
                 const nextId = `${prefix}-H${nextNum}`;
                 display.innerText = `Next: ${nextId}`; 
-                manualIdInput.placeholder = nextId; // Show user exactly what is coming next
+                manualIdInput.placeholder = nextId; 
                 return prefix;
             }
             
@@ -592,8 +651,8 @@
         window.addMarker = async () => {
             let inputString = document.getElementById('coordInput').value.trim();
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
-            const zoneVal = document.getElementById('zoneInput').value.trim() || 'General';
-            const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
+            const zoneVal = normalizeInput(document.getElementById('zoneInput').value);
+            const workAreaVal = normalizeInput(document.getElementById('workAreaInput').value);
             const manualIdVal = document.getElementById('manualIdInput').value.trim(); 
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
@@ -616,13 +675,12 @@
             
             let uniqueId;
             if (manualIdVal) {
-                const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
+                const collision = markers.find(m => m.uniqueId === manualIdVal && normalizeInput(m.workArea) === workAreaVal);
                 if (collision) return showGlobalError("Duplicate Manual ID.");
                 uniqueId = manualIdVal;
             } else {
-                const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-                // CONTINUITY LOGIC: Find the max numeric suffix for this work area to ensure sequence
-                const areaMarkers = markers.filter(m => (m.workArea || 'General') === workAreaVal);
+                const prefix = workAreaVal.substring(0, 3).toUpperCase();
+                const areaMarkers = markers.filter(m => normalizeInput(m.workArea) === workAreaVal);
                 let nextNum = 1;
                 if (areaMarkers.length > 0) {
                     const nums = areaMarkers.map(m => {
@@ -644,18 +702,14 @@
             markers.push(newHole);
             await dbPut('markers', newHole);
             
-            // AUTOMATION: Keep project details static for faster logging
             document.getElementById('coordInput').value = '';
             document.getElementById('manualIdInput').value = '';
-            document.getElementById('coordInput').focus(); // Ready for next paste
+            document.getElementById('coordInput').focus(); 
             
             syncState();
-            updatePrefix(); // Refresh the hint to show the next sequence number (e.g., H91)
+            updatePrefix(); 
         };
 
-        /**
-         * --- MODAL EDITING LOGIC (Identity & GPS focus) ---
-         */
         window.editMarker = (id) => {
             const m = markers.find(item => item.id === id);
             if (!m) return;
@@ -690,12 +744,11 @@
 
             const wpVal = document.getElementById('editWorkPlan').value.trim();
             
-            // Only update requested fields: Feeder, WP, Zone, Area, ID, Contractor, GPS
             markers[idx] = {
                 ...markers[idx],
                 feeder: document.getElementById('editFeeder').value,
-                zone: document.getElementById('editZone').value || 'General',
-                workArea: document.getElementById('editWorkArea').value || 'General',
+                zone: normalizeInput(document.getElementById('editZone').value),
+                workArea: normalizeInput(document.getElementById('editWorkArea').value),
                 uniqueId: document.getElementById('editUniqueId').value.trim(),
                 contractor: document.getElementById('editContractor').value || 'Unassigned',
                 workPlan: wpVal ? `WP-${wpVal}` : 'N/A',
@@ -706,7 +759,7 @@
             await dbPut('markers', markers[idx]);
             closeEditModal();
             syncState();
-            updatePrefix(); // Sync UI hints
+            updatePrefix(); 
         };
 
         window.deleteMarker = async (id) => { 
@@ -714,7 +767,7 @@
                 markers = markers.filter(m => m.id !== id);
                 await dbDelete('markers', id);
                 syncState();
-                updatePrefix(); // Sync UI hints
+                updatePrefix(); 
             }
         };
 
@@ -801,7 +854,7 @@
                 let matchesProject = false;
                 if (filterProj === 'all') matchesProject = true;
                 else if (filterProj === 'planted_filter') matchesProject = m.status === 'planted';
-                else matchesProject = (m.zone || 'General') === filterProj;
+                else matchesProject = normalizeInput(m.zone) === filterProj;
                 
                 return matchesSearch && matchesProject;
             });
@@ -894,15 +947,15 @@
             const filtered = markers.filter(m => {
                 if (filterProj === 'all') return true;
                 if (filterProj === 'planted_filter') return m.status === 'planted';
-                return (m.zone || 'General') === filterProj;
+                return normalizeInput(m.zone) === filterProj;
             });
             
             filtered.forEach(m => {
                 const isComplete = m.status === 'complete', isPlanted = m.status === 'planted', isGuy = m.holeType === 'Guy';
                 
-                let primaryColor = "#dc2626"; // Default Red
-                if (isPlanted) primaryColor = "#3b82f6"; // Blue
-                else if (isComplete) primaryColor = "#eab308"; // Yellow
+                let primaryColor = "#dc2626"; 
+                if (isPlanted) primaryColor = "#3b82f6"; 
+                else if (isComplete) primaryColor = "#eab308"; 
                 
                 let iconConfig;
                 if (isGuy) {
@@ -925,19 +978,13 @@
             if (filtered.length > 0) googleMap.fitBounds(bounds);
         }
 
-        /**
-         * --- HIERARCHICAL REPORTING ENGINE (ENHANCED 2-SHEET VERSION) ---
-         * Now includes Work Area level breakdown within each Zone.
-         */
         window.generateReport = () => {
             if (markers.length === 0) return;
 
-            // 1. Prepare Hierarchical Analysis Data (Sheet 1)
-            // Structure: stats[zone][workArea][type]
             const stats = {};
             markers.forEach(m => {
-                const zone = m.zone || 'General';
-                const area = m.workArea || 'General';
+                const zone = normalizeInput(m.zone);
+                const area = normalizeInput(m.workArea);
                 
                 if (!stats[zone]) stats[zone] = {};
                 if (!stats[zone][area]) {
@@ -956,9 +1003,7 @@
             });
 
             const analysisData = [];
-            // Sort Zones
             Object.keys(stats).sort().forEach(zone => {
-                // Sort Work Areas within Zone
                 Object.keys(stats[zone]).sort().forEach(area => {
                     const p = stats[zone][area].poles;
                     const g = stats[zone][area].guys;
@@ -991,16 +1036,15 @@
                 });
             });
 
-            // 2. Prepare Summary Log Data (Sheet 2)
             const sortedMarkers = [...markers].sort((a, b) => {
-                const zoneSort = (a.zone || '').localeCompare(b.zone || '');
+                const zoneSort = normalizeInput(a.zone).localeCompare(normalizeInput(b.zone));
                 if (zoneSort !== 0) return zoneSort;
-                return (a.workArea || '').localeCompare(b.workArea || '');
+                return normalizeInput(a.workArea).localeCompare(normalizeInput(b.workArea));
             });
 
             const logData = sortedMarkers.map(m => ({ 
-                "Project (Zone)": m.zone || 'N/A',
-                "Work Area": m.workArea || 'N/A',
+                "Project (Zone)": normalizeInput(m.zone),
+                "Work Area": normalizeInput(m.workArea),
                 "Work Plan #": m.workPlan || 'N/A',
                 "Hole ID": m.uniqueId, 
                 "Feeder": m.feeder, 
@@ -1014,16 +1058,12 @@
                 "Timestamp": m.timestamp 
             }));
 
-            // 3. Create Workbook and Append Sheets
             const wb = XLSX.utils.book_new();
-            
             const ws1 = XLSX.utils.json_to_sheet(analysisData);
             XLSX.utils.book_append_sheet(wb, ws1, "Detailed Area Analysis");
-            
             const ws2 = XLSX.utils.json_to_sheet(logData);
             XLSX.utils.book_append_sheet(wb, ws2, "Summary Log");
 
-            // 4. Trigger Download
             XLSX.writeFile(wb, `UPH_OPERATIONS_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
