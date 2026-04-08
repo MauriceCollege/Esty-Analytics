@@ -224,12 +224,12 @@
                 <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
                     Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
                 </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.6</span><span>IndexedDB Active</span></div>
+                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.8</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- API Key Modal -->
     <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-6">
         <div class="max-w-md w-full glass-panel rounded-[3rem] p-10 space-y-6">
             <h2 class="text-2xl font-black text-center text-white">Refresh API Credentials</h2>
@@ -238,6 +238,71 @@
             <div class="flex gap-4">
                 <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-500 py-4 rounded-2xl">Cancel</button>
                 <button onclick="saveNewKey()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-2xl shadow-xl">Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Marker Modal (Identity & Location Only) -->
+    <div id="editMarkerModal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 overflow-y-auto">
+        <div class="max-w-2xl w-full glass-panel rounded-[3rem] p-8 md:p-10 space-y-8 shadow-3xl animate-fade-in my-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-6">
+                <div>
+                    <h2 class="text-2xl font-black tracking-tighter text-white">Edit Hole Identity</h2>
+                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Operational ID: <span id="editModalIdDisplay" class="text-blue-500">#</span></p>
+                </div>
+                <button onclick="closeEditModal()" class="p-2 bg-slate-900 hover:bg-slate-800 rounded-full text-slate-400 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Group 1: Identity -->
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Feeder ID</label>
+                        <select id="editFeeder" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                            <option value="Bogue 610">Bogue 610</option>
+                            <option value="Maggotty 110">Maggotty 110</option>
+                            <option value="Paradise 310">Paradise 310</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Zone</label>
+                        <input type="text" id="editZone" placeholder="Enter Zone..." class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Work Area</label>
+                        <input type="text" id="editWorkArea" placeholder="Enter Work Area..." class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Unique Hole ID</label>
+                        <input type="text" id="editUniqueId" placeholder="e.g., NWB-H1" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all font-bold">
+                    </div>
+                </div>
+
+                <!-- Group 2: Project & GPS -->
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Contractor</label>
+                        <input type="text" id="editContractor" placeholder="Contractor Name..." class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Work Plan (WP#)</label>
+                        <div class="relative">
+                             <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 pointer-events-none">WP-</div>
+                             <input type="text" id="editWorkPlan" placeholder="Plan Number" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">GPS Location (Lat, Lng)</label>
+                        <input type="text" id="editCoords" placeholder="18.1096, -77.2975" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button onclick="closeEditModal()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-400 font-black py-4 rounded-2xl transition-all border border-slate-800 uppercase tracking-widest text-xs">Discard</button>
+                <button onclick="updateMarker()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 uppercase tracking-widest text-xs">Save Identity</button>
             </div>
         </div>
     </div>
@@ -383,7 +448,7 @@
 
         function calcStorageUsage() {
             const el = document.getElementById('storageUsage');
-            if (!markers) {
+            if (!markers || markers.length === 0) {
                 el.innerText = '0 KB';
                 return;
             }
@@ -433,7 +498,6 @@
         };
 
         window.resetInputs = () => {
-            editingId = null;
             document.getElementById('feederInput').value = '';
             document.getElementById('zoneInput').value = '';
             document.getElementById('workAreaInput').value = '';
@@ -442,11 +506,6 @@
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
             document.getElementById('prefixDisplay').innerText = '';
-            
-            // UI Reset
-            document.getElementById('mainActionButton').classList.replace('bg-blue-600', 'bg-red-600');
-            document.getElementById('mainActionButton').classList.replace('hover:bg-blue-500', 'hover:bg-red-500');
-            document.getElementById('mainActionIcon').innerHTML = '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>';
         };
 
         window.gm_authFailure = function() {
@@ -495,7 +554,7 @@
             title.classList.remove('animate-blink-green', 'text-slate-500');
             
             if (filterVal === 'planted_filter') {
-                title.classList.add('animate-blink-green'); // Blink for visibility
+                title.classList.add('animate-blink-green'); 
                 title.innerText = "Filter: Planted Poles";
             } else if (filterVal !== 'all') {
                 title.classList.add('animate-blink-green');
@@ -518,7 +577,6 @@
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
             const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
 
-            // Coordinates Parsing
             let lat = null, lng = null;
             const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
             if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
@@ -532,72 +590,86 @@
                 const match = inputString.match(manualRegex);
                 if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
             }
-            if (lat === null || lng === null) return showGlobalError("Invalid Format.");
+            if (lat === null || lng === null) return showGlobalError("Invalid Coordinate Format.");
             
-            if (editingId) {
-                const idx = markers.findIndex(m => m.id === editingId);
-                if (idx !== -1) {
-                    markers[idx] = {
-                        ...markers[idx],
-                        feeder: feederVal,
-                        zone: zoneVal,
-                        workArea: workAreaVal,
-                        contractor: contractorVal,
-                        workPlan: workPlanFormatted,
-                        lat, lng,
-                        uniqueId: manualIdVal || markers[idx].uniqueId
-                    };
-                    await dbPut('markers', markers[idx]);
-                    editingId = null;
-                }
+            let uniqueId;
+            if (manualIdVal) {
+                const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
+                if (collision) return showGlobalError("Duplicate Manual ID.");
+                uniqueId = manualIdVal;
             } else {
-                let uniqueId;
-                if (manualIdVal) {
-                    const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
-                    if (collision) return showGlobalError("Duplicate Manual ID.");
-                    uniqueId = manualIdVal;
-                } else {
-                    const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-                    const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
-                    uniqueId = `${prefix}-H${areaCount + 1}`;
-                }
-                
-                const newHole = {
-                    id: Date.now().toString(),
-                    uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
-                    contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
-                    lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
-                };
-                
-                markers.push(newHole);
-                await dbPut('markers', newHole);
+                const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
+                const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
+                uniqueId = `${prefix}-H${areaCount + 1}`;
             }
+            
+            const newHole = {
+                id: Date.now().toString(),
+                uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
+                contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
+                lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
+            };
+            
+            markers.push(newHole);
+            await dbPut('markers', newHole);
             
             resetInputs();
             syncState();
         };
 
+        /**
+         * --- MODAL EDITING LOGIC (Identity & GPS focus) ---
+         */
         window.editMarker = (id) => {
             const m = markers.find(item => item.id === id);
             if (!m) return;
             
             editingId = id;
-            document.getElementById('feederInput').value = m.feeder === 'N/A' ? '' : m.feeder;
-            document.getElementById('zoneInput').value = m.zone === 'General' ? '' : m.zone;
-            document.getElementById('workAreaInput').value = m.workArea === 'General' ? '' : m.workArea;
-            document.getElementById('manualIdInput').value = m.uniqueId;
-            document.getElementById('contractorInput').value = m.contractor === 'Unassigned' ? '' : m.contractor;
-            document.getElementById('workPlanInput').value = m.workPlan.replace('WP-', '') || '';
-            document.getElementById('coordInput').value = `${m.lat}, ${m.lng}`;
-            updatePrefix();
+            document.getElementById('editModalIdDisplay').innerText = m.uniqueId;
+            document.getElementById('editFeeder').value = m.feeder === 'N/A' ? 'Bogue 610' : m.feeder;
+            document.getElementById('editZone').value = m.zone === 'General' ? '' : m.zone;
+            document.getElementById('editWorkArea').value = m.workArea === 'General' ? '' : m.workArea;
+            document.getElementById('editUniqueId').value = m.uniqueId;
+            document.getElementById('editContractor').value = m.contractor === 'Unassigned' ? '' : m.contractor;
+            document.getElementById('editWorkPlan').value = (m.workPlan || '').replace('WP-', '') || '';
+            document.getElementById('editCoords').value = `${m.lat}, ${m.lng}`;
             
-            // Switch UI to edit mode
-            const btn = document.getElementById('mainActionButton');
-            btn.classList.replace('bg-red-600', 'bg-blue-600');
-            btn.classList.replace('hover:bg-red-500', 'hover:bg-blue-500');
-            document.getElementById('mainActionIcon').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            document.getElementById('editMarkerModal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = () => {
+            editingId = null;
+            document.getElementById('editMarkerModal').classList.add('hidden');
+        };
+
+        window.updateMarker = async () => {
+            if (!editingId) return;
             
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const idx = markers.findIndex(m => m.id === editingId);
+            if (idx === -1) return;
+
+            const coordStr = document.getElementById('editCoords').value.trim();
+            const match = coordStr.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+            if (!match) return showGlobalError("Invalid GPS Format (use: lat, lng).");
+
+            const wpVal = document.getElementById('editWorkPlan').value.trim();
+            
+            // Only update requested fields: Feeder, WP, Zone, Area, ID, Contractor, GPS
+            markers[idx] = {
+                ...markers[idx],
+                feeder: document.getElementById('editFeeder').value,
+                zone: document.getElementById('editZone').value || 'General',
+                workArea: document.getElementById('editWorkArea').value || 'General',
+                uniqueId: document.getElementById('editUniqueId').value.trim(),
+                contractor: document.getElementById('editContractor').value || 'Unassigned',
+                workPlan: wpVal ? `WP-${wpVal}` : 'N/A',
+                lat: parseFloat(match[1]),
+                lng: parseFloat(match[2])
+            };
+
+            await dbPut('markers', markers[idx]);
+            closeEditModal();
+            syncState();
         };
 
         window.deleteMarker = async (id) => { 
@@ -686,7 +758,7 @@
             const filterProj = document.getElementById('projectFilter').value;
             
             const filtered = markers.filter(m => {
-                const matchesSearch = m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search);
+                const matchesSearch = (m.uniqueId || '').toLowerCase().includes(search) || (m.contractor || '').toLowerCase().includes(search);
                 
                 let matchesProject = false;
                 if (filterProj === 'all') matchesProject = true;
@@ -743,7 +815,7 @@
                         </div>
                         <div class="flex gap-2">
                             <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${tickClass}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
-                            <button onclick="editMarker('${m.id}')" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                            <button onclick="editMarker('${m.id}')" title="Edit Identity & Location" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
                             <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
                         </div>
                     </div>
@@ -805,7 +877,7 @@
                 const gMarker = new google.maps.Marker({ 
                     position: { lat: m.lat, lng: m.lng }, 
                     map: googleMap, 
-                    title: m.uniqueId, // Hover tooltip
+                    title: m.uniqueId, 
                     label: { text: labelText, color: (isComplete && !isGuy && !isPlanted) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, 
                     icon: iconConfig 
                 });
