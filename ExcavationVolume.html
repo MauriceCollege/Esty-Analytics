@@ -204,7 +204,7 @@
                             </button>
                         </div>
                         <div class="relative">
-                            <input type="text" id="searchInventory" placeholder="Filter ID, WP#, or contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
+                            <input type="text" id="searchInventory" placeholder="Filter ID, WP#, or contractor..." oninput="handleFilterChange()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
                         </div>
                     </div>
                     <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar"></div>
@@ -310,131 +310,73 @@
     <input type="file" id="imageInput" class="hidden" accept="image/*">
 
     <script>
-        /**
-         * --- NORMALIZATION ENGINE ---
-         * Standardizes text input and fixes spelling errors.
-         */
         const normalizeInput = (str) => {
             if (!str) return 'General';
             let normalized = str.trim();
             if (normalized.length === 0) return 'General';
-            
-            // Spelling Correction Mapping
-            const corrections = [
-                { pattern: /Woodlnds/gi, replacement: "Woodlands" },
-                { pattern: /WoodlNDS/gi, replacement: "Woodlands" }
-            ];
-
-            corrections.forEach(c => {
-                normalized = normalized.replace(c.pattern, c.replacement);
-            });
-
-            // Proper Case: Capitalize every word (handles multi-word names correctly)
+            const corrections = [{ pattern: /Woodlnds/gi, replacement: "Woodlands" }, { pattern: /WoodlNDS/gi, replacement: "Woodlands" }];
+            corrections.forEach(c => { normalized = normalized.replace(c.pattern, c.replacement); });
             return normalized.split(/\s+/).map(word => {
                 if (word.length === 0) return "";
                 return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
             }).join(' ');
         };
 
-        /**
-         * --- DATABASE REPAIR ROUTINE ---
-         * Runs on startup to fix existing records in IndexedDB.
-         */
         const repairDatabase = async () => {
             const allMarkers = await dbGetAll('markers');
             let repairsCount = 0;
-
             for (let m of allMarkers) {
-                const originalZone = m.zone;
-                const originalArea = m.workArea;
-                const normalizedZone = normalizeInput(originalZone);
-                const normalizedArea = normalizeInput(originalArea);
-
-                if (originalZone !== normalizedZone || originalArea !== normalizedArea) {
+                const normalizedZone = normalizeInput(m.zone);
+                const normalizedArea = normalizeInput(m.workArea);
+                if (m.zone !== normalizedZone || m.workArea !== normalizedArea) {
                     m.zone = normalizedZone;
                     m.workArea = normalizedArea;
                     await dbPut('markers', m);
                     repairsCount++;
                 }
             }
-
-            if (repairsCount > 0) {
-                console.log(`System: Repaired ${repairsCount} log entries (Woodlands fix/Normalization).`);
-                markers = await dbGetAll('markers'); // Refresh local state
-            }
+            if (repairsCount > 0) markers = await dbGetAll('markers');
         };
 
-        /**
-         * --- INDEXED DB ENGINE ---
-         */
         const DB_NAME = 'UPHTrackerDB';
         const DB_VERSION = 1;
         let db;
+        const initDB = () => new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('markers')) db.createObjectStore('markers', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+            request.onerror = (e) => reject("Database failure.");
+        });
 
-        const initDB = () => {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('markers')) db.createObjectStore('markers', { keyPath: 'id' });
-                    if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
-                };
-                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                request.onerror = (e) => reject("Database failure.");
-            });
-        };
+        const dbPut = (storeName, data) => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).put(data).onsuccess = () => resolve();
+        });
 
-        const dbPut = (storeName, data) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.put(data);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
+        const dbGet = (storeName, key) => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readonly');
+            tx.objectStore(storeName).get(key).onsuccess = (e) => resolve(e.target.result);
+        });
 
-        const dbGet = (storeName, key) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject();
-            });
-        };
+        const dbGetAll = (storeName) => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readonly');
+            tx.objectStore(storeName).getAll().onsuccess = (e) => resolve(e.target.result);
+        });
 
-        const dbGetAll = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject();
-            });
-        };
+        const dbDelete = (storeName, key) => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).delete(key).onsuccess = () => resolve();
+        });
 
-        const dbDelete = (storeName, key) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.delete(key);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
+        const dbClear = (storeName) => new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).clear().onsuccess = () => resolve();
+        });
 
-        const dbClear = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.clear();
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
-
-        // --- APPLICATION STATE ---
         let currentUser = null;
         let markers = [];
         let googleMap = null;
@@ -443,7 +385,6 @@
         let editingId = null;
         const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
 
-        // --- CORE FUNCTIONS ---
         async function handleLogin() {
             const first = document.getElementById('firstNameInput').value.trim();
             const last = document.getElementById('lastNameInput').value.trim();
@@ -468,7 +409,6 @@
                 const keySetting = await dbGet('settings', 'gmaps_key');
                 googleMapsKey = keySetting ? keySetting.value : '';
                 markers = await dbGetAll('markers');
-
                 if (!currentUser) {
                     document.getElementById('loginOverlay').classList.remove('hidden');
                 } else {
@@ -476,17 +416,12 @@
                     document.getElementById('mainDashboard').classList.remove('hidden');
                     setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
                     document.getElementById('userNameDisplay').innerText = currentUser.fullName;
-                    
-                    // Critical: Run Data Repair before rendering anything
                     await repairDatabase();
-                    
                     updateProjectDropdown();
                     renderRegistry();
                     loadGMap();
                 }
-            } catch (err) {
-                showGlobalError("Database Initialization Failed.");
-            }
+            } catch (err) { showGlobalError("Database Initialization Failed."); }
         }
 
         async function clearAllData() {
@@ -506,28 +441,17 @@
 
         function calcStorageUsage() {
             const el = document.getElementById('storageUsage');
-            if (!markers || markers.length === 0) {
-                el.innerText = '0 KB';
-                return;
-            }
             const jsonString = JSON.stringify(markers);
             const bytes = new Blob([jsonString]).size;
             if (bytes < 1024) el.innerText = `${bytes} B`;
-            else if (bytes < 1048576) el.innerText = `${(bytes / 1024).toFixed(2)} KB`;
-            else el.innerText = `${(bytes / 1048576).toFixed(2)} MB`;
+            else el.innerText = `${(bytes / 1024).toFixed(2)} KB`;
         }
 
         function updateProjectDropdown() {
             const dropdown = document.getElementById('projectFilter');
             const currentVal = dropdown.value;
-            // Normalize for dropdown display
             const userProjects = [...new Set(markers.map(m => normalizeInput(m.zone)))].sort();
-            
-            dropdown.innerHTML = `
-                <option value="all">All Zones</option>
-                <option value="planted_filter">Status: Pole Planted</option>
-            `;
-            
+            dropdown.innerHTML = `<option value="all">All Zones</option><option value="planted_filter">Status: Pole Planted</option>`;
             userProjects.forEach(proj => {
                 const opt = document.createElement('option');
                 opt.value = proj;
@@ -546,15 +470,12 @@
         }
 
         window.updatePrefix = () => {
-            const workAreaInput = document.getElementById('workAreaInput');
-            const workAreaValRaw = workAreaInput.value.trim();
+            const workAreaValRaw = document.getElementById('workAreaInput').value.trim();
             const workAreaVal = normalizeInput(workAreaValRaw);
             const display = document.getElementById('prefixDisplay');
             const manualIdInput = document.getElementById('manualIdInput');
-            
             if (workAreaValRaw.length >= 2) {
                 const prefix = workAreaVal.substring(0, 3).toUpperCase();
-                
                 const areaMarkers = markers.filter(m => normalizeInput(m.workArea) === workAreaVal);
                 let nextNum = 1;
                 if (areaMarkers.length > 0) {
@@ -564,29 +485,25 @@
                     });
                     nextNum = Math.max(...nums) + 1;
                 }
-                
                 const nextId = `${prefix}-H${nextNum}`;
-                display.innerText = `Next: ${nextId}`; 
-                manualIdInput.placeholder = nextId; 
+                display.innerText = `Next: ${nextId}`;
+                manualIdInput.placeholder = nextId;
                 return prefix;
             }
-            
-            display.innerText = ''; 
+            display.innerText = '';
             manualIdInput.placeholder = 'Manual Hole ID';
             return 'GEN';
         };
 
-        // Reset all inputs (for starting a completely new project/area)
         window.resetInputs = () => {
             document.getElementById('feederInput').value = '';
             document.getElementById('zoneInput').value = '';
             document.getElementById('workAreaInput').value = '';
-            document.getElementById('manualIdInput').value = ''; 
+            document.getElementById('manualIdInput').value = '';
             document.getElementById('contractorInput').value = '';
             document.getElementById('workPlanInput').value = '';
             document.getElementById('coordInput').value = '';
             document.getElementById('prefixDisplay').innerText = '';
-            document.getElementById('manualIdInput').placeholder = 'Manual Hole ID';
         };
 
         window.gm_authFailure = function() {
@@ -595,16 +512,13 @@
         };
 
         window.initMap = () => {
-            try {
-                googleMap = new google.maps.Map(document.getElementById('map'), {
-                    center: JAMAICA_CENTER, zoom: 8, mapTypeId: 'hybrid',
-                    disableDefaultUI: false, streetViewControl: false,
-                    styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
-                });
-                document.getElementById('mapLoader').classList.add('hidden');
-                document.getElementById('mapFailureOverlay').classList.add('hidden');
-                updateMapMarkers();
-            } catch (e) { document.getElementById('mapFailureOverlay').classList.remove('hidden'); }
+            googleMap = new google.maps.Map(document.getElementById('map'), {
+                center: JAMAICA_CENTER, zoom: 8, mapTypeId: 'hybrid',
+                disableDefaultUI: false, streetViewControl: false,
+                styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
+            });
+            document.getElementById('mapLoader').classList.add('hidden');
+            updateMapMarkers();
         };
 
         const loadGMap = () => {
@@ -622,28 +536,16 @@
         window.promptNewKey = () => document.getElementById('apiKeyModal').classList.remove('hidden');
         window.saveNewKey = async () => {
             const val = document.getElementById('newApiKeyInput').value.trim();
-            if (val) { 
-                await dbPut('settings', { key: 'gmaps_key', value: val });
-                location.reload(); 
-            }
+            if (val) { await dbPut('settings', { key: 'gmaps_key', value: val }); location.reload(); }
         };
 
         window.handleFilterChange = () => {
             const filterVal = document.getElementById('projectFilter').value;
             const title = document.getElementById('activeOpTitle');
-            
             title.classList.remove('animate-blink-green', 'text-slate-500');
-            
-            if (filterVal === 'planted_filter') {
-                title.classList.add('animate-blink-green'); 
-                title.innerText = "Filter: Planted Poles";
-            } else if (filterVal !== 'all') {
-                title.classList.add('animate-blink-green');
-                title.innerText = "Tracking Zone: " + filterVal;
-            } else {
-                title.classList.add('text-slate-500');
-                title.innerText = "Active Operation";
-            }
+            if (filterVal === 'planted_filter') { title.classList.add('animate-blink-green'); title.innerText = "Filter: Planted Poles"; }
+            else if (filterVal !== 'all') { title.classList.add('animate-blink-green'); title.innerText = "Tracking Zone: " + filterVal; }
+            else { title.classList.add('text-slate-500'); title.innerText = "Active Operation"; }
             renderRegistry();
             updateMapMarkers();
         };
@@ -653,67 +555,30 @@
             const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
             const zoneVal = normalizeInput(document.getElementById('zoneInput').value);
             const workAreaVal = normalizeInput(document.getElementById('workAreaInput').value);
-            const manualIdVal = document.getElementById('manualIdInput').value.trim(); 
+            const manualIdVal = document.getElementById('manualIdInput').value.trim();
             const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
             const workPlanRaw = document.getElementById('workPlanInput').value.trim();
             const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
-
             let lat = null, lng = null;
             const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
             if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
-                for (let pattern of urlPatterns) {
-                    const match = inputString.match(pattern);
-                    if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); break; }
-                }
+                for (let pattern of urlPatterns) { const match = inputString.match(pattern); if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); break; } }
             }
-            if (lat === null || lng === null) {
-                const manualRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
-                const match = inputString.match(manualRegex);
-                if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
-            }
-            if (lat === null || lng === null) return showGlobalError("Invalid Coordinate Format.");
-            
-            let uniqueId;
-            if (manualIdVal) {
-                const collision = markers.find(m => m.uniqueId === manualIdVal && normalizeInput(m.workArea) === workAreaVal);
-                if (collision) return showGlobalError("Duplicate Manual ID.");
-                uniqueId = manualIdVal;
-            } else {
-                const prefix = workAreaVal.substring(0, 3).toUpperCase();
-                const areaMarkers = markers.filter(m => normalizeInput(m.workArea) === workAreaVal);
-                let nextNum = 1;
-                if (areaMarkers.length > 0) {
-                    const nums = areaMarkers.map(m => {
-                        const match = m.uniqueId.match(/-H(\d+)$/);
-                        return match ? parseInt(match[1]) : 0;
-                    });
-                    nextNum = Math.max(...nums) + 1;
-                }
-                uniqueId = `${prefix}-H${nextNum}`;
-            }
-            
-            const newHole = {
-                id: Date.now().toString(),
-                uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
-                contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
-                lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
-            };
-            
+            if (lat === null) { const match = inputString.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/); if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); } }
+            if (lat === null) return showGlobalError("Invalid Coordinate Format.");
+            let uniqueId = manualIdVal || `${workAreaVal.substring(0, 3).toUpperCase()}-H${(markers.filter(m => normalizeInput(m.workArea) === workAreaVal).length + 1)}`;
+            const newHole = { id: Date.now().toString(), uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal, contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName, lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString() };
             markers.push(newHole);
             await dbPut('markers', newHole);
-            
             document.getElementById('coordInput').value = '';
             document.getElementById('manualIdInput').value = '';
-            document.getElementById('coordInput').focus(); 
-            
             syncState();
-            updatePrefix(); 
+            updatePrefix();
         };
 
         window.editMarker = (id) => {
             const m = markers.find(item => item.id === id);
             if (!m) return;
-            
             editingId = id;
             document.getElementById('editModalIdDisplay').innerText = m.uniqueId;
             document.getElementById('editFeeder').value = m.feeder === 'N/A' ? 'Bogue 610' : m.feeder;
@@ -723,102 +588,28 @@
             document.getElementById('editContractor').value = m.contractor === 'Unassigned' ? '' : m.contractor;
             document.getElementById('editWorkPlan').value = (m.workPlan || '').replace('WP-', '') || '';
             document.getElementById('editCoords').value = `${m.lat}, ${m.lng}`;
-            
             document.getElementById('editMarkerModal').classList.remove('hidden');
         };
 
-        window.closeEditModal = () => {
-            editingId = null;
-            document.getElementById('editMarkerModal').classList.add('hidden');
-        };
+        window.closeEditModal = () => { editingId = null; document.getElementById('editMarkerModal').classList.add('hidden'); };
 
         window.updateMarker = async () => {
             if (!editingId) return;
-            
             const idx = markers.findIndex(m => m.id === editingId);
-            if (idx === -1) return;
-
-            const coordStr = document.getElementById('editCoords').value.trim();
-            const match = coordStr.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-            if (!match) return showGlobalError("Invalid GPS Format (use: lat, lng).");
-
-            const wpVal = document.getElementById('editWorkPlan').value.trim();
-            
-            markers[idx] = {
-                ...markers[idx],
-                feeder: document.getElementById('editFeeder').value,
-                zone: normalizeInput(document.getElementById('editZone').value),
-                workArea: normalizeInput(document.getElementById('editWorkArea').value),
-                uniqueId: document.getElementById('editUniqueId').value.trim(),
-                contractor: document.getElementById('editContractor').value || 'Unassigned',
-                workPlan: wpVal ? `WP-${wpVal}` : 'N/A',
-                lat: parseFloat(match[1]),
-                lng: parseFloat(match[2])
-            };
-
+            const match = document.getElementById('editCoords').value.trim().match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+            if (!match) return showGlobalError("Invalid GPS Format.");
+            markers[idx] = { ...markers[idx], feeder: document.getElementById('editFeeder').value, zone: normalizeInput(document.getElementById('editZone').value), workArea: normalizeInput(document.getElementById('editWorkArea').value), uniqueId: document.getElementById('editUniqueId').value.trim(), contractor: document.getElementById('editContractor').value || 'Unassigned', workPlan: document.getElementById('editWorkPlan').value ? `WP-${document.getElementById('editWorkPlan').value}` : 'N/A', lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
             await dbPut('markers', markers[idx]);
             closeEditModal();
             syncState();
-            updatePrefix(); 
+            updatePrefix();
         };
 
-        window.deleteMarker = async (id) => { 
-            if (confirm("Delete entry?")) {
-                markers = markers.filter(m => m.id !== id);
-                await dbDelete('markers', id);
-                syncState();
-                updatePrefix(); 
-            }
-        };
-
-        window.toggleStatus = async (id) => {
-            const idx = markers.findIndex(m => m.id === id);
-            if (markers[idx].status === 'planted') {
-                markers[idx].status = 'pending';
-            } else {
-                markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
-            }
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        window.togglePlanted = async (id) => {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].status = markers[idx].status === 'planted' ? 'complete' : 'planted';
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        window.toggleMethod = async (id, method) => {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].digMethod = method;
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        window.toggleHoleType = async (id, type) => {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].holeType = type;
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        async function compressImage(base64Str, maxWidth = 800, maxHeight = 800) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.src = base64Str;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height;
-                    if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } }
-                    else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-            });
-        }
+        window.deleteMarker = async (id) => { if (confirm("Delete entry?")) { markers = markers.filter(m => m.id !== id); await dbDelete('markers', id); syncState(); updatePrefix(); } };
+        window.toggleStatus = async (id) => { const idx = markers.findIndex(m => m.id === id); markers[idx].status = markers[idx].status === 'planted' ? 'pending' : (markers[idx].status === 'complete' ? 'pending' : 'complete'); await dbPut('markers', markers[idx]); syncState(); };
+        window.togglePlanted = async (id) => { const idx = markers.findIndex(m => m.id === id); markers[idx].status = markers[idx].status === 'planted' ? 'complete' : 'planted'; await dbPut('markers', markers[idx]); syncState(); };
+        window.toggleMethod = async (id, method) => { const idx = markers.findIndex(m => m.id === id); markers[idx].digMethod = method; await dbPut('markers', markers[idx]); syncState(); };
+        window.toggleHoleType = async (id, type) => { const idx = markers.findIndex(m => m.id === id); markers[idx].holeType = type; await dbPut('markers', markers[idx]); syncState(); };
 
         window.triggerUpload = (id) => { window.pendingId = id; document.getElementById('imageInput').click(); };
         document.getElementById('imageInput').onchange = (e) => {
@@ -826,9 +617,8 @@
             if (file && window.pendingId) {
                 const reader = new FileReader();
                 reader.onloadend = async () => {
-                    const compressed = await compressImage(reader.result);
                     const idx = markers.findIndex(m => m.id === window.pendingId);
-                    markers[idx].image = compressed;
+                    markers[idx].image = reader.result;
                     await dbPut('markers', markers[idx]);
                     syncState();
                 };
@@ -847,91 +637,41 @@
             const list = document.getElementById('registryList');
             const search = document.getElementById('searchInventory').value.toLowerCase();
             const filterProj = document.getElementById('projectFilter').value;
-            
             const filtered = markers.filter(m => {
-                const matchesSearch = (m.uniqueId || '').toLowerCase().includes(search) || (m.contractor || '').toLowerCase().includes(search);
-                
-                let matchesProject = false;
-                if (filterProj === 'all') matchesProject = true;
-                else if (filterProj === 'planted_filter') matchesProject = m.status === 'planted';
-                else matchesProject = normalizeInput(m.zone) === filterProj;
-                
+                const matchesSearch = (m.uniqueId || '').toLowerCase().includes(search) || (m.contractor || '').toLowerCase().includes(search) || (m.workPlan || '').toLowerCase().includes(search);
+                const matchesProject = filterProj === 'all' ? true : (filterProj === 'planted_filter' ? m.status === 'planted' : normalizeInput(m.zone) === filterProj);
                 return matchesSearch && matchesProject;
             });
-            
             document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0 || markers.length === 0);
-            const completedCount = filtered.filter(m => m.status === 'complete' || m.status === 'planted').length;
-            const total = filtered.length;
-            const percent = Math.round((completedCount / total) * 100) || 0;
-            
-            document.getElementById('kpiCounts').innerText = `${completedCount} / ${total} Operations Tracked`;
-            document.getElementById('kpiPercent').innerText = `${percent}%`;
-            document.getElementById('kpiProgressBar').style.width = `${percent}%`;
-            
+            const comp = filtered.filter(m => m.status === 'complete' || m.status === 'planted').length;
+            document.getElementById('kpiCounts').innerText = `${comp} / ${filtered.length} Operations Tracked`;
+            document.getElementById('kpiPercent').innerText = `${Math.round((comp / filtered.length) * 100) || 0}%`;
+            document.getElementById('kpiProgressBar').style.width = `${(comp / filtered.length) * 100 || 0}%`;
             let totalDist = 0;
             list.innerHTML = filtered.map((m, idx) => {
                 const dist = idx > 0 ? calculateDistance(filtered[idx - 1].lat, filtered[idx - 1].lng, m.lat, m.lng) : 0;
                 totalDist += dist;
-                const isComplete = m.status === 'complete';
-                const isPlanted = m.status === 'planted';
-
-                let borderClass = 'border-slate-800';
-                let tickClass = 'text-slate-400 bg-slate-900 border-slate-800';
-
-                if (isPlanted) {
-                    borderClass = 'border-blue-500/60 ring-1 ring-blue-500/20';
-                    tickClass = 'text-blue-500 bg-blue-500/20 border-blue-500/50';
-                } else if (isComplete) {
-                    borderClass = 'border-yellow-500/60 ring-1 ring-yellow-500/20';
-                    tickClass = 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50';
-                }
-
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${borderClass}">
+                const isP = m.status === 'planted', isC = m.status === 'complete';
+                return `<div class="group flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isP ? 'border-blue-500/60 ring-1 ring-blue-500/20' : isC ? 'border-yellow-500/60 ring-1 ring-yellow-500/20' : 'border-slate-800'}">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-4">
-                            <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isPlanted ? 'bg-blue-600 text-white' : isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
-                                ${m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : '#'}
-                                ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
-                                    <span class="text-[9px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded font-bold border border-orange-500/30">${m.workPlan || 'N/A'}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
-                                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
-                                </div>
-                            </div>
+                            <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isP ? 'bg-blue-600' : isC ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">${m.uniqueId.split('-H').pop() || '#'}
+                            ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl"><img src="${m.image}" class="w-full"></div>` : ''}</div>
+                            <div class="space-y-1"><h4 class="text-[11px] font-black text-slate-100 uppercase">${m.uniqueId} <span class="text-[9px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded border border-orange-500/30 ml-2">${m.workPlan}</span></h4><p class="text-[9px] text-red-500 font-bold uppercase">${m.feeder} | <span class="text-emerald-500">${m.workArea}</span></p></div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border transition-all ${tickClass}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
-                            <button onclick="editMarker('${m.id}')" title="Edit Identity & Location" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                            <button onclick="toggleStatus('${m.id}')" class="p-2.5 rounded-xl border ${isP ? 'text-blue-500 bg-blue-500/20 border-blue-500/50' : isC ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                            <button onclick="editMarker('${m.id}')" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                            <button onclick="deleteMarker('${m.id}')" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
                         </div>
                     </div>
-                    
                     <div class="mt-4 grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Dig Method</p>
-                            <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleMethod('${m.id}', 'M')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button>
-                                <button onclick="toggleMethod('${m.id}', 'B')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
-                            <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-green-600 text-white') : 'text-slate-600'}" title="Double click for Planted status">Pole</button>
-                                <button onclick="toggleHoleType('${m.id}', 'Guy')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? (isPlanted ? 'bg-blue-600 text-white' : 'bg-green-600 text-white') : 'text-slate-600'}" title="Double click for Planted status">Guy</button>
-                            </div>
-                        </div>
+                        <div class="space-y-2"><p class="text-[8px] font-black uppercase text-slate-500">Dig Method</p>
+                        <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleMethod('${m.id}', 'M')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button><button onclick="toggleMethod('${m.id}', 'B')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button></div></div>
+                        <div class="space-y-2"><p class="text-[8px] font-black uppercase text-slate-500">Hole Type</p>
+                        <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800"><button onclick="toggleHoleType('${m.id}', 'Pole')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? (isP ? 'bg-blue-600' : 'bg-green-600') + ' text-white' : 'text-slate-600'}">Pole</button><button onclick="toggleHoleType('${m.id}', 'Guy')" ondblclick="togglePlanted('${m.id}')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? (isP ? 'bg-blue-600' : 'bg-green-600') + ' text-white' : 'text-slate-600'}">Guy</button></div></div>
                     </div>
-
-                    <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                        <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px] tracking-tight">${m.contractor}</p>
-                        <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
-                    </div>
+                    <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50"><p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p><button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white">Photo</button></div>
                 </div>`;
             }).join('');
             document.getElementById('maxDistLabel').innerText = `Route: ${totalDist.toFixed(2)} km`;
@@ -941,132 +681,32 @@
             if (!googleMap) return;
             gMarkers.forEach(m => m.setMap(null));
             gMarkers = [];
-            const bounds = new google.maps.LatLngBounds();
             const filterProj = document.getElementById('projectFilter').value;
-            
+            const search = document.getElementById('searchInventory').value.toLowerCase();
+            const bounds = new google.maps.LatLngBounds();
             const filtered = markers.filter(m => {
-                if (filterProj === 'all') return true;
-                if (filterProj === 'planted_filter') return m.status === 'planted';
-                return normalizeInput(m.zone) === filterProj;
+                const matchesSearch = (m.uniqueId || '').toLowerCase().includes(search) || (m.contractor || '').toLowerCase().includes(search) || (m.workPlan || '').toLowerCase().includes(search);
+                const matchesProject = filterProj === 'all' ? true : (filterProj === 'planted_filter' ? m.status === 'planted' : normalizeInput(m.zone) === filterProj);
+                return matchesSearch && matchesProject;
             });
-            
             filtered.forEach(m => {
-                const isComplete = m.status === 'complete', isPlanted = m.status === 'planted', isGuy = m.holeType === 'Guy';
-                
-                let primaryColor = "#dc2626"; 
-                if (isPlanted) primaryColor = "#3b82f6"; 
-                else if (isComplete) primaryColor = "#eab308"; 
-                
-                let iconConfig;
-                if (isGuy) {
-                    const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${primaryColor}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/></svg>`;
-                    iconConfig = { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), anchor: new google.maps.Point(16, 16), labelOrigin: new google.maps.Point(16, 16) };
-                } else {
-                    iconConfig = { path: google.maps.SymbolPath.CIRCLE, fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
-                }
-                const labelText = m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : 'M';
-                const gMarker = new google.maps.Marker({ 
-                    position: { lat: m.lat, lng: m.lng }, 
-                    map: googleMap, 
-                    title: m.uniqueId, 
-                    label: { text: labelText, color: (isComplete && !isGuy && !isPlanted) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, 
-                    icon: iconConfig 
-                });
-                gMarkers.push(gMarker);
-                bounds.extend(gMarker.getPosition());
+                const isP = m.status === 'planted', isC = m.status === 'complete', isG = m.holeType === 'Guy';
+                let col = isP ? "#3b82f6" : (isC ? "#eab308" : "#dc2626");
+                let icon = isG ? { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="h-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${col}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#h-${m.id})" stroke="white" stroke-width="2.5"/></svg>`), anchor: new google.maps.Point(16, 16) } : { path: google.maps.SymbolPath.CIRCLE, fillColor: col, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
+                const gM = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, label: { text: m.uniqueId.split('-H').pop() || 'M', color: (isC && !isG && !isP) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon });
+                gMarkers.push(gM);
+                bounds.extend(gM.getPosition());
             });
             if (filtered.length > 0) googleMap.fitBounds(bounds);
+            else { googleMap.setCenter(JAMAICA_CENTER); googleMap.setZoom(8); }
         }
 
         window.generateReport = () => {
-            if (markers.length === 0) return;
-
-            const stats = {};
-            markers.forEach(m => {
-                const zone = normalizeInput(m.zone);
-                const area = normalizeInput(m.workArea);
-                
-                if (!stats[zone]) stats[zone] = {};
-                if (!stats[zone][area]) {
-                    stats[zone][area] = {
-                        poles: { total: 0, planted: 0, complete: 0, pending: 0 },
-                        guys: { total: 0, planted: 0, complete: 0, pending: 0 }
-                    };
-                }
-                
-                const type = (m.holeType || 'Pole') === 'Guy' ? 'guys' : 'poles';
-                stats[zone][area][type].total++;
-                
-                if (m.status === 'planted') stats[zone][area][type].planted++;
-                else if (m.status === 'complete') stats[zone][area][type].complete++;
-                else stats[zone][area][type].pending++;
-            });
-
-            const analysisData = [];
-            Object.keys(stats).sort().forEach(zone => {
-                Object.keys(stats[zone]).sort().forEach(area => {
-                    const p = stats[zone][area].poles;
-                    const g = stats[zone][area].guys;
-                    
-                    const poleCompleteTotal = p.planted + p.complete;
-                    const guyCompleteTotal = g.planted + g.complete;
-                    
-                    const polePct = p.total > 0 ? ((poleCompleteTotal / p.total) * 100).toFixed(1) + '%' : '0%';
-                    const guyPct = g.total > 0 ? ((guyCompleteTotal / g.total) * 100).toFixed(1) + '%' : '0%';
-                    
-                    const areaComplete = poleCompleteTotal + guyCompleteTotal;
-                    const areaTotal = p.total + g.total;
-                    const areaPct = areaTotal > 0 ? ((areaComplete / areaTotal) * 100).toFixed(1) + '%' : '0%';
-
-                    analysisData.push({
-                        "Zone ID": zone,
-                        "Work Area": area,
-                        "Poles (Total)": p.total,
-                        "Poles (Planted)": p.planted,
-                        "Poles (Hole Complete)": p.complete,
-                        "Poles (Incomplete)": p.pending,
-                        "Pole Progress %": polePct,
-                        "Guys (Total)": g.total,
-                        "Guys (Planted)": g.planted,
-                        "Guys (Hole Complete)": g.complete,
-                        "Guys (Incomplete)": g.pending,
-                        "Guy Progress %": guyPct,
-                        "Area Overall Progress %": areaPct
-                    });
-                });
-            });
-
-            const sortedMarkers = [...markers].sort((a, b) => {
-                const zoneSort = normalizeInput(a.zone).localeCompare(normalizeInput(b.zone));
-                if (zoneSort !== 0) return zoneSort;
-                return normalizeInput(a.workArea).localeCompare(normalizeInput(b.workArea));
-            });
-
-            const logData = sortedMarkers.map(m => ({ 
-                "Project (Zone)": normalizeInput(m.zone),
-                "Work Area": normalizeInput(m.workArea),
-                "Work Plan #": m.workPlan || 'N/A',
-                "Hole ID": m.uniqueId, 
-                "Feeder": m.feeder, 
-                "Contractor": m.contractor, 
-                "Hole Type": m.holeType || 'Pole',
-                "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
-                "Status": m.status.toUpperCase(), 
-                "Latitude": m.lat,
-                "Longitude": m.lng,
-                "Operator": m.createdBy,
-                "Timestamp": m.timestamp 
-            }));
-
             const wb = XLSX.utils.book_new();
-            const ws1 = XLSX.utils.json_to_sheet(analysisData);
-            XLSX.utils.book_append_sheet(wb, ws1, "Detailed Area Analysis");
-            const ws2 = XLSX.utils.json_to_sheet(logData);
-            XLSX.utils.book_append_sheet(wb, ws2, "Summary Log");
-
-            XLSX.writeFile(wb, `UPH_OPERATIONS_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
+            const log = markers.map(m => ({ "Zone": m.zone, "Area": m.workArea, "WP#": m.workPlan, "ID": m.uniqueId, "Contractor": m.contractor, "Type": m.holeType || 'Pole', "Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe', "Status": m.status, "Lat": m.lat, "Lng": m.lng, "Op": m.createdBy, "Time": m.timestamp }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(log), "Summary Log");
+            XLSX.writeFile(wb, `UPH_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
-
         window.onload = initializeUI;
     </script>
 </body>
