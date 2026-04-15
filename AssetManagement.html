@@ -19,10 +19,6 @@
         
         .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
         
-        .gm-style-iw { background: transparent !important; box-shadow: none !important; border: none !important; }
-        .gm-style-iw-tc { display: none !important; }
-        .gm-style-iw-d { background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 16px !important; overflow: hidden !important; padding: 0 !important; color: white !important; }
-        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -94,8 +90,8 @@
                             <option value="Maggotty 110">Maggotty 110</option>
                             <option value="Paradise 310">Paradise 310</option>
                         </select>
-                        <input type="text" id="zoneInput" placeholder="Zone" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-40 outline-none">
-                        <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-32 outline-none" oninput="updatePrefix()">
+                        <input type="text" id="zoneInput" placeholder="Project (Zone)" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-40 outline-none">
+                        <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-32 outline-none">
                         <input type="text" id="manualIdInput" placeholder="Manual Hole ID" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-32 outline-none">
                         <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-40 outline-none">
                         <div class="relative">
@@ -119,7 +115,7 @@
                         <div class="space-y-1">
                             <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
                             <div class="flex items-center gap-3">
-                                <select id="projectFilter" onchange="syncState()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none">
+                                <select id="projectFilter" onchange="handleFilterChange()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none">
                                     <option value="all">All Zones</option>
                                 </select>
                                 <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95">
@@ -129,7 +125,7 @@
                             </div>
                         </div>
                         <div class="flex items-end gap-4">
-                            <p id="kpiCounts" class="text-sm text-slate-300 font-bold uppercase tabular-nums">0 / 0 Tracked</p>
+                            <p id="kpiCounts" class="text-sm text-slate-300 font-bold uppercase tabular-nums tracking-widest">0 / 0 TRACKED</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
@@ -163,7 +159,7 @@
                                 <button onclick="generateReport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">Export</button>
                             </div>
                         </div>
-                        <input type="text" id="searchInventory" placeholder="Filter ID or contractor..." oninput="syncState()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
+                        <input type="text" id="searchInventory" placeholder="Filter ID or contractor..." oninput="handleFilterChange()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
                     </div>
                     <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar"></div>
                 </div>
@@ -172,9 +168,9 @@
             <!-- Footer -->
             <footer class="flex items-center justify-between px-6 py-4 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black border-t border-slate-900 mt-4">
                 <div class="flex items-center gap-8">
-                    <div>Status: <span class="text-green-500">Nominal</span></div>
+                    <div>Status: <span class="text-green-500 font-bold">Nominal</span></div>
                     <div class="flex items-center gap-3">
-                        STORAGE USED: <span id="storageUsage" class="font-bold animate-blink-orange text-orange-500">0 KB</span>
+                        STORAGE USED: <span id="storageUsage" class="font-bold animate-blink-orange text-orange-500 uppercase tracking-widest">0 KB</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
@@ -194,12 +190,63 @@
         </div>
     </div>
 
+    <!-- Edit Marker Modal -->
+    <div id="editMarkerModal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 overflow-y-auto">
+        <div class="max-w-2xl w-full glass-panel rounded-[3rem] p-8 md:p-10 space-y-8 shadow-3xl animate-fade-in my-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-6">
+                <div>
+                    <h2 class="text-2xl font-black tracking-tighter text-white">Edit Operation</h2>
+                </div>
+                <button onclick="closeEditModal()" class="p-2 bg-slate-900 hover:bg-slate-800 rounded-full text-slate-400 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-100">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Feeder</label>
+                        <input type="text" id="editFeeder" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Project (Zone)</label>
+                        <input type="text" id="editZone" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Work Area</label>
+                        <input type="text" id="editWorkArea" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Unique ID</label>
+                        <input type="text" id="editUniqueId" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Contractor</label>
+                        <input type="text" id="editContractor" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Work Plan (WP#)</label>
+                        <input type="text" id="editWorkPlan" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm outline-none mt-1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button onclick="closeEditModal()" class="flex-1 bg-slate-900 text-slate-400 font-black py-4 rounded-2xl uppercase tracking-widest text-xs">Discard</button>
+                <button onclick="updateMarker()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl uppercase tracking-widest text-xs">Save Identity</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importInput" accept=".xlsx, .xls" class="hidden">
+    <input type="file" id="imageInput" accept="image/*" class="hidden">
 
     <script>
         const DB_NAME = 'UPHTrackerDB_V2';
         const DB_VERSION = 1;
-        let db, currentUser = null, markers = [], googleMap = null, googleMapsKey = '', gMarkers = [];
+        let db, currentUser = null, markers = [], googleMap = null, googleMapsKey = '', gMarkers = [], editingId = null;
 
         const initDB = () => new Promise((resolve) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -225,7 +272,8 @@
         });
 
         const dbDelete = (store, key) => new Promise(res => {
-            db.transaction(store, 'readwrite').objectStore(store).delete(key).onsuccess = () => res();
+            const tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).delete(key).onsuccess = () => res();
         });
 
         async function initializeUI() {
@@ -313,20 +361,31 @@
                 const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 if (confirm(`Restore ${rows.length} operations?`)) {
                     for (const row of rows) {
-                        const marker = {
-                            id: (Date.now() + Math.random()).toString(),
-                            uniqueId: row["ID"] || "UNK",
-                            zone: row["Zone"] || "General",
-                            workArea: row["Area"] || "Unassigned",
-                            workPlan: row["WP#"] || "N/A",
-                            contractor: row["Contractor"] || "Unassigned",
-                            lat: parseFloat(row["Lat"]),
-                            lng: parseFloat(row["Lng"]),
-                            status: row["Status"] || "pending",
-                            createdBy: row["Op"] || "Imported",
-                            timestamp: row["Time"] || new Date().toLocaleString()
-                        };
-                        if (!isNaN(marker.lat)) {
+                        const entry = {};
+                        for (let key in row) { entry[key.trim().toLowerCase()] = row[key]; }
+                        const getV = (keys) => { for(let k of keys) { if(entry[k] !== undefined) return entry[k]; } return null; };
+
+                        const lat = parseFloat(getV(["lat", "latitude"]));
+                        const lng = parseFloat(getV(["lng", "longitude"]));
+
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            const marker = {
+                                id: (Date.now() + Math.random()).toString(),
+                                uniqueId: (getV(["id", "hole id", "id#"]) || "UNK").toString(),
+                                zone: (getV(["project (zone)", "zone", "project"]) || "General").toString(),
+                                workArea: (getV(["work area", "area"]) || "Unassigned").toString(),
+                                workPlan: (getV(["work plan #", "wp#", "work plan"]) || "N/A").toString(),
+                                contractor: (getV(["contractor", "crew"]) || "Unassigned").toString(),
+                                feeder: (getV(["feeder"]) || "N/A").toString(),
+                                holeType: (getV(["hole type", "type"]) || "Pole").toString(),
+                                digMethod: (getV(["dig method", "method"]) || "M").toString(),
+                                status: (getV(["status"]) || "pending").toString().toLowerCase(),
+                                lat: lat,
+                                lng: lng,
+                                createdBy: (getV(["operator", "op", "user"]) || "Imported").toString(),
+                                timestamp: (getV(["timestamp", "time"]) || new Date().toLocaleString()).toString(),
+                                image: null
+                            };
                             markers.push(marker);
                             await dbPut('markers', marker);
                         }
@@ -347,6 +406,7 @@
                 if(urlMatch) { lat = parseFloat(urlMatch[1]); lng = parseFloat(urlMatch[2]); }
             }
             if (lat === null) return alert("Invalid GPS coordinates.");
+
             const marker = {
                 id: Date.now().toString(),
                 uniqueId: document.getElementById('manualIdInput').value.trim() || `${document.getElementById('workAreaInput').value.toUpperCase() || 'GEN'}-H${markers.length + 1}`,
@@ -354,7 +414,9 @@
                 workArea: document.getElementById('workAreaInput').value || 'Unassigned',
                 contractor: document.getElementById('contractorInput').value || 'Unassigned',
                 workPlan: document.getElementById('workPlanInput').value ? `WP-${document.getElementById('workPlanInput').value}` : 'N/A',
-                lat, lng, status: 'pending', createdBy: currentUser.fullName, timestamp: new Date().toLocaleString()
+                feeder: document.getElementById('feederInput').value || 'N/A',
+                lat, lng, status: 'pending', createdBy: currentUser.fullName, timestamp: new Date().toLocaleString(),
+                holeType: 'Pole', digMethod: 'M', image: null
             };
             markers.push(marker);
             await dbPut('markers', marker);
@@ -362,79 +424,229 @@
             syncState();
         };
 
+        window.toggleHole = async (id) => {
+            const idx = markers.findIndex(m => m.id === id);
+            const cur = markers[idx].status;
+            markers[idx].status = (cur === 'complete' || cur === 'planted') ? 'pending' : 'complete';
+            await dbPut('markers', markers[idx]);
+            syncState();
+        };
+
+        window.togglePlanted = async (id) => {
+            const idx = markers.findIndex(m => m.id === id);
+            markers[idx].status = markers[idx].status === 'planted' ? 'complete' : 'planted';
+            await dbPut('markers', markers[idx]);
+            syncState();
+        };
+
+        window.toggleMethod = async (id, method) => {
+            const idx = markers.findIndex(m => m.id === id);
+            markers[idx].digMethod = method;
+            await dbPut('markers', markers[idx]);
+            syncState();
+        };
+
+        window.toggleHoleType = async (id, type) => {
+            const idx = markers.findIndex(m => m.id === id);
+            markers[idx].holeType = type;
+            await dbPut('markers', markers[idx]);
+            syncState();
+        };
+
+        window.editMarker = (id) => {
+            const m = markers.find(item => item.id === id);
+            if (!m) return;
+            editingId = id;
+            document.getElementById('editFeeder').value = m.feeder;
+            document.getElementById('editZone').value = m.zone;
+            document.getElementById('editWorkArea').value = m.workArea;
+            document.getElementById('editUniqueId').value = m.uniqueId;
+            document.getElementById('editContractor').value = m.contractor;
+            document.getElementById('editWorkPlan').value = (m.workPlan || '').replace('WP-', '');
+            document.getElementById('editMarkerModal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = () => { editingId = null; document.getElementById('editMarkerModal').classList.add('hidden'); };
+
+        window.updateMarker = async () => {
+            if(!editingId) return;
+            const idx = markers.findIndex(m => m.id === editingId);
+            markers[idx] = {
+                ...markers[idx],
+                feeder: document.getElementById('editFeeder').value,
+                zone: document.getElementById('editZone').value,
+                workArea: document.getElementById('editWorkArea').value,
+                uniqueId: document.getElementById('editUniqueId').value,
+                contractor: document.getElementById('editContractor').value,
+                workPlan: `WP-${document.getElementById('editWorkPlan').value}`
+            };
+            await dbPut('markers', markers[idx]);
+            closeEditModal();
+            syncState();
+        };
+
+        window.deleteMarker = async (id) => { if(confirm("Delete entry?")) { markers = markers.filter(m => m.id !== id); await dbDelete('markers', id); syncState(); } };
+
+        window.triggerUpload = (id) => { window.targetId = id; document.getElementById('imageInput').click(); };
+        document.getElementById('imageInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file && window.targetId) {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    const idx = markers.findIndex(m => m.id === window.targetId);
+                    markers[idx].image = reader.result;
+                    await dbPut('markers', markers[idx]);
+                    syncState();
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.handleFilterChange = () => {
+            syncState();
+        };
+
+        function syncState() {
+            const currentFilter = document.getElementById('projectFilter').value;
+            const userZones = [...new Set(markers.map(m => m.zone))].sort();
+            
+            // Re-populate dropdown while keeping selection
+            const dropdown = document.getElementById('projectFilter');
+            dropdown.innerHTML = '<option value="all">All Zones</option>';
+            userZones.forEach(z => {
+                const opt = document.createElement('option');
+                opt.value = z;
+                opt.innerText = "Zone: " + z;
+                dropdown.appendChild(opt);
+            });
+            dropdown.value = currentFilter || 'all';
+
+            // Filter data for KPIs and syncing
+            const search = (document.getElementById('searchInventory').value || '').toLowerCase();
+            const filtered = markers.filter(m => {
+                const matchesSearch = (m.uniqueId || '').toLowerCase().includes(search) || (m.contractor || '').toLowerCase().includes(search);
+                const matchesZone = dropdown.value === 'all' || m.zone === dropdown.value;
+                return matchesSearch && matchesZone;
+            });
+
+            // FIXED KPI Calculation Logic
+            // In All Zones view: All Completed / All in System
+            // In Filtered view: Completed in Selection / Total in Selection
+            const selectionTotal = filtered.length;
+            const completedInSelection = filtered.filter(m => m.status === 'complete' || m.status === 'planted').length;
+            
+            document.getElementById('kpiCounts').innerText = `${completedInSelection} / ${selectionTotal} TRACKED`;
+            
+            const pct = selectionTotal > 0 ? Math.round((completedInSelection / selectionTotal) * 100) : 0;
+            document.getElementById('kpiPercent').innerText = `${pct}%`;
+            document.getElementById('kpiProgressBar').style.width = `${pct}%`;
+            
+            const bytes = new Blob([JSON.stringify(markers)]).size;
+            document.getElementById('storageUsage').innerText = `${(bytes / 1024).toFixed(1)} KB`;
+
+            renderRegistry(filtered);
+            updateMapMarkers(filtered);
+        }
+
+        function renderRegistry(filteredData) {
+            const list = document.getElementById('registryList');
+            
+            list.innerHTML = filteredData.map(m => {
+                const isP = m.status === 'planted';
+                const isC = m.status === 'complete';
+                const num = m.uniqueId.split('-H').pop() || '#';
+                return `
+                <div class="glass-panel p-5 rounded-[2rem] border ${isP ? 'border-blue-500/60' : isC ? 'border-yellow-500/60' : 'border-slate-800'} transition-all hover:border-slate-700">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center font-black text-xs ${isP ? 'bg-blue-600 text-white' : isC ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">${num}</div>
+                        <div class="flex-1 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-black text-white uppercase tracking-wider">${m.uniqueId} <span class="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded text-[9px] border border-orange-500/20 ml-2">${m.workPlan}</span></h4>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleHole('${m.id}')" ondblclick="togglePlanted('${m.id}')" class="p-2 rounded-lg ${isP ? 'bg-blue-600/20 text-blue-400' : isC ? 'bg-yellow-500/20 text-yellow-500' : 'bg-slate-900 text-slate-500'} border border-slate-800">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </button>
+                                    <button onclick="editMarker('${m.id}')" class="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button onclick="deleteMarker('${m.id}')" class="p-2 rounded-lg bg-red-500/10 text-red-500 border border-red-500/20">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[9px] font-black uppercase text-red-500">${m.feeder}</span>
+                                <span class="text-[9px] font-black uppercase text-emerald-500">${m.workArea}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4">
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black uppercase tracking-widest text-slate-600">Dig Method</label>
+                            <div class="flex bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+                                <button onclick="toggleMethod('${m.id}', 'M')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'M' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-600'}">M</button>
+                                <button onclick="toggleMethod('${m.id}', 'B')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'B' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-600'}">B</button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[8px] font-black uppercase tracking-widest text-slate-600">Hole Type</label>
+                            <div class="flex bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+                                <button onclick="toggleHoleType('${m.id}', 'Pole')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? 'bg-green-600 text-white' : 'text-slate-600'}">Pole</button>
+                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-green-600 text-white' : 'text-slate-600'}">Guy</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800/50 flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase text-slate-400">${m.contractor}</span>
+                        <button onclick="triggerUpload('${m.id}')" class="text-[10px] font-black uppercase tracking-widest ${m.image ? 'text-blue-400 underline' : 'text-slate-500 hover:text-white'}">Attach Photo</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateMapMarkers(filteredData) {
+            if (!googleMap) return;
+            
+            gMarkers.forEach(gm => gm.setMap(null));
+            gMarkers = filteredData.map(m => {
+                if (isNaN(m.lat) || isNaN(m.lng)) return null;
+                const isP = m.status === 'planted';
+                const isC = m.status === 'complete';
+                const col = isP ? '#3b82f6' : (isC ? '#eab308' : '#ef4444');
+                const num = m.uniqueId.split('-H').pop() || '#';
+                
+                const marker = new google.maps.Marker({
+                    position: { lat: m.lat, lng: m.lng }, 
+                    map: googleMap, 
+                    title: m.uniqueId, // Hover ID tooltip
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: col,
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 2,
+                        scale: 12
+                    },
+                    label: { text: num, color: (isC && !isP) ? 'black' : 'white', fontWeight: '900', fontSize: '10px' }
+                });
+
+                return marker;
+            }).filter(m => m !== null);
+        }
+
         window.generateReport = () => {
             const wb = XLSX.utils.book_new();
             const log = markers.map(m => ({
-                "Zone": m.zone, "Area": m.workArea, "WP#": m.workPlan, "ID": m.uniqueId,
-                "Contractor": m.contractor, "Status": m.status, "Lat": m.lat, "Lng": m.lng,
-                "Op": m.createdBy, "Time": m.timestamp
+                "Project (Zone)": m.zone, "Work Area": m.workArea, "Work Plan #": m.workPlan, "ID": m.uniqueId,
+                "Feeder": m.feeder, "Contractor": m.contractor, "Hole Type": m.holeType, "Dig Method": m.digMethod,
+                "Status": m.status, "Lat": m.lat, "Lng": m.lng, "Operator": m.createdBy, "Timestamp": m.timestamp
             }));
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(log), "Field Log");
             XLSX.writeFile(wb, `UPH_REPORT_${Date.now()}.xlsx`);
         };
 
-        function syncState() {
-            const list = document.getElementById('registryList');
-            const search = document.getElementById('searchInventory').value.toLowerCase();
-            const filtered = markers.filter(m => m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search));
-            list.innerHTML = filtered.map(m => `
-                <div class="glass-panel p-4 rounded-2xl border ${m.status === 'complete' ? 'border-green-500/40' : 'border-slate-800'} transition-all">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-black text-white">${m.uniqueId}</p>
-                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">${m.zone} | ${m.workPlan}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="toggleHole('${m.id}')" class="text-xs ${m.status === 'complete' ? 'text-green-500' : 'text-slate-600'}">✓</button>
-                            <button onclick="deleteMarker('${m.id}')" class="text-red-500/50">×</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            const comp = markers.filter(m => m.status === 'complete').length;
-            document.getElementById('kpiCounts').innerText = `${comp} / ${markers.length} Tracked`;
-            const pct = markers.length > 0 ? Math.round((comp / markers.length) * 100) : 0;
-            document.getElementById('kpiPercent').innerText = `${pct}%`;
-            document.getElementById('kpiProgressBar').style.width = `${pct}%`;
-            const bytes = new Blob([JSON.stringify(markers)]).size;
-            document.getElementById('storageUsage').innerText = `${(bytes / 1024).toFixed(1)} KB`;
-            updateMapMarkers();
-        }
-
-        async function toggleHole(id) {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
-            await dbPut('markers', markers[idx]);
-            syncState();
-        }
-
-        async function deleteMarker(id) {
-            if(confirm("Delete entry?")) {
-                markers = markers.filter(m => m.id !== id);
-                await dbDelete('markers', id);
-                syncState();
-            }
-        }
-
-        function updateMapMarkers() {
-            if (!googleMap) return;
-            gMarkers.forEach(gm => gm.setMap(null));
-            gMarkers = markers.map(m => new google.maps.Marker({
-                position: { lat: m.lat, lng: m.lng }, 
-                map: googleMap, 
-                title: m.uniqueId,
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: m.status === 'complete' ? '#22c55e' : '#ef4444',
-                    fillOpacity: 1,
-                    strokeColor: '#fff',
-                    strokeWeight: 2,
-                    scale: 8
-                }
-            }));
-        }
-
-        window.promptNewKey = () => document.getElementById('apiKeyModal').classList.remove('hidden');
         window.onload = initializeUI;
     </script>
 </body>
