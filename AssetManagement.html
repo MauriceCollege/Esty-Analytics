@@ -19,7 +19,6 @@
         
         .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
         
-        /* Map Info Window Styling */
         .gm-style-iw { background: transparent !important; box-shadow: none !important; border: none !important; }
         .gm-style-iw-tc { display: none !important; }
         .gm-style-iw-d { background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 16px !important; overflow: hidden !important; padding: 0 !important; color: white !important; }
@@ -30,24 +29,17 @@
         }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         
-        .id-badge:hover .media-preview { display: block; animation: fadeIn 0.2s ease-out; }
-
         @keyframes blink-green {
             0%, 100% { color: #22c55e; opacity: 1; }
             50% { color: #4ade80; opacity: 0.5; }
         }
-        .animate-blink-green {
-            animation: blink-green 1.5s infinite;
-        }
+        .animate-blink-green { animation: blink-green 1.5s infinite; }
 
-        /* Orange Blinking for Storage */
         @keyframes blink-orange {
             0%, 100% { color: #f97316; opacity: 1; }
             50% { color: #fb923c; opacity: 0.4; }
         }
-        .animate-blink-orange {
-            animation: blink-orange 2s infinite;
-        }
+        .animate-blink-orange { animation: blink-orange 2s infinite; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -60,14 +52,14 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
                 <h2 class="text-3xl font-black tracking-tighter text-white">Operator Login</h2>
-                <p class="text-slate-400 text-sm">Access the Enterprise Tracking System</p>
+                <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Enterprise Field Engine</p>
             </div>
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="firstNameInput" placeholder="First Name" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-red-600/40 outline-none transition-all">
-                    <input type="text" id="lastNameInput" placeholder="Last Name" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-red-600/40 outline-none transition-all">
+                    <input type="text" id="firstNameInput" placeholder="First Name" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-red-600/40">
+                    <input type="text" id="lastNameInput" placeholder="Last Name" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-red-600/40">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-red-600/20 active:scale-95">Initialize Session</button>
+                <button onclick="handleLogin()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95">Initialize Session</button>
             </div>
         </div>
     </div>
@@ -88,42 +80,31 @@
                         <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-slate-200 to-slate-500 bg-clip-text text-transparent">UPH Tracker Pro</h1>
                         <div class="flex items-center gap-3 mt-1">
                             <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
-                            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Logged in as: <span id="userNameDisplay" class="text-slate-300">User</span></p>
-                            <button onclick="handleLogout()" class="text-[9px] text-red-500/50 hover:text-red-500 font-black uppercase tracking-widest transition-colors ml-2">Logout</button>
+                            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Logged in: <span id="userNameDisplay" class="text-slate-300">User</span></p>
+                            <button onclick="handleLogout()" class="text-[9px] text-red-500/50 hover:text-red-500 font-black uppercase tracking-widest ml-2">Logout</button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <select id="feederInput" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-xs font-semibold w-36">
+                        <select id="feederInput" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-36 outline-none focus:ring-2 focus:ring-red-500/30">
                             <option value="" disabled selected>Feeder ID</option>
                             <option value="Bogue 610">Bogue 610</option>
                             <option value="Maggotty 110">Maggotty 110</option>
                             <option value="Paradise 310">Paradise 310</option>
                         </select>
-                        
-                        <div class="relative group">
-                            <input type="text" id="zoneInput" placeholder="Zone / Community" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-xs font-semibold w-40">
-                        </div>
-                        <div class="relative">
-                            <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-xs font-semibold w-32" oninput="updatePrefix()">
-                            <div id="prefixDisplay" class="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-600 uppercase tracking-widest pointer-events-none"></div>
-                        </div>
-
-                        <div class="relative">
-                            <input type="text" id="manualIdInput" placeholder="Manual Hole ID" class="bg-slate-900/80 border border-slate-700/50 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500/30 transition-all text-xs font-semibold w-32 placeholder:text-slate-600" title="Override automatic ID sequence">
-                        </div>
-
-                        <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-xs font-semibold w-40">
-                        
+                        <input type="text" id="zoneInput" placeholder="Zone" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-40 outline-none">
+                        <input type="text" id="workAreaInput" placeholder="Work Area" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-32 outline-none" oninput="updatePrefix()">
+                        <input type="text" id="manualIdInput" placeholder="Manual Hole ID" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-32 outline-none">
+                        <input type="text" id="contractorInput" placeholder="Contractor" class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold w-40 outline-none">
                         <div class="relative">
                             <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500 pointer-events-none">WP-</div>
-                            <input type="number" id="workPlanInput" placeholder="Plan #" class="w-28 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all text-xs font-semibold" title="Enter Work Plan Number">
+                            <input type="number" id="workPlanInput" placeholder="Plan #" class="w-28 pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-800 rounded-2xl text-xs font-semibold outline-none">
                         </div>
                     </div>
                     <div class="relative group">
-                        <input type="text" id="coordInput" placeholder="Paste Coordinates (lat, lng) or Google Maps URL..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 transition-all text-sm shadow-xl">
+                        <input type="text" id="coordInput" placeholder="Paste Lat, Lng or Google Maps URL..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3.5 pr-14 focus:outline-none focus:ring-2 focus:ring-red-500/30 text-sm shadow-xl">
                         <button onclick="addMarker()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
@@ -131,66 +112,44 @@
                 </div>
             </header>
 
-            <!-- Operations Dashboard -->
+            <!-- Dashboard Summary -->
             <div id="kpiContainer" class="glass-panel p-6 rounded-[2rem] shadow-2xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div class="flex-1 space-y-4">
-                        <div class="flex items-center gap-4">
-                            <div class="space-y-1">
-                                <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
-                                <div class="flex items-center gap-3">
-                                    <select id="projectFilter" onchange="handleFilterChange()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none focus:ring-1 focus:ring-blue-500/50">
-                                        <option value="all">All Zones</option>
-                                    </select>
-                                    <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95" title="Clear inputs for a new zone">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-                                        New Project
-                                    </button>
-                                </div>
+                        <div class="space-y-1">
+                            <h3 id="activeOpTitle" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 transition-colors duration-300">Active Operation</h3>
+                            <div class="flex items-center gap-3">
+                                <select id="projectFilter" onchange="syncState()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 outline-none">
+                                    <option value="all">All Zones</option>
+                                </select>
+                                <button onclick="resetInputs()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-700 transition-all flex items-center gap-2 shadow-lg active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    New Project
+                                </button>
                             </div>
                         </div>
                         <div class="flex items-end gap-4">
-                            <p id="kpiCounts" class="text-sm text-slate-300 font-bold uppercase tabular-nums">0 / 0 Holes Completed</p>
-                            <p id="maxDistLabel" class="text-[11px] text-slate-500 font-mono mb-0.5">Route: 0.00 km</p>
+                            <p id="kpiCounts" class="text-sm text-slate-300 font-bold uppercase tabular-nums">0 / 0 Tracked</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div id="kpiPercent" class="text-4xl font-black text-yellow-500 tabular-nums">0%</div>
                         <div class="w-48 h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-0.5">
-                            <div id="kpiProgressBar" class="h-full bg-gradient-to-r from-red-600 via-yellow-500 to-green-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                            <div id="kpiProgressBar" class="h-full bg-gradient-to-r from-red-600 to-green-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Error Banner -->
-            <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 px-6 py-4 rounded-2xl flex items-center justify-between animate-shake">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <div>
-                        <span id="errorMessage" class="font-bold text-sm block"></span>
-                        <span id="errorSubtitle" class="text-[10px] uppercase tracking-widest opacity-60"></span>
-                    </div>
-                </div>
-                <button onclick="this.parentElement.classList.add('hidden')" class="text-red-400/50 hover:text-red-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line></svg>
-                </button>
-            </div>
-
-            <!-- Map & Ledger -->
+            <!-- Workspace -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-8 relative bg-slate-900 rounded-[2.5rem] border border-slate-800 h-[680px] overflow-hidden shadow-2xl group">
-                    <div id="mapFailureOverlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-10 text-center space-y-8">
-                        <div class="p-8 bg-red-500/10 rounded-full text-red-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
-                        </div>
-                        <h3 class="text-2xl font-black uppercase text-white" id="mapErrorTitle">Satellite Offline</h3>
-                        <p class="text-slate-400 text-sm max-w-sm mx-auto" id="mapErrorDesc">Google Maps could not be loaded.</p>
-                        <button onclick="promptNewKey()" class="px-8 py-4 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-all">Update API Key</button>
-                    </div>
+                <div class="lg:col-span-8 relative bg-slate-900 rounded-[2.5rem] border border-slate-800 h-[680px] overflow-hidden shadow-2xl">
                     <div id="mapLoader" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950/80 z-20">
                         <div class="w-16 h-16 border-4 border-slate-800 border-t-red-600 rounded-full animate-spin"></div>
-                        <p class="mt-4 text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Satellites...</p>
+                    </div>
+                    <div id="mapFailureOverlay" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-10 text-center space-y-8">
+                        <h3 class="text-2xl font-black uppercase text-white">Google Maps Connection Required</h3>
+                        <button onclick="promptNewKey()" class="px-8 py-4 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-500 transition-all">Configure API Key</button>
                     </div>
                     <div id="map" class="w-full h-full"></div>
                 </div>
@@ -199,667 +158,283 @@
                     <div class="p-6 border-b border-slate-800/60 flex flex-col gap-4">
                         <div class="flex items-center justify-between">
                             <h2 class="font-black text-xs flex items-center gap-3 uppercase tracking-[0.25em] text-slate-400"><span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>Live Ledger</h2>
-                            <button onclick="generateReport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 hover:text-blue-300 transition-all bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline></svg>Export
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="triggerImport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20">Restore</button>
+                                <button onclick="generateReport()" class="flex items-center gap-2 text-[10px] font-black uppercase text-blue-400 bg-blue-400/10 px-3 py-1.5 rounded-lg border border-blue-400/20">Export</button>
+                            </div>
                         </div>
-                        <div class="relative">
-                            <input type="text" id="searchInventory" placeholder="Filter ID, WP#, or contractor..." oninput="renderRegistry()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
-                        </div>
+                        <input type="text" id="searchInventory" placeholder="Filter ID or contractor..." oninput="syncState()" class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-slate-700">
                     </div>
                     <div id="registryList" class="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar"></div>
-                    <div id="noResults" class="hidden flex flex-col items-center justify-center p-10 text-center opacity-40"><p class="text-xs font-bold uppercase tracking-widest">No entries found</p></div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <footer class="flex flex-wrap items-center gap-8 px-6 py-4 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black border-t border-slate-900 mt-4">
-                <div class="flex items-center gap-3">System Status: <span id="sysStatus" class="text-green-500">Nominal</span></div>
-                <div class="flex items-center gap-4 border-l border-slate-900 pl-6">
+            <footer class="flex items-center justify-between px-6 py-4 text-[10px] text-slate-600 uppercase tracking-[0.4em] font-black border-t border-slate-900 mt-4">
+                <div class="flex items-center gap-8">
+                    <div>Status: <span class="text-green-500">Nominal</span></div>
+                    <div class="flex items-center gap-3">
+                        STORAGE USED: <span id="storageUsage" class="font-bold animate-blink-orange text-orange-500">0 KB</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
                     <button onclick="promptNewKey()" class="text-slate-500 hover:text-white transition-colors">Rotate API Keys</button>
+                    <div class="opacity-40 font-mono tracking-normal">ENGINE v9.9.5</div>
                 </div>
-                <!-- STORAGE USAGE DISPLAY -->
-                <div class="flex items-center gap-3 border-l border-slate-900 pl-6">
-                    Storage Used: <span id="storageUsage" class="font-bold animate-blink-orange">0 KB</span>
-                </div>
-                <div class="ml-auto flex items-center gap-4 opacity-40"><span>Engine v9.2</span><span>IndexedDB Active</span></div>
             </footer>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- API Key Modal -->
     <div id="apiKeyModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-6">
         <div class="max-w-md w-full glass-panel rounded-[3rem] p-10 space-y-6">
-            <h2 class="text-2xl font-black text-center text-white">Refresh API Credentials</h2>
-            <p class="text-center text-slate-400 text-xs leading-relaxed">Enter a valid Google Maps API Key.</p>
-            <input type="password" id="newApiKeyInput" placeholder="Enter AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-center font-mono outline-none focus:ring-2 focus:ring-red-600/40">
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('apiKeyModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-500 py-4 rounded-2xl">Cancel</button>
-                <button onclick="saveNewKey()" class="flex-1 bg-red-600 text-white font-black py-4 rounded-2xl shadow-xl">Sync</button>
-            </div>
+            <h2 class="text-2xl font-black text-center text-white">API Credentials</h2>
+            <input type="password" id="newApiKeyInput" placeholder="Enter AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 text-center font-mono outline-none">
+            <button id="saveKeyBtn" onclick="saveNewKey()" class="w-full bg-red-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all">Activate Engine</button>
         </div>
     </div>
 
-    <!-- Edit Entry Modal -->
-    <div id="editModal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/95 backdrop-blur-2xl p-6">
-        <div class="max-w-lg w-full glass-panel rounded-[3rem] p-10 space-y-6 overflow-y-auto max-h-[90vh] custom-scrollbar">
-            <h2 class="text-2xl font-black text-center text-white">Edit Hole Entry</h2>
-            <p class="text-center text-slate-400 text-xs uppercase tracking-widest font-bold">Update Operational Parameters</p>
-            
-            <input type="hidden" id="editHoleId">
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Hole ID</label>
-                    <input type="text" id="editUniqueId" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-yellow-500/30 outline-none transition-all">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Feeder</label>
-                    <select id="editFeeder" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-red-500/30 outline-none transition-all">
-                        <option value="Bogue 610">Bogue 610</option>
-                        <option value="Maggotty 110">Maggotty 110</option>
-                        <option value="Paradise 310">Paradise 310</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Zone / Community</label>
-                    <input type="text" id="editZone" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none transition-all">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Work Area</label>
-                    <input type="text" id="editWorkArea" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Contractor</label>
-                    <input type="text" id="editContractor" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500/30 outline-none transition-all">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-500 uppercase px-2">Work Plan #</label>
-                    <input type="number" id="editWorkPlan" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/30 outline-none transition-all">
-                </div>
-            </div>
-
-            <div class="flex gap-4 pt-4">
-                <button onclick="document.getElementById('editModal').classList.add('hidden')" class="flex-1 bg-slate-900 text-slate-500 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all">Cancel</button>
-                <button onclick="saveEdit()" class="flex-1 bg-yellow-600 text-black font-black py-4 rounded-2xl shadow-xl shadow-yellow-600/10 hover:bg-yellow-500 transition-all uppercase text-xs tracking-widest">Update Ledger</button>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="imageInput" class="hidden" accept="image/*">
+    <input type="file" id="importInput" accept=".xlsx, .xls" class="hidden">
 
     <script>
-        /**
-         * --- INDEXED DB ENGINE ---
-         */
-        const DB_NAME = 'UPHTrackerDB';
+        const DB_NAME = 'UPHTrackerDB_V2';
         const DB_VERSION = 1;
-        let db;
+        let db, currentUser = null, markers = [], googleMap = null, googleMapsKey = '', gMarkers = [];
 
-        const initDB = () => {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('markers')) db.createObjectStore('markers', { keyPath: 'id' });
-                    if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
-                };
-                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                request.onerror = (e) => reject("Database failure.");
-            });
-        };
+        const initDB = () => new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('markers')) db.createObjectStore('markers', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        });
 
-        const dbPut = (storeName, data) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.put(data);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
+        const dbPut = (store, data) => new Promise(res => {
+            const tx = db.transaction(store, 'readwrite');
+            tx.objectStore(store).put(data).onsuccess = () => res();
+        });
 
-        const dbGet = (storeName, key) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject();
-            });
-        };
+        const dbGet = (store, key) => new Promise(res => {
+            db.transaction(store, 'readonly').objectStore(store).get(key).onsuccess = (e) => res(e.target.result);
+        });
 
-        const dbGetAll = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readonly');
-                const store = tx.objectStore(storeName);
-                const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject();
-            });
-        };
+        const dbGetAll = (store) => new Promise(res => {
+            db.transaction(store, 'readonly').objectStore(store).getAll().onsuccess = (e) => res(e.target.result);
+        });
 
-        const dbDelete = (storeName, key) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.delete(key);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
+        const dbDelete = (store, key) => new Promise(res => {
+            db.transaction(store, 'readwrite').objectStore(store).delete(key).onsuccess = () => res();
+        });
 
-        const dbClear = (storeName) => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                const req = store.clear();
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-        };
+        async function initializeUI() {
+            await initDB();
+            const userSet = await dbGet('settings', 'user');
+            currentUser = userSet ? userSet.value : null;
+            const keySet = await dbGet('settings', 'gmaps_key');
+            googleMapsKey = keySet ? keySet.value : '';
+            markers = await dbGetAll('markers');
 
-        // --- APPLICATION STATE ---
-        let currentUser = null;
-        let markers = [];
-        let googleMap = null;
-        let googleMapsKey = '';
-        let gMarkers = [];
-        const JAMAICA_CENTER = { lat: 18.1096, lng: -77.2975 };
+            if (!currentUser) {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            } else {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
+                document.getElementById('userNameDisplay').innerText = currentUser.fullName;
+                syncState();
+                loadGMap();
+            }
+        }
 
-        // --- CORE FUNCTIONS ---
         async function handleLogin() {
             const first = document.getElementById('firstNameInput').value.trim();
             const last = document.getElementById('lastNameInput').value.trim();
             if (!first || !last) return;
-            currentUser = { first, last, fullName: `${first} ${last}` };
+            currentUser = { fullName: `${first} ${last}` };
             await dbPut('settings', { key: 'user', value: currentUser });
             initializeUI();
         }
 
         async function handleLogout() {
-            if(confirm("Logout from current session?")) {
-                await dbDelete('settings', 'user');
-                location.reload();
-            }
+            if(confirm("Logout?")) { await dbDelete('settings', 'user'); location.reload(); }
         }
 
-        async function initializeUI() {
-            try {
-                await initDB();
-                const userSetting = await dbGet('settings', 'user');
-                currentUser = userSetting ? userSetting.value : null;
-                const keySetting = await dbGet('settings', 'gmaps_key');
-                googleMapsKey = keySetting ? keySetting.value : '';
-                markers = await dbGetAll('markers');
-
-                if (!currentUser) {
-                    document.getElementById('loginOverlay').classList.remove('hidden');
-                } else {
-                    document.getElementById('loginOverlay').classList.add('hidden');
-                    document.getElementById('mainDashboard').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('mainDashboard').classList.add('opacity-100'), 50);
-                    document.getElementById('userNameDisplay').innerText = currentUser.fullName;
-                    updateProjectDropdown();
-                    renderRegistry();
-                    loadGMap();
-                }
-            } catch (err) {
-                showGlobalError("Database Initialization Failed.");
-            }
-        }
-
-        async function syncState() {
-            updateProjectDropdown();
-            renderRegistry();
-            updateMapMarkers();
-            calcStorageUsage();
-        }
-
-        function calcStorageUsage() {
-            const el = document.getElementById('storageUsage');
-            if (!markers) {
-                el.innerText = '0 KB';
-                return;
-            }
-            const jsonString = JSON.stringify(markers);
-            const bytes = new Blob([jsonString]).size;
-            if (bytes < 1024) el.innerText = `${bytes} B`;
-            else if (bytes < 1048576) el.innerText = `${(bytes / 1024).toFixed(2)} KB`;
-            else el.innerText = `${(bytes / 1048576).toFixed(2)} MB`;
-        }
-
-        function updateProjectDropdown() {
-            const dropdown = document.getElementById('projectFilter');
-            const currentVal = dropdown.value;
-            const userProjects = [...new Set(markers.map(m => m.zone || 'General'))].sort();
-            dropdown.innerHTML = `<option value="all">All Zones</option>`;
-            userProjects.forEach(proj => {
-                const opt = document.createElement('option');
-                opt.value = proj;
-                opt.textContent = proj;
-                dropdown.appendChild(opt);
-            });
-            dropdown.value = currentVal;
-            handleFilterChange();
-        }
-
-        function showGlobalError(msg) {
-            const banner = document.getElementById('errorBanner');
-            document.getElementById('errorMessage').innerText = msg;
-            banner.classList.remove('hidden');
-            setTimeout(() => banner.classList.add('hidden'), 5000);
-        }
-
-        window.updatePrefix = () => {
-            const input = document.getElementById('workAreaInput').value.trim();
-            const display = document.getElementById('prefixDisplay');
-            if (input.length >= 2) {
-                const prefix = input.substring(0, 3).toUpperCase();
-                display.innerText = `${prefix}-H#`; 
-                return prefix;
-            }
-            display.innerText = ''; return 'GEN';
-        };
-
-        window.resetInputs = () => {
-            document.getElementById('feederInput').value = '';
-            document.getElementById('zoneInput').value = '';
-            document.getElementById('workAreaInput').value = '';
-            document.getElementById('manualIdInput').value = ''; 
-            document.getElementById('contractorInput').value = '';
-            document.getElementById('workPlanInput').value = '';
-            document.getElementById('coordInput').value = '';
-            document.getElementById('prefixDisplay').innerText = '';
-        };
-
-        window.gm_authFailure = function() {
-            document.getElementById('mapLoader').classList.add('hidden');
-            document.getElementById('mapFailureOverlay').classList.remove('hidden');
-        };
-
-        window.initMap = () => {
-            try {
-                googleMap = new google.maps.Map(document.getElementById('map'), {
-                    center: JAMAICA_CENTER, zoom: 8, mapTypeId: 'hybrid',
-                    disableDefaultUI: false, streetViewControl: false,
-                    styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
-                });
-                document.getElementById('mapLoader').classList.add('hidden');
-                document.getElementById('mapFailureOverlay').classList.add('hidden');
-                updateMapMarkers();
-            } catch (e) { document.getElementById('mapFailureOverlay').classList.remove('hidden'); }
-        };
-
-        const loadGMap = () => {
+        function loadGMap() {
             if (!googleMapsKey) {
                 document.getElementById('mapLoader').classList.add('hidden');
                 document.getElementById('mapFailureOverlay').classList.remove('hidden');
                 return;
             }
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap&libraries=geometry`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=initMap`;
             script.async = true;
             document.head.appendChild(script);
+        }
+
+        window.initMap = () => {
+            document.getElementById('mapFailureOverlay').classList.add('hidden');
+            googleMap = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 18.1096, lng: -77.2975 }, zoom: 8, mapTypeId: 'hybrid'
+            });
+            document.getElementById('mapLoader').classList.add('hidden');
+            updateMapMarkers();
         };
 
-        window.promptNewKey = () => document.getElementById('apiKeyModal').classList.remove('hidden');
         window.saveNewKey = async () => {
             const val = document.getElementById('newApiKeyInput').value.trim();
             if (val) { 
                 await dbPut('settings', { key: 'gmaps_key', value: val });
-                location.reload(); 
+                googleMapsKey = val;
+                document.getElementById('apiKeyModal').classList.add('hidden');
+                loadGMap();
             }
         };
 
-        window.handleFilterChange = () => {
-            const filterVal = document.getElementById('projectFilter').value;
-            const title = document.getElementById('activeOpTitle');
-            if (filterVal !== 'all') {
-                title.classList.add('animate-blink-green');
-                title.classList.remove('text-slate-500');
-            } else {
-                title.classList.remove('animate-blink-green');
-                title.classList.add('text-slate-500');
-            }
-            renderRegistry();
-            updateMapMarkers();
+        window.resetInputs = () => {
+            document.getElementById('feederInput').value = '';
+            document.getElementById('zoneInput').value = '';
+            document.getElementById('workAreaInput').value = '';
+            document.getElementById('manualIdInput').value = '';
+            document.getElementById('contractorInput').value = '';
+            document.getElementById('workPlanInput').value = '';
+            document.getElementById('coordInput').value = '';
         };
+
+        window.triggerImport = () => document.getElementById('importInput').click();
+
+        document.getElementById('importInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                if (confirm(`Restore ${rows.length} operations?`)) {
+                    for (const row of rows) {
+                        const marker = {
+                            id: (Date.now() + Math.random()).toString(),
+                            uniqueId: row["ID"] || "UNK",
+                            zone: row["Zone"] || "General",
+                            workArea: row["Area"] || "Unassigned",
+                            workPlan: row["WP#"] || "N/A",
+                            contractor: row["Contractor"] || "Unassigned",
+                            lat: parseFloat(row["Lat"]),
+                            lng: parseFloat(row["Lng"]),
+                            status: row["Status"] || "pending",
+                            createdBy: row["Op"] || "Imported",
+                            timestamp: row["Time"] || new Date().toLocaleString()
+                        };
+                        if (!isNaN(marker.lat)) {
+                            markers.push(marker);
+                            await dbPut('markers', marker);
+                        }
+                    }
+                    syncState();
+                }
+            };
+            reader.readAsBinaryString(file);
+        });
 
         window.addMarker = async () => {
-            let inputString = document.getElementById('coordInput').value.trim();
-            const feederVal = document.getElementById('feederInput').value.trim() || 'N/A';
-            const zoneVal = document.getElementById('zoneInput').value.trim() || 'General';
-            const workAreaVal = document.getElementById('workAreaInput').value.trim() || 'General';
-            const manualIdVal = document.getElementById('manualIdInput').value.trim(); 
-            const contractorVal = document.getElementById('contractorInput').value.trim() || 'Unassigned';
-            const workPlanRaw = document.getElementById('workPlanInput').value.trim();
-            const workPlanFormatted = workPlanRaw ? `WP-${workPlanRaw}` : 'N/A';
-
-            const urlPatterns = [/@(-?\d+\.\d+),(-?\d+\.\d+)/, /place\/(-?\d+\.\d+),(-?\d+\.\d+)/, /q=(-?\d+\.\d+),(-?\d+\.\d+)/];
+            const input = document.getElementById('coordInput').value.trim();
             let lat = null, lng = null;
-            if (inputString.includes('google.com/maps') || inputString.includes('maps.app.goo.gl')) {
-                for (let pattern of urlPatterns) {
-                    const match = inputString.match(pattern);
-                    if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); break; }
-                }
+            const coordMatch = input.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+            if (coordMatch) { lat = parseFloat(coordMatch[1]); lng = parseFloat(coordMatch[2]); }
+            else {
+                const urlMatch = input.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                if(urlMatch) { lat = parseFloat(urlMatch[1]); lng = parseFloat(urlMatch[2]); }
             }
-            if (lat === null || lng === null) {
-                const manualRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
-                const match = inputString.match(manualRegex);
-                if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
-            }
-            if (lat === null || lng === null) return showGlobalError("Invalid Format.");
-            
-            let uniqueId;
-            if (manualIdVal) {
-                const collision = markers.find(m => m.uniqueId === manualIdVal && m.workArea === workAreaVal);
-                if (collision) return showGlobalError("Duplicate Manual ID.");
-                uniqueId = manualIdVal;
-            } else {
-                const prefix = workAreaVal.substring(0, 3).toUpperCase() || 'GEN';
-                const areaCount = markers.filter(m => (m.workArea || 'General') === workAreaVal).length;
-                uniqueId = `${prefix}-H${areaCount + 1}`;
-            }
-            
-            const newHole = {
+            if (lat === null) return alert("Invalid GPS coordinates.");
+            const marker = {
                 id: Date.now().toString(),
-                uniqueId, feeder: feederVal, zone: zoneVal, workArea: workAreaVal,
-                contractor: contractorVal, workPlan: workPlanFormatted, createdBy: currentUser.fullName,
-                lat, lng, status: 'pending', digMethod: 'M', holeType: 'Pole', image: null, timestamp: new Date().toLocaleString()
+                uniqueId: document.getElementById('manualIdInput').value.trim() || `${document.getElementById('workAreaInput').value.toUpperCase() || 'GEN'}-H${markers.length + 1}`,
+                zone: document.getElementById('zoneInput').value || 'General',
+                workArea: document.getElementById('workAreaInput').value || 'Unassigned',
+                contractor: document.getElementById('contractorInput').value || 'Unassigned',
+                workPlan: document.getElementById('workPlanInput').value ? `WP-${document.getElementById('workPlanInput').value}` : 'N/A',
+                lat, lng, status: 'pending', createdBy: currentUser.fullName, timestamp: new Date().toLocaleString()
             };
-            
-            markers.push(newHole);
-            await dbPut('markers', newHole);
+            markers.push(marker);
+            await dbPut('markers', marker);
             document.getElementById('coordInput').value = '';
-            document.getElementById('manualIdInput').value = ''; 
             syncState();
         };
 
-        window.deleteMarker = async (id) => { 
-            if (confirm("Delete entry?")) {
-                markers = markers.filter(m => m.id !== id);
-                await dbDelete('markers', id);
-                syncState();
-            }
+        window.generateReport = () => {
+            const wb = XLSX.utils.book_new();
+            const log = markers.map(m => ({
+                "Zone": m.zone, "Area": m.workArea, "WP#": m.workPlan, "ID": m.uniqueId,
+                "Contractor": m.contractor, "Status": m.status, "Lat": m.lat, "Lng": m.lng,
+                "Op": m.createdBy, "Time": m.timestamp
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(log), "Field Log");
+            XLSX.writeFile(wb, `UPH_REPORT_${Date.now()}.xlsx`);
         };
 
-        // --- NEW EDITING LOGIC ---
-        window.openEditModal = (id) => {
-            const hole = markers.find(m => m.id === id);
-            if (!hole) return;
-            
-            document.getElementById('editHoleId').value = hole.id;
-            document.getElementById('editUniqueId').value = hole.uniqueId;
-            document.getElementById('editFeeder').value = hole.feeder;
-            document.getElementById('editZone').value = hole.zone || '';
-            document.getElementById('editWorkArea').value = hole.workArea || '';
-            document.getElementById('editContractor').value = hole.contractor || '';
-            
-            // Extract number from WP- prefix
-            const wpRaw = hole.workPlan || '';
-            const wpNum = wpRaw.replace('WP-', '');
-            document.getElementById('editWorkPlan').value = isNaN(wpNum) ? '' : wpNum;
-            
-            document.getElementById('editModal').classList.remove('hidden');
-        };
+        function syncState() {
+            const list = document.getElementById('registryList');
+            const search = document.getElementById('searchInventory').value.toLowerCase();
+            const filtered = markers.filter(m => m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search));
+            list.innerHTML = filtered.map(m => `
+                <div class="glass-panel p-4 rounded-2xl border ${m.status === 'complete' ? 'border-green-500/40' : 'border-slate-800'} transition-all">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-black text-white">${m.uniqueId}</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">${m.zone} | ${m.workPlan}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="toggleHole('${m.id}')" class="text-xs ${m.status === 'complete' ? 'text-green-500' : 'text-slate-600'}">✓</button>
+                            <button onclick="deleteMarker('${m.id}')" class="text-red-500/50">×</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            const comp = markers.filter(m => m.status === 'complete').length;
+            document.getElementById('kpiCounts').innerText = `${comp} / ${markers.length} Tracked`;
+            const pct = markers.length > 0 ? Math.round((comp / markers.length) * 100) : 0;
+            document.getElementById('kpiPercent').innerText = `${pct}%`;
+            document.getElementById('kpiProgressBar').style.width = `${pct}%`;
+            const bytes = new Blob([JSON.stringify(markers)]).size;
+            document.getElementById('storageUsage').innerText = `${(bytes / 1024).toFixed(1)} KB`;
+            updateMapMarkers();
+        }
 
-        window.saveEdit = async () => {
-            const id = document.getElementById('editHoleId').value;
-            const idx = markers.findIndex(m => m.id === id);
-            if (idx === -1) return;
-
-            const newUniqueId = document.getElementById('editUniqueId').value.trim();
-            const newWorkArea = document.getElementById('editWorkArea').value.trim();
-
-            // Collision Check if ID changed
-            if (newUniqueId !== markers[idx].uniqueId) {
-                 const collision = markers.find(m => m.uniqueId === newUniqueId && m.workArea === newWorkArea && m.id !== id);
-                 if (collision) return showGlobalError("Conflict: Duplicate ID in this area.");
-            }
-
-            const wpNum = document.getElementById('editWorkPlan').value.trim();
-
-            markers[idx].uniqueId = newUniqueId;
-            markers[idx].feeder = document.getElementById('editFeeder').value;
-            markers[idx].zone = document.getElementById('editZone').value.trim() || 'General';
-            markers[idx].workArea = newWorkArea || 'General';
-            markers[idx].contractor = document.getElementById('editContractor').value.trim() || 'Unassigned';
-            markers[idx].workPlan = wpNum ? `WP-${wpNum}` : 'N/A';
-
-            await dbPut('markers', markers[idx]);
-            document.getElementById('editModal').classList.add('hidden');
-            syncState();
-            showGlobalError("Entry Updated Successfully");
-        };
-
-        window.toggleStatus = async (id) => {
+        async function toggleHole(id) {
             const idx = markers.findIndex(m => m.id === id);
             markers[idx].status = markers[idx].status === 'complete' ? 'pending' : 'complete';
             await dbPut('markers', markers[idx]);
             syncState();
-        };
-
-        window.toggleMethod = async (id, method) => {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].digMethod = method;
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        window.toggleHoleType = async (id, type) => {
-            const idx = markers.findIndex(m => m.id === id);
-            markers[idx].holeType = type;
-            await dbPut('markers', markers[idx]);
-            syncState();
-        };
-
-        async function compressImage(base64Str, maxWidth = 800, maxHeight = 800) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.src = base64Str;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width, height = img.height;
-                    if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } }
-                    else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-            });
         }
 
-        window.triggerUpload = (id) => { window.pendingId = id; document.getElementById('imageInput').click(); };
-        document.getElementById('imageInput').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file && window.pendingId) {
-                const reader = new FileReader();
-                reader.onloadend = async () => {
-                    const compressed = await compressImage(reader.result);
-                    const idx = markers.findIndex(m => m.id === window.pendingId);
-                    markers[idx].image = compressed;
-                    await dbPut('markers', markers[idx]);
-                    syncState();
-                };
-                reader.readAsDataURL(file);
+        async function deleteMarker(id) {
+            if(confirm("Delete entry?")) {
+                markers = markers.filter(m => m.id !== id);
+                await dbDelete('markers', id);
+                syncState();
             }
-        };
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
-
-        window.renderRegistry = () => {
-            const list = document.getElementById('registryList');
-            const search = document.getElementById('searchInventory').value.toLowerCase();
-            const filterProj = document.getElementById('projectFilter').value;
-            const filtered = markers.filter(m => {
-                const matchesSearch = m.uniqueId.toLowerCase().includes(search) || m.contractor.toLowerCase().includes(search);
-                const matchesProject = filterProj === 'all' || (m.zone || 'General') === filterProj;
-                return matchesSearch && matchesProject;
-            });
-            
-            document.getElementById('noResults').classList.toggle('hidden', filtered.length > 0 || markers.length === 0);
-            const completedCount = filtered.filter(m => m.status === 'complete').length;
-            const total = filtered.length;
-            const percent = Math.round((completedCount / total) * 100) || 0;
-            
-            document.getElementById('kpiCounts').innerText = `${completedCount} / ${total} Completed`;
-            document.getElementById('kpiPercent').innerText = `${percent}%`;
-            document.getElementById('kpiProgressBar').style.width = `${percent}%`;
-            
-            let totalDist = 0;
-            list.innerHTML = filtered.map((m, idx) => {
-                const dist = idx > 0 ? calculateDistance(filtered[idx - 1].lat, filtered[idx - 1].lng, m.lat, m.lng) : 0;
-                totalDist += dist;
-                const isComplete = m.status === 'complete';
-                return `<div class="group relative flex flex-col glass-panel p-5 rounded-3xl transition-all border ${isComplete ? 'border-yellow-500/60 ring-1 ring-yellow-500/20' : 'border-slate-800'}">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="id-badge relative w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[11px] ${isComplete ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-slate-400'}">
-                                ${m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : '#'}
-                                ${m.image ? `<div class="media-preview hidden absolute z-50 left-full ml-4 top-0 w-48 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-2xl pointer-events-none"><img src="${m.image}" class="w-full h-auto object-cover"></div>` : ''}
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-[11px] font-black text-slate-100 uppercase tracking-tighter">${m.uniqueId}</h4>
-                                    <span class="text-[9px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded font-bold border border-orange-500/30">${m.workPlan || 'N/A'}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <p class="text-[9px] text-red-500 font-bold uppercase tracking-widest">${m.feeder}</p>
-                                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">${m.workArea || 'N/A'}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="toggleStatus('${m.id}')" title="Toggle Completion Status" class="p-2.5 rounded-xl border transition-all ${isComplete ? 'text-yellow-500 bg-yellow-500/20 border-yellow-500/50' : 'text-slate-400 bg-slate-900 border-slate-800'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
-                            <button onclick="openEditModal('${m.id}')" title="Edit Entry" class="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            </button>
-                            <button onclick="deleteMarker('${m.id}')" title="Delete Entry" class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Dig Method</p>
-                            <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleMethod('${m.id}', 'M')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'M' ? 'bg-slate-800 text-white' : 'text-slate-600'}">M</button>
-                                <button onclick="toggleMethod('${m.id}', 'B')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.digMethod === 'B' ? 'bg-slate-800 text-white' : 'text-slate-600'}">B</button>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <p class="text-[8px] font-black uppercase text-slate-500 tracking-widest">Hole Type</p>
-                            <div class="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800">
-                                <button onclick="toggleHoleType('${m.id}', 'Pole')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Pole' || !m.holeType ? 'bg-slate-800 text-white' : 'text-slate-600'}">Pole</button>
-                                <button onclick="toggleHoleType('${m.id}', 'Guy')" class="flex-1 py-1 text-[9px] font-black rounded-md ${m.holeType === 'Guy' ? 'bg-slate-800 text-white' : 'text-slate-600'}">Guy</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 flex items-center justify-between pt-4 border-t border-slate-800/50">
-                        <p class="text-[9px] font-bold text-slate-300 uppercase truncate max-w-[100px]">${m.contractor}</p>
-                        <button onclick="triggerUpload('${m.id}')" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-colors">${m.image ? 'Update Photo' : 'Attach Photo'}</button>
-                    </div>
-                </div>`;
-            }).join('');
-            document.getElementById('maxDistLabel').innerText = `Route: ${totalDist.toFixed(2)} km`;
-        };
 
         function updateMapMarkers() {
             if (!googleMap) return;
-            gMarkers.forEach(m => m.setMap(null));
-            gMarkers = [];
-            const bounds = new google.maps.LatLngBounds();
-            const filterProj = document.getElementById('projectFilter').value;
-            const filtered = markers.filter(m => filterProj === 'all' || (m.zone || 'General') === filterProj);
-            filtered.forEach(m => {
-                const isComplete = m.status === 'complete', isGuy = m.holeType === 'Guy';
-                const primaryColor = isComplete ? "#eab308" : "#dc2626";
-                let iconConfig;
-                if (isGuy) {
-                    const stripeColor = isComplete ? "#eab308" : "#dc2626";
-                    const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hazard-${m.id}" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><rect width="4" height="8" fill="${stripeColor}"/><rect x="4" width="4" height="8" fill="black"/></pattern></defs><circle cx="16" cy="16" r="14" fill="url(#hazard-${m.id})" stroke="white" stroke-width="2.5"/></svg>`;
-                    iconConfig = { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), anchor: new google.maps.Point(16, 16), labelOrigin: new google.maps.Point(16, 16) };
-                } else {
-                    iconConfig = { path: google.maps.SymbolPath.CIRCLE, fillColor: primaryColor, fillOpacity: 1, strokeWeight: 2, scale: 15, strokeColor: 'white' };
+            gMarkers.forEach(gm => gm.setMap(null));
+            gMarkers = markers.map(m => new google.maps.Marker({
+                position: { lat: m.lat, lng: m.lng }, 
+                map: googleMap, 
+                title: m.uniqueId,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: m.status === 'complete' ? '#22c55e' : '#ef4444',
+                    fillOpacity: 1,
+                    strokeColor: '#fff',
+                    strokeWeight: 2,
+                    scale: 8
                 }
-                const labelText = m.uniqueId.includes('-H') ? m.uniqueId.split('-H').pop() : 'M';
-                const gMarker = new google.maps.Marker({ position: { lat: m.lat, lng: m.lng }, map: googleMap, title: m.uniqueId, label: { text: labelText, color: (isComplete && !isGuy) ? "black" : "white", fontWeight: "900", fontSize: "10px" }, icon: iconConfig });
-                gMarkers.push(gMarker);
-                bounds.extend(gMarker.getPosition());
-            });
-            if (filtered.length > 0) googleMap.fitBounds(bounds);
+            }));
         }
 
-        window.generateReport = () => {
-            if (markers.length === 0) return;
-            const sortedMarkers = [...markers].sort((a, b) => {
-                const zoneSort = (a.zone || '').localeCompare(b.zone || '');
-                if (zoneSort !== 0) return zoneSort;
-                return (a.workArea || '').localeCompare(b.workArea || '');
-            });
-
-            const logData = sortedMarkers.map(m => ({ 
-                "Project (Zone)": m.zone || 'N/A',
-                "Work Area": m.workArea || 'N/A',
-                "Work Plan #": m.workPlan || 'N/A',
-                "Hole ID": m.uniqueId, 
-                "Feeder": m.feeder, 
-                "Contractor": m.contractor, 
-                "Hole Type": m.holeType || 'Pole',
-                "Dig Method": m.digMethod === 'M' ? 'Manual' : 'Backhoe',
-                "Status": m.status.toUpperCase(), 
-                "Latitude": m.lat,
-                "Longitude": m.lng,
-                "Operator": m.createdBy,
-                "Timestamp": m.timestamp 
-            }));
-
-            const uphReportData = [];
-            const zones = [...new Set(markers.map(m => m.zone || 'General'))].sort();
-            let gComplete = 0, gPending = 0;
-
-            zones.forEach(zone => {
-                const zoneMarkers = markers.filter(m => (m.zone || 'General') === zone);
-                const workAreas = [...new Set(zoneMarkers.map(m => m.workArea || 'General'))].sort();
-                let zComplete = 0, zPending = 0;
-                uphReportData.push({ "Project / Zone": zone.toUpperCase(), "Work Area": "---", "Classification": "---", "Completed": "---", "Pending": "---", "Total": "---" });
-                workAreas.forEach(wa => {
-                    const waMarkers = zoneMarkers.filter(m => (m.workArea || 'General') === wa);
-                    const pc = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'complete').length;
-                    const pp = waMarkers.filter(m => (m.holeType || 'Pole') === 'Pole' && m.status === 'pending').length;
-                    const gc = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'complete').length;
-                    const gp = waMarkers.filter(m => m.holeType === 'Guy' && m.status === 'pending').length;
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Pole Holes", "Completed": pc, "Pending": pp, "Total": pc + pp });
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": wa, "Classification": "Guy Holes", "Completed": gc, "Pending": gp, "Total": gc + gp });
-                    uphReportData.push({ "Project / Zone": zone, "Work Area": `${wa} SUBTOTAL`, "Classification": "All Types", "Completed": pc + gc, "Pending": pp + gp, "Total": pc + gc + pp + gp });
-                    uphReportData.push({ "Project / Zone": "", "Work Area": "", "Classification": "", "Completed": "", "Pending": "", "Total": "" });
-                    zComplete += (pc + gc); zPending += (pp + gp);
-                });
-                uphReportData.push({ "Project / Zone": `${zone} TOTAL`, "Work Area": "ALL AREAS", "Classification": "Zone Summary", "Completed": zComplete, "Pending": zPending, "Total": zComplete + zPending });
-                uphReportData.push({ "Project / Zone": "==========", "Work Area": "==========", "Classification": "==========", "Completed": "===", "Pending": "===", "Total": "===" });
-                gComplete += zComplete; gPending += zPending;
-            });
-            uphReportData.push({ "Project / Zone": "GRAND TOTAL", "Work Area": "GLOBAL", "Classification": "All Operations", "Completed": gComplete, "Pending": gPending, "Total": gComplete + gPending });
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uphReportData), "UPH Summary");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "Operations Log");
-            XLSX.writeFile(wb, `UPH_MANAGEMENT_REPORT_${new Date().toISOString().split('T')[0]}.xlsx`);
-        };
-
+        window.promptNewKey = () => document.getElementById('apiKeyModal').classList.remove('hidden');
         window.onload = initializeUI;
     </script>
 </body>
